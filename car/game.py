@@ -6,9 +6,9 @@ import traceback
 import math
 import random
 
-from .audio import AudioManager
-from .input import handle_input
-from .physics import update_physics_and_collisions
+from .audio.audio import AudioManager
+from .logic.input import handle_input
+from .logic.physics import update_physics_and_collisions
 from .rendering.renderer import render_game
 from .ui.shop import draw_shop_menu
 from .logic.shop import Shop
@@ -16,6 +16,10 @@ from .data.shops import SHOP_DATA
 from .data.game_constants import CUTSCENE_RADIUS
 from .logic.quests import Quest, KillBossObjective, KillCountObjective, SurvivalObjective
 from .logic.save_load import save_game, load_game, get_save_files
+from .logic.shop_logic import handle_shop_interaction
+from .logic.quest_logic import handle_quest_interaction, update_quests
+from .logic.menu_logic import handle_menu
+from .logic.pause_menu_logic import handle_pause_menu
 from .logic.npcs import handle_npc_interaction
 from .data import *
 from .logic.boss import Boss
@@ -244,239 +248,32 @@ def main_game(stdscr):
                         game_menu_win = None
 
             if game_state.menu_open:
-                num_weapons = len(game_state.mounted_weapons)
-                num_inventory = len(game_state.player_inventory)
-                current_section_name = menu_sections[game_state.menu_selected_section_idx]
+                handle_menu(stdscr, game_state, COLOR_PAIR_MAP)
+                continue # Skip the rest of the game loop
+            
+            # --- Normal Game Update (Menu is Closed) ---
+            if game_menu_win:
+                try: del game_menu_win
+                except: pass
+                game_menu_win = None
 
-                if actions["menu_up"]:
-                    if current_section_name == "weapons" and num_weapons > 0:
-                        game_state.menu_selected_item_idx = (game_state.menu_selected_item_idx - 1) % num_weapons
-                    elif current_section_name == "inventory" and num_inventory > 0:
-                        game_state.menu_selected_item_idx = (game_state.menu_selected_item_idx - 1) % num_inventory
-                elif actions["menu_down"]:
-                    if current_section_name == "weapons" and num_weapons > 0:
-                        game_state.menu_selected_item_idx = (game_state.menu_selected_item_idx + 1) % num_weapons
-                    elif current_section_name == "inventory" and num_inventory > 0:
-                        game_state.menu_selected_item_idx = (game_state.menu_selected_item_idx + 1) % num_inventory
-                elif actions["menu_left"]:
-                    game_state.menu_selected_section_idx = (game_state.menu_selected_section_idx - 1) % len(menu_sections)
-                    game_state.menu_selected_item_idx = 0
-                elif actions["menu_right"]:
-                    game_state.menu_selected_section_idx = (game_state.menu_selected_section_idx + 1) % len(menu_sections)
-                    game_state.menu_selected_item_idx = 0
-                elif actions["menu_select"]:
-                    if current_section_name == "inventory":
-                        # Placeholder for inventory item action
-                        pass
-                    elif current_section_name == "weapons":
-                        # Equip/unequip weapon
-                        mount_point = list(game_state.attachment_points.keys())[game_state.menu_selected_item_idx]
-                        
-                        # Unequip
-                        if game_state.mounted_weapons.get(mount_point):
-                            weapon_key = game_state.mounted_weapons[mount_point]
-                            game_state.player_inventory.append({"type": "gun", "name": WEAPONS_DATA[weapon_key]["name"]})
-                            del game_state.mounted_weapons[mount_point]
-                        # Equip
-                        else:
-                            for i, item in enumerate(game_state.player_inventory):
-                                if item["type"] == "gun":
-                                    weapon_key = [k for k, v in WEAPONS_DATA.items() if v["name"] == item["name"]][0]
-                                    if WEAPONS_DATA[weapon_key]["slots"] <= game_state.attachment_points[mount_point]["size"]:
-                                        game_state.mounted_weapons[mount_point] = weapon_key
-                                        game_state.player_inventory.pop(i)
-                                        break
-                elif actions["menu_back"]:
-                    game_state.menu_open = False
+            handle_pause_menu(stdscr, game_state, COLOR_PAIR_MAP)
+            
+            update_physics_and_collisions(game_state, world, audio_manager, stdscr, COLOR_PAIR_MAP)
+            render_game(stdscr, game_state, world, COLOR_PAIR_MAP)
+            update_and_draw_entity_modal(stdscr, game_state, COLOR_PAIR_MAP)
 
-                car_stats_for_menu = { "cash": game_state.player_cash, "durability": int(game_state.current_durability), "max_durability": int(game_state.max_durability),
-                                       "current_gas": game_state.current_gas, "gas_capacity": int(game_state.gas_capacity), "ammo_counts": game_state.ammo_counts,
-                                       "speed": game_state.car_speed, "world_x": game_state.car_world_x, "world_y": game_state.car_world_y,
-                                       "inventory": game_state.player_inventory,
-                                       "player_level": game_state.player_level, "current_xp": game_state.current_xp, "xp_to_next_level": game_state.xp_to_next_level,
-                                       "mounted_weapons": game_state.mounted_weapons,
-                                       "weapons_data": WEAPONS_DATA
-                                     }
-
-                current_selection = (menu_sections[game_state.menu_selected_section_idx], game_state.menu_selected_item_idx)
-                if game_menu_win:
-                    try: del game_menu_win
-                    except: pass
-                game_state.selected_car_data["weapons_data"] = WEAPONS_DATA
-                game_state.selected_car_data["menu_art"] = game_state.all_car_art[0]
-                grid_x = round(game_state.car_world_x / CITY_SPACING)
-                grid_y = round(game_state.car_world_y / CITY_SPACING)
-                loc_desc_ui = get_city_name(grid_x, grid_y)
-                game_menu_win = draw_inventory_menu(stdscr, game_state.selected_car_data, car_stats_for_menu, loc_desc_ui, game_state.frame, current_selection, COLOR_PAIR_MAP)
-
-                if game_menu_win is None:
-                    game_state.menu_open = False
-                    try: stdscr.addstr(h-1, 0, "Error: Menu failed to draw!")
-                    except: pass
-                    stdscr.refresh(); time.sleep(1)
-
-            else: # --- Normal Game Update (Menu is Closed) ---
-                if game_menu_win:
-                    try: del game_menu_win
-                    except: pass
-                    game_menu_win = None
-
-                if actions["toggle_pause"]:
-                    selected_pause_option = 0
-                    while True:
-                        draw_pause_menu(stdscr, selected_pause_option, COLOR_PAIR_MAP)
-                        key = stdscr.getch()
-                        if key == curses.KEY_UP:
-                            selected_pause_option = (selected_pause_option - 1) % 4
-                        elif key == curses.KEY_DOWN:
-                            selected_pause_option = (selected_pause_option + 1) % 4
-                        elif key == curses.KEY_ENTER or key == 10 or key == 13:
-                            if selected_pause_option == 0: # Resume
-                                break
-                            elif selected_pause_option == 1: # Save Game
-                                save_game(game_state)
-                                add_notification("Game Saved!", color="MENU_HIGHLIGHT")
-                            elif selected_pause_option == 2: # Main Menu
-                                return
-                            elif selected_pause_option == 3: # Quit
-                                sys.exit(0)
-                        elif key == 27: # ESC also resumes
-                            break
-                
-                update_physics_and_collisions(game_state, world, audio_manager, stdscr, COLOR_PAIR_MAP)
-                render_game(stdscr, game_state, world, COLOR_PAIR_MAP)
-                update_and_draw_entity_modal(stdscr, game_state, COLOR_PAIR_MAP)
-
-                if game_state.car_speed < 1.0 and game_state.shop_cooldown == 0:
-                    grid_x = round(game_state.car_world_x / CITY_SPACING)
-                    grid_y = round(game_state.car_world_y / CITY_SPACING)
-                    city_buildings = get_buildings_in_city(grid_x, grid_y)
-                    for building in city_buildings:
-                        if building['x'] <= game_state.car_world_x < building['x'] + building['w'] and \
-                           building['y'] <= game_state.car_world_y < building['y'] + building['h']:
-                            if building["type"] in SHOP_DATA:
-                                shop_data = SHOP_DATA[building["type"]]
-                                shop = Shop(shop_data["name"], shop_data["inventory"])
-                                selected_item_index = 0
-                                active_list = "shop"
-                                while True:
-                                    player_stats = {
-                                        "inventory": game_state.player_inventory,
-                                        "cash": game_state.player_cash,
-                                        "durability": game_state.current_durability,
-                                        "max_durability": game_state.max_durability,
-                                        "current_gas": game_state.current_gas,
-                                        "gas_capacity": game_state.gas_capacity
-                                    }
-                                    draw_shop_menu(stdscr, shop, player_stats, selected_item_index, active_list, COLOR_PAIR_MAP)
-                                    key = stdscr.getch()
-                                    if key == curses.KEY_UP:
-                                        if active_list == "shop":
-                                            selected_item_index = (selected_item_index - 1) % len(shop.inventory)
-                                        else:
-                                            selected_item_index = (selected_item_index - 1) % len(game_state.player_inventory)
-                                    elif key == curses.KEY_DOWN:
-                                        if active_list == "shop":
-                                            selected_item_index = (selected_item_index + 1) % len(shop.inventory)
-                                        else:
-                                            selected_item_index = (selected_item_index + 1) % len(game_state.player_inventory)
-                                    elif key == curses.KEY_LEFT:
-                                        active_list = "shop"
-                                        selected_item_index = 0
-                                    elif key == curses.KEY_RIGHT:
-                                        active_list = "player"
-                                        selected_item_index = 0
-                                    elif key == curses.KEY_ENTER or key == 10 or key == 13:
-                                        if active_list == "shop":
-                                            item_to_buy = shop.inventory[selected_item_index]
-                                            if game_state.player_cash >= item_to_buy["price"]:
-                                                game_state.player_cash -= item_to_buy["price"]
-                                                game_state.player_inventory.append({"type": "item", "name": item_to_buy["item"]})
-                                        else:
-                                            item_to_sell = game_state.player_inventory[selected_item_index]
-                                            game_state.player_cash += item_to_sell.get("price", 0)
-                                            game_state.player_inventory.pop(selected_item_index)
-                                    elif key == 27:
-                                        game_state.shop_cooldown = 100
-                                        break
-                                break
-                            elif building["type"] == "GENERIC" and building["name"] == "City Hall":
-                                if not game_state.current_quest:
-                                    quest_key = random.choice(list(QUESTS.keys()))
-                                    quest_data = QUESTS[quest_key]
-                                    
-                                    objectives = []
-                                    for obj_class, args in quest_data["objectives"]:
-                                        objectives.append(obj_class(*args))
-
-                                    game_state.current_quest = Quest(
-                                        name=quest_data["name"],
-                                        description=quest_data["description"],
-                                        objectives=objectives,
-                                        rewards=quest_data["rewards"]
-                                    )
-                                    add_notification(f"New Quest: {game_state.current_quest.name}", color="MENU_HIGHLIGHT")
-
-                                    if "boss" in quest_data:
-                                        boss_data = quest_data["boss"]
-                                        boss_car_data = next((c for c in CARS_DATA if c["name"] == boss_data["car"]), None)
-                                        if boss_car_data:
-                                            boss = Boss(boss_data["name"], boss_car_data, boss_data["hp_multiplier"])
-                                            boss.x = game_state.car_world_x + random.uniform(-200, 200)
-                                            boss.y = game_state.car_world_y + random.uniform(-200, 200)
-                                            boss.hp = boss_car_data["durability"] * boss.hp_multiplier
-                                            boss.art = boss_car_data["art"]
-                                            boss.width, boss.height = get_car_dimensions(boss.art)
-                                            game_state.active_bosses[quest_key] = boss
-                                            audio_manager.stop_music()
-                                            audio_manager.play_music("car/sounds/boss.mid")
-                                else:
-                                    add_notification("You already have an active quest.", color="UI_LOCATION")
-                                break
-                
-                if game_state.current_durability <= 0:
-                    play_death_cutscene(stdscr, COLOR_PAIR_MAP)
-                    game_state.game_over = True
-                    game_state.game_over_message = "CAR DESTROYED!"
-                elif game_state.current_gas <= 0 and game_state.car_speed <= 0.01:
-                    game_state.game_over = True
-                    game_state.game_over_message = "OUT OF GAS!"
-
-            # --- Quest Update Logic ---
-            if game_state.current_quest:
-                game_state_for_quest = {
-                    "active_bosses": game_state.active_bosses,
-                    "active_enemies": game_state.active_enemies,
-                }
-                game_state.current_quest.update(game_state_for_quest)
-
-                if game_state.current_quest.completed:
-                    rewards = game_state.current_quest.rewards
-                    game_state.gain_xp(rewards.get("xp", 0))
-                    game_state.player_cash += rewards.get("cash", 0)
-                    add_notification(f"Quest Complete: {game_state.current_quest.name}", color="MENU_HIGHLIGHT")
-                    play_cutscene(stdscr, [[f"Quest Complete!"]], 1)
-                    game_state.current_quest = None
-                else:
-                    for objective in game_state.current_quest.objectives:
-                        if isinstance(objective, SurvivalObjective):
-                            if objective.timer > 0:
-                                spawn_rate_mod = game_state.difficulty_mods["spawn_rate_mult"] * 3.0 
-                            elif not objective.mini_boss_spawned:
-                                mini_boss_name = objective.mini_boss_name
-                                if mini_boss_name in ENEMIES_DATA:
-                                    edata_s = ENEMIES_DATA[ENEMIES_DATA.index(next(item for item in ENEMIES_DATA if item["name"] == mini_boss_name))]
-                                    eh_s, ew_s = get_obstacle_dimensions(edata_s["art"])
-                                    sangle = random.uniform(0, 2*math.pi)
-                                    sdist = random.uniform(max(w,h)*0.6, game_state.spawn_radius)
-                                    sx = game_state.car_world_x + sdist*math.cos(sangle)
-                                    sy = game_state.car_world_y + sdist*math.sin(sangle)
-                                    evx_s, evy_s = 0, 0
-                                    edur_s = int(edata_s["durability"] * game_state.difficulty_mods["enemy_hp_mult"] * 1.5)
-                                    game_state.active_enemies[game_state.next_enemy_id] = [sx, sy, ENEMIES_DATA.index(edata_s), eh_s, ew_s, evx_s, evy_s, edata_s["art"], edur_s]
-                                    game_state.next_enemy_id += 1
-                                    objective.mini_boss_spawned = True
-                                    add_notification(f"A powerful enemy has appeared!", color="ENEMY")
+            handle_shop_interaction(stdscr, game_state, world, COLOR_PAIR_MAP)
+            handle_quest_interaction(game_state, world, audio_manager)
+            update_quests(game_state, audio_manager)
+            
+            if game_state.current_durability <= 0:
+                play_death_cutscene(stdscr, COLOR_PAIR_MAP)
+                game_state.game_over = True
+                game_state.game_over_message = "CAR DESTROYED!"
+            elif game_state.current_gas <= 0 and game_state.car_speed <= 0.01:
+                game_state.game_over = True
+                game_state.game_over_message = "OUT OF GAS!"
 
         stdscr.nodelay(0)
         game_over_win = draw_game_over_menu(stdscr, game_state.game_over_message, COLOR_PAIR_MAP)

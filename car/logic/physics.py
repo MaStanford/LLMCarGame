@@ -1,14 +1,14 @@
 import math
 import random
-from .data.game_constants import CITY_SPACING, TOTAL_SPAWN_RATE, MAX_ENEMIES
-from .data.obstacles import OBSTACLE_DATA
-from .data.pickups import PICKUP_DATA, PICKUP_CASH
-from .data.weapons import WEAPONS_DATA
-from .data.enemies import ENEMIES_DATA
-from .common.utils import get_obstacle_dimensions
-from .logic.quests import KillCountObjective, SurvivalObjective
-from .ui.entity_modal import play_explosion_in_modal
-from .ui.notifications import add_notification
+from ..data.game_constants import CITY_SPACING, TOTAL_SPAWN_RATE, MAX_ENEMIES
+from ..data.obstacles import OBSTACLE_DATA
+from ..data.pickups import PICKUP_DATA, PICKUP_CASH
+from ..data.weapons import WEAPONS_DATA
+from ..data.enemies import ENEMIES_DATA
+from ..common.utils import get_obstacle_dimensions
+from .quests import KillCountObjective, SurvivalObjective
+from ..ui.entity_modal import play_explosion_in_modal
+from ..ui.notifications import add_notification
 
 def update_physics_and_collisions(game_state, world, audio_manager, stdscr, color_pair_map):
     """Handles all physics updates and collision detection."""
