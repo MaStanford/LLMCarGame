@@ -1,4 +1,4 @@
-from .pickups import AMMO_BULLET, AMMO_HEAVY_BULLET, AMMO_FUEL
+from .pickups import AMMO_BULLET, AMMO_HEAVY_BULLET, AMMO_FUEL, AMMO_MINES
 from .game_constants import FLAME_CHAR
 
 # --- Weapon Definitions ---
@@ -22,7 +22,7 @@ WEAPONS_DATA = {
         ]
     },
     "mine_launcher": {
-        "name": "Mine Launcher", "slots": 2, "fire_rate": 20, "power": 20, "range": 1, "speed": 0, "ammo_type": "AMMO_MINES", "particle": "o",
+        "name": "Mine Launcher", "slots": 2, "fire_rate": 20, "power": 20, "range": 1, "speed": 0, "ammo_type": AMMO_MINES, "particle": "o",
         "art": [
             ["o"], ["o"], ["o"], ["o"], ["o"], ["o"], ["o"], ["o"]
         ]

@@ -19,23 +19,15 @@ def draw_sprite(stdscr, y, x, art, color_pair_num, attributes=0, transparent_bg=
 
             try:
                 if transparent_bg:
-                    # Get the background character and its attributes
-                    if bg_char:
+                    if bg_char is not None:
                         bg_char_and_attr = bg_char
                     else:
                         bg_char_and_attr = stdscr.inch(draw_y, draw_x)
+                    bg_attr = bg_char_and_attr & (curses.A_ATTRIBUTES | curses.A_COLOR)
                     
-                    bg_color_pair_number = curses.pair_number(bg_char_and_attr & curses.A_COLOR)
-                    fg_color, bg_color = curses.pair_content(bg_color_pair_number)
-
-                    # Create a new color pair with the new foreground and old background
-                    new_pair_number = color_pair_num
-                    curses.init_pair(new_pair_number, curses.pair_content(color_pair_num)[0], bg_color)
-                    
-                    final_attr = attributes | curses.color_pair(new_pair_number)
+                    final_attr = bg_attr | attributes | curses.color_pair(color_pair_num)
                     stdscr.addch(draw_y, draw_x, char, final_attr)
                 else:
-                    # Original behavior
                     color_attr = curses.color_pair(color_pair_num) if curses.has_colors() else 0
                     final_attr = color_attr | attributes
                     stdscr.addch(draw_y, draw_x, char, final_attr)

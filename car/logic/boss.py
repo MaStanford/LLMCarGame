@@ -1,8 +1,8 @@
 class Boss:
-    def __init__(self, name, car, hp_multiplier):
-        self.name = name
-        self.car = car
-        self.hp_multiplier = hp_multiplier
+    def __init__(self, boss_data):
+        self.name = boss_data["name"]
+        self.car = next((c for c in CARS_DATA if c["name"] == boss_data["car"]), None)
+        self.hp_multiplier = boss_data["hp_multiplier"]
         self.x = 0
         self.y = 0
         self.hp = 0

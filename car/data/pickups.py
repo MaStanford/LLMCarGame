@@ -7,7 +7,7 @@ AMMO_MINES = "MINES"
 # --- Pickup Types ---
 PICKUP_GAS = "GAS"
 PICKUP_AMMO_BULLET = "AMMO_BULLET"
-PICKUP_AMMO_HEAVY = "AMMO_HEAVY"
+PICKUP_AMMO_HEAVY_BULLET = "AMMO_HEAVY_BULLET"
 PICKUP_AMMO_FUEL = "AMMO_FUEL"
 PICKUP_AMMO_MINES = "AMMO_MINES"
 PICKUP_REPAIR = "REPAIR"
@@ -21,7 +21,7 @@ PICKUP_GUN_MINE_LAUNCHER = "GUN_MINE_LAUNCHER"
 PICKUP_DATA = {
     PICKUP_GAS: {"art": ["F"], "color_pair_name": "PICKUP_GAS", "value": 500},
     PICKUP_AMMO_BULLET: {"art": ["B"], "color_pair_name": "PICKUP_AMMO", "value": 50, "ammo_type": AMMO_BULLET},
-    PICKUP_AMMO_HEAVY: {"art": ["H"], "color_pair_name": "PICKUP_AMMO", "value": 25, "ammo_type": AMMO_HEAVY_BULLET},
+    PICKUP_AMMO_HEAVY_BULLET: {"art": ["H"], "color_pair_name": "PICKUP_AMMO", "value": 25, "ammo_type": AMMO_HEAVY_BULLET},
     PICKUP_AMMO_FUEL: {"art": ["f"], "color_pair_name": "PICKUP_AMMO", "value": 100, "ammo_type": AMMO_FUEL},
     PICKUP_AMMO_MINES: {"art": ["M"], "color_pair_name": "PICKUP_AMMO", "value": 5, "ammo_type": AMMO_MINES},
     PICKUP_REPAIR: {"art": ["R"], "color_pair_name": "PICKUP_REPAIR", "value": 25},

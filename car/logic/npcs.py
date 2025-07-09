@@ -1,10 +1,11 @@
-from ..ui.cutscene import draw_cutscene_modal
+from ..ui.cutscene import draw_entity_modal
 
 def handle_npc_interaction(stdscr, npc, color_map):
     """Handles NPC interaction."""
     if npc["type"] == "quest_giver":
-        draw_cutscene_modal(stdscr, "Quest Giver", "Hello, traveler! I have a quest for you.", color_map)
+        draw_entity_modal(stdscr, {"name": "Quest Giver", "hp": "N/A", "max_hp": 0, "type": "npc"}, color_map)
         return "quest_accepted"
     else:
-        draw_cutscene_modal(stdscr, "NPC", "Hello there!", color_map)
+        draw_entity_modal(stdscr, {"name": "NPC", "hp": "N/A", "max_hp": 0, "type": "npc"}, color_map)
         return None
+
