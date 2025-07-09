@@ -1,10 +1,10 @@
 import curses
+import math
 from car.data.cars import CARS_DATA
-from car.data.colors import COLOR_PAIR_MAP
-from car.rendering.draw_utils import draw_text_art
+from car.rendering.draw_utils import draw_sprite
 from car.data.difficulty import DIFFICULTY_LEVELS
 
-def draw_new_game_menu(stdscr, selected_car_index, selected_color_index, selected_difficulty_index, selected_weapon_index, car_color_names):
+def draw_new_game_menu(stdscr, selected_car_index, selected_color_index, selected_difficulty_index, selected_weapon_index, car_color_names, COLOR_PAIR_MAP, preview_angle):
     h, w = stdscr.getmaxyx()
     stdscr.clear()
 
@@ -15,7 +15,11 @@ def draw_new_game_menu(stdscr, selected_car_index, selected_color_index, selecte
     # Car Selection
     car = CARS_DATA[selected_car_index]
     car_name = car["name"]
-    car_art = car["menu_art"]
+    
+    positive_preview_angle = preview_angle % (2 * math.pi)
+    preview_direction_index = int((positive_preview_angle + math.pi / 8) / (math.pi / 4)) % 8
+    car_art = car["art"][preview_direction_index]
+
 
     car_win_h = len(car_art) + 4
     car_win_w = max(len(line) for line in car_art) + 4
@@ -28,8 +32,8 @@ def draw_new_game_menu(stdscr, selected_car_index, selected_color_index, selecte
     
     # Draw car art
     color_name = car_color_names[selected_color_index]
-    color_pair = COLOR_PAIR_MAP.get(color_name, COLOR_PAIR_MAP["default_color"])
-    draw_text_art(car_win, car_art, 2, (car_win_w - len(car_art[0])) // 2, color_pair)
+    color_pair = COLOR_PAIR_MAP.get(color_name, COLOR_PAIR_MAP.get("DEFAULT", 0))
+    draw_sprite(car_win, 2, (car_win_w - len(car_art[0])) // 2, car_art, color_pair)
 
     # Car Stats
     stats_win_h = 10
@@ -58,7 +62,6 @@ def draw_new_game_menu(stdscr, selected_car_index, selected_color_index, selecte
     difficulty_text = f"< {DIFFICULTY_LEVELS[selected_difficulty_index]} >"
     difficulty_win.addstr(2, (difficulty_win_w - len(difficulty_text)) // 2, difficulty_text)
 
-
     # Weapon Selection
     weapons_win_h = 10
     weapons_win_w = 40
@@ -86,5 +89,5 @@ def draw_new_game_menu(stdscr, selected_car_index, selected_color_index, selecte
     weapons_win.refresh()
 
     # Instructions
-    instructions = "Left/Right: Car | Up/Down: Difficulty | W/S: Weapon | C: Color | Enter: Confirm"
+    instructions = "Left/Right: Car | Up/Down: Difficulty | W/S: Weapon | C: Color | A/D: Rotate | Enter: Confirm"
     stdscr.addstr(h - 2, (w - len(instructions)) // 2, instructions)

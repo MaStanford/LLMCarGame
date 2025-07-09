@@ -1,14 +1,15 @@
-import string
 from .pickups import PICKUP_REPAIR, PICKUP_GAS
 
-# --- Shop Definitions ---
-# Replaced emojis in shop art
-SHOP_DATA = {
-    "REPAIR": {
-        "name": "Repair Shop",
+BUILDING_DATA = {
+    "mechanic_shop": {
+        "name": "Mechanic Shop",
+        "inventory": [
+            {"item": "PICKUP_REPAIR", "price": 50},
+            {"item": "PICKUP_GAS", "price": 20},
+        ],
         "art": [
             "╔════════════════╗",
-            "║  ===GARAGE===  ║", # Simple text/symbols
+            "║  ===GARAGE===  ║",
             "║┌─┬─┬─┬┐ R  ║",
             "║├─┼─┼─┼┤ E  ║",
             "║└─┴─┴─┴┘ P  ║",
@@ -18,25 +19,34 @@ SHOP_DATA = {
         "interaction_type": PICKUP_REPAIR,
         "color_pair_name": "SHOP_REPAIR"
     },
-    "GAS": {
+    "gas_station": {
         "name": "Gas Station",
+        "inventory": [
+            {"item": "PICKUP_GAS", "price": 20},
+        ],
         "art": [
             "  ╔═══════╗  ",
             " ╔╝_______╚╗ ",
-            "║ | PUMP  | ║", # Text instead of emoji
+            "║ | PUMP  | ║",
             "║ | G A S | ║",
             "║ |_______| ║",
-            "╚══════════��╝",
+            "╚═══════════╝",
         ],
         "width": 13, "height": 6,
         "interaction_type": PICKUP_GAS,
         "color_pair_name": "SHOP_GAS"
     },
-    "AMMO": {
+    "weapon_shop": {
         "name": "Ammo Shop",
+        "inventory": [
+            {"item": "lmg", "price": 100},
+            {"item": "hmg", "price": 200},
+            {"item": "flamethrower", "price": 300},
+            {"item": "mine_launcher", "price": 400},
+        ],
         "art": [
             " ╔════════════╗ ",
-            "║  * AMMO * ║", # Simple text/symbols
+            "║  * AMMO * ║",
             "║╔═══════╗   ║",
             "║║ GUN>║   ║ ║",
             "║╚═══════╝ ║ ║",
@@ -46,7 +56,7 @@ SHOP_DATA = {
         "interaction_type": "AMMO", # Special type
         "color_pair_name": "SHOP_AMMO"
     },
-    "CITY_HALL": {
+    "city_hall": {
         "name": "City Hall",
         "art": [
             "  /\\ ",
@@ -60,11 +70,3 @@ SHOP_DATA = {
         "color_pair_name": "BUILDING_OUTLINE_COLOR"
     }
 }
-
-# --- Building Aesthetics ---
-BUILDING_OUTLINE = { # Double line characters
-    "topLeft": '╔', "topRight": '╗', "bottomLeft": '╚', "bottomRight": '╝',
-    "vertical": '║', "horizontal": '═'
-}
-# Added more symbols, removed some confusing ones
-BUILDING_NAME_CHARS = string.ascii_uppercase + string.digits + "!#$%&*+=?☆★♥♦♣♠♪♫☼►◄▲▼"
