@@ -1,4 +1,6 @@
 import curses
+import sys
+import traceback
 
 def draw_inventory_menu(stdscr, car_data, car_stats, location_desc, frame_count, menu_selection, color_map):
     """Draws the status menu modal. Returns the menu window object or None.
@@ -162,11 +164,12 @@ def draw_inventory_menu(stdscr, car_data, car_stats, location_desc, frame_count,
         # Draw Weapon List with Highlighting
         mount_index = 0 # Use 0-based index for selection logic
         flash_on = (frame_count // 15) % 2 == 0
-        weapon_items = list(car_data['mounted_weapons'].items()) # Get weapons as a list
+        weapon_items = list(car_data['attachment_points'].items()) # Get all attachment points
 
-        for point_name, wep_key in weapon_items:
+        for point_name, point_info in weapon_items:
             is_selected = (menu_selection[0] == "weapons" and menu_selection[1] == mount_index)
-            point_info = car_data['attachment_points'].get(point_name, {})
+            
+            wep_key = car_stats['mounted_weapons'].get(point_name)
             point_size = point_info.get('size', '?'); wep_name = "Empty"
             if wep_key:
                 wep_name = car_data['weapons_data'].get(wep_key, {}).get('name', 'UNKNOWN')

@@ -7,22 +7,28 @@ def main():
     """Main entry point for the game."""
     try:
         curses.wrapper(main_game)
-        print("Game exited normally.")
     except curses.error as e:
+        # It's possible endwin is already called by the wrapper on error
         if 'curses' in sys.modules and hasattr(curses, 'endwin') and callable(curses.endwin):
             try:
-                if curses.isendwin() is False: curses.endwin()
+                if not curses.isendwin():
+                    curses.endwin()
             except Exception as cleanup_e:
-                print(f"Error during manual curses cleanup: {cleanup_e}", file=sys.stderr)
-        print(f"\nCurses error occurred: {e}", file=sys.stderr)
-        print("Terminal might be too small, incompatible, or lack color/Unicode support.", file=sys.stderr)
-        traceback.print_exc()
+                # Log cleanup error if necessary, but don't obscure the original error
+                pass
+        print(f"\n[ERROR] A curses error occurred: {e}", file=sys.stderr)
+        print("This can happen if the terminal window is too small, or if the", file=sys.stderr)
+        print("terminal type is not supported. Try resizing your window or", file=sys.stderr)
+        print("running in a different terminal.", file=sys.stderr)
+        # traceback.print_exc() # Optional: for debugging
     except Exception as e:
+        # Ensure curses is cleaned up on any other exception
         if 'curses' in sys.modules and hasattr(curses, 'endwin') and callable(curses.endwin):
             try:
-                if curses.isendwin() is False: curses.endwin()
+                if not curses.isendwin():
+                    curses.endwin()
             except Exception as cleanup_e:
-                print(f"Error during manual curses cleanup: {cleanup_e}", file=sys.stderr)
+                pass # As above
         print(f"\nAn unexpected error occurred: {e}", file=sys.stderr)
         traceback.print_exc()
 

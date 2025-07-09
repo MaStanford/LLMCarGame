@@ -6,6 +6,10 @@ import traceback
 import math
 import random
 
+from .audio import AudioManager
+from .ui.shop import draw_shop_menu
+from .logic.shop import Shop
+from .data.shops import SHOP_DATA
 from .logic.quests import Quest, KillBossObjective
 from .logic.save_load import save_game, load_game, get_save_files
 from .logic.npcs import handle_npc_interaction
@@ -17,6 +21,8 @@ from .rendering import *
 from .ui import *
 from .ui.new_game import draw_new_game_menu
 from .ui.pause_menu import draw_pause_menu
+from .ui.cutscene import play_cutscene
+from .ui.notifications import add_notification, draw_notifications
 from .world import *
 from .world.generation import get_city_name
 from .world.world import World
@@ -112,8 +118,12 @@ def main_game(stdscr):
     ui_xp_bar_color_num = COLOR_PAIR_MAP.get("UI_XP_BAR", 0)
 
 
+    # --- Audio Setup ---
+    audio_manager = AudioManager()
+
     # --- Main Menu ---
     selected_option = 0
+    audio_manager.play_music("car/sounds/main_menu.mid")
     while True:
         main_menu_win = draw_main_menu(stdscr, selected_option, COLOR_PAIR_MAP)
         if main_menu_win is None:
@@ -126,6 +136,8 @@ def main_game(stdscr):
             selected_option = (selected_option + 1) % 4
         elif key == curses.KEY_ENTER or key == 10 or key == 13:
             if selected_option == 0: # New Game
+                audio_manager.stop_music()
+                audio_manager.play_music("car/sounds/world.mid")
                 break
             elif selected_option == 1: # Load Game
                 save_files = get_save_files()
@@ -188,8 +200,9 @@ def main_game(stdscr):
     selected_difficulty_index = 1  # Default to Normal
 
     selected_weapon_index = 0
+    preview_angle = 0.0
     while True:
-        draw_new_game_menu(stdscr, selected_car_index, selected_color_index, selected_difficulty_index, selected_weapon_index, car_color_names)
+        draw_new_game_menu(stdscr, selected_car_index, selected_color_index, selected_difficulty_index, selected_weapon_index, car_color_names, COLOR_PAIR_MAP, preview_angle)
         key = stdscr.getch()
 
         if key == curses.KEY_LEFT:
@@ -206,6 +219,10 @@ def main_game(stdscr):
             selected_weapon_index = (selected_weapon_index - 1)
         elif key == ord('s'):
             selected_weapon_index = (selected_weapon_index + 1)
+        elif key == ord('a'):
+            preview_angle = normalize_angle(preview_angle + math.pi / 4)
+        elif key == ord('d'):
+            preview_angle = normalize_angle(preview_angle - math.pi / 4)
         elif key == curses.KEY_ENTER or key == 10 or key == 13:
             chosen_difficulty = DIFFICULTY_LEVELS[selected_difficulty_index]
             difficulty_mods = DIFFICULTY_MODIFIERS[chosen_difficulty]
@@ -361,24 +378,32 @@ def main_game(stdscr):
 
         # --- Inner Game Loop ---
         while not game_over:
+            collided_obs_ids = []
+            pickups_from_collision = []
             frame += 1
             if level_up_message_timer > 0:
                 level_up_message_timer -=1
 
-            keys_pressed = set()
+            car_center_world_x = car_world_x + car_width / 2
+            car_center_world_y = car_world_y + car_height / 2
+            grid_x = round(car_center_world_x / CITY_SPACING)
+            grid_y = round(car_center_world_y / CITY_SPACING)
+            loc_desc_ui = get_city_name(grid_x, grid_y)
+
+            keys = set()
             key = stdscr.getch()
-            while key != -1 and key != curses.ERR:
-                keys_pressed.add(key)
+            while key != -1:
+                keys.add(key)
                 key = stdscr.getch()
 
             tab_key_code = 9
-            if tab_key_code in keys_pressed:
+            if tab_key_code in keys:
                 menu_open = not menu_open
-                keys_pressed.discard(tab_key_code)
+                keys.discard(tab_key_code)
                 if menu_open:
                     menu_selected_section_idx = 0
                     menu_selected_item_idx = 0
-                    keys_pressed.clear()
+                    keys.clear()
                 else:
                     if game_menu_win:
                         try: game_menu_win.erase(); game_menu_win.refresh(); del game_menu_win
@@ -390,35 +415,35 @@ def main_game(stdscr):
                 num_inventory = len(player_inventory)
                 current_section_name = menu_sections[menu_selected_section_idx]
 
-                if curses.KEY_UP in keys_pressed:
+                if curses.KEY_UP in keys:
                     if current_section_name == "weapons" and num_weapons > 0:
                         menu_selected_item_idx = (menu_selected_item_idx - 1) % num_weapons
                     elif current_section_name == "inventory" and num_inventory > 0:
                         menu_selected_item_idx = (menu_selected_item_idx - 1) % num_inventory
-                elif curses.KEY_DOWN in keys_pressed:
+                elif curses.KEY_DOWN in keys:
                     if current_section_name == "weapons" and num_weapons > 0:
                         menu_selected_item_idx = (menu_selected_item_idx + 1) % num_weapons
                     elif current_section_name == "inventory" and num_inventory > 0:
                         menu_selected_item_idx = (menu_selected_item_idx + 1) % num_inventory
-                elif curses.KEY_LEFT in keys_pressed:
+                elif curses.KEY_LEFT in keys:
                     menu_selected_section_idx = (menu_selected_section_idx - 1) % len(menu_sections)
                     menu_selected_item_idx = 0
-                elif curses.KEY_RIGHT in keys_pressed:
+                elif curses.KEY_RIGHT in keys:
                     menu_selected_section_idx = (menu_selected_section_idx + 1) % len(menu_sections)
                     menu_selected_item_idx = 0
-                elif key == curses.KEY_ENTER or key == 10 or key == 13:
+                elif curses.KEY_ENTER in keys or 10 in keys or 13 in keys:
                     if current_section_name == "inventory":
                         # Placeholder for inventory item action
                         pass
                     elif current_section_name == "weapons":
                         # Equip/unequip weapon
-                        mount_point = list(mounted_weapons.keys())[menu_selected_item_idx]
+                        mount_point = list(attachment_points.keys())[menu_selected_item_idx]
                         
                         # Unequip
-                        if mounted_weapons[mount_point]:
+                        if mounted_weapons.get(mount_point):
                             weapon_key = mounted_weapons[mount_point]
                             player_inventory.append({"type": "gun", "name": WEAPONS_DATA[weapon_key]["name"]})
-                            mounted_weapons[mount_point] = None
+                            del mounted_weapons[mount_point]
                         # Equip
                         else:
                             for i, item in enumerate(player_inventory):
@@ -428,23 +453,25 @@ def main_game(stdscr):
                                         mounted_weapons[mount_point] = weapon_key
                                         player_inventory.pop(i)
                                         break
-                elif 27 in keys_pressed: # ESC key quits game
+                elif 27 in keys: # ESC key quits game
                     game_over = True; game_over_message = "Game Exited"; play_again = False; continue
 
                 car_stats_for_menu = { "cash": player_cash, "durability": int(current_durability), "max_durability": int(max_durability),
                                        "current_gas": current_gas, "gas_capacity": int(gas_capacity), "ammo_counts": ammo_counts,
                                        "speed": car_speed, "world_x": car_world_x, "world_y": car_world_y,
                                        "inventory": player_inventory,
-                                       "player_level": player_level, "current_xp": current_xp, "xp_to_next_level": xp_to_next_level # XP stats for menu
+                                       "player_level": player_level, "current_xp": current_xp, "xp_to_next_level": xp_to_next_level, # XP stats for menu
+                                       "quests": player_quests,
+                                       "mounted_weapons": mounted_weapons,
+                                       "weapons_data": WEAPONS_DATA
                                      }
-                car_center_world_x = car_world_x + car_width / 2; car_center_world_y = car_world_y + car_height / 2
-                _, location_desc, _ = get_location_info(car_center_world_x, car_center_world_y)
 
                 current_selection = (menu_sections[menu_selected_section_idx], menu_selected_item_idx)
                 if game_menu_win:
                     try: del game_menu_win
                     except: pass
-                game_menu_win = draw_inventory_menu(stdscr, selected_car_data, car_stats_for_menu, location_desc, frame, current_selection, COLOR_PAIR_MAP)
+                selected_car_data["weapons_data"] = WEAPONS_DATA
+                game_menu_win = draw_inventory_menu(stdscr, selected_car_data, car_stats_for_menu, loc_desc_ui, frame, current_selection, COLOR_PAIR_MAP)
 
                 if game_menu_win is None:
                     menu_open = False
@@ -458,7 +485,7 @@ def main_game(stdscr):
                     except: pass
                     game_menu_win = None
 
-                elif 27 in keys_pressed: # ESC key opens pause menu
+                elif 27 in keys: # ESC key opens pause menu
                     selected_pause_option = 0
                     while True:
                         draw_pause_menu(stdscr, selected_pause_option, COLOR_PAIR_MAP)
@@ -488,6 +515,7 @@ def main_game(stdscr):
                                     "difficulty_mods": difficulty_mods,
                                 }
                                 save_game(game_state)
+                                add_notification("Game Saved!", color="MENU_HIGHLIGHT")
                             elif selected_pause_option == 2: # Main Menu
                                 return
                             elif selected_pause_option == 3: # Quit
@@ -496,17 +524,17 @@ def main_game(stdscr):
                             break
 
                 accelerate = False; brake = False; turn_left = False; turn_right = False; fire_input = False
-                if ord('w') in keys_pressed or curses.KEY_UP in keys_pressed:
+                if ord('w') in keys or curses.KEY_UP in keys:
                     accelerate = True
-                if ord('s') in keys_pressed or curses.KEY_DOWN in keys_pressed:
+                if ord('s') in keys or curses.KEY_DOWN in keys:
                     brake = True
-                if ord('a') in keys_pressed or curses.KEY_LEFT in keys_pressed:
+                if ord('a') in keys or curses.KEY_LEFT in keys:
                     turn_left = True
-                if ord('d') in keys_pressed or curses.KEY_RIGHT in keys_pressed:
+                if ord('d') in keys or curses.KEY_RIGHT in keys:
                     turn_right = True
-                if ord(' ') in keys_pressed:
+                if ord(' ') in keys:
                     fire_input = True
-                if curses.KEY_ENTER in keys_pressed or 10 in keys_pressed or 13 in keys_pressed:
+                if curses.KEY_ENTER in keys or 10 in keys or 13 in keys:
                     brake = True
 
                 # --- Update Logic (Physics, Collisions, etc.) ---
@@ -515,8 +543,8 @@ def main_game(stdscr):
                 turn_this_frame = 0.0
                 speed_turn_modifier = max(0.1, 1.0 - (car_speed / (max_speed * 1.5 if max_speed > 0 else 1.5))) # Avoid div by zero if max_speed is 0
                 effective_turn_rate = turn_rate * speed_turn_modifier
-                if turn_left: turn_this_frame += effective_turn_rate
-                if turn_right: turn_this_frame -= effective_turn_rate
+                if turn_right: turn_this_frame += effective_turn_rate
+                if turn_left: turn_this_frame -= effective_turn_rate
                 car_angle = normalize_angle(car_angle + turn_this_frame)
 
                 current_acceleration_force = 0.0; current_braking_force = 0.0
@@ -541,8 +569,10 @@ def main_game(stdscr):
                 if next_terrain.get("passable", True):
                     car_world_x = next_world_x; car_world_y = next_world_y
                 else:
+                    audio_manager.play_sfx(SFX_MAP["crash"])
                     prev_speed = car_speed; car_speed = 0; car_velocity_x = 0; car_velocity_y = 0
                     current_durability -= max(1, int(prev_speed * 2))
+                    audio_manager.play_sfx(SFX_MAP["player_hit"])
 
                 distance_this_frame = car_speed; distance_traveled += distance_this_frame
                 gas_used_moving = distance_this_frame * gas_consumption_rate * gas_consumption_scaler
@@ -568,10 +598,12 @@ def main_game(stdscr):
                                 if wep_key == "flamethrower":
                                     end_x = p_x + wep_data["range"]*math.cos(car_angle); end_y = p_y + wep_data["range"]*math.sin(car_angle)
                                     active_flames.append([p_x, p_y, end_x, end_y, projectile_power])
+                                    audio_manager.play_sfx(SFX_MAP["flamethrower"])
                                 else:
                                     active_particles.append([p_x, p_y, car_angle, wep_data["speed"], projectile_power, wep_data["range"], wep_data["particle"]])
+                                    audio_manager.play_sfx(SFX_MAP[wep_key])
 
-                particles_to_remove = []; obstacles_hit_by_projectiles = {}
+                particles_to_remove = []; obstacles_hit_by_projectiles = {}; bosses_hit_by_projectiles = {}
                 for i, p_state in enumerate(active_particles):
                     p_x, p_y, p_angle, p_speed, p_power, p_range_left, p_char = p_state
                     p_dist = p_speed; p_x += p_dist*math.cos(p_angle); p_y += p_dist*math.sin(p_angle); p_range_left -= p_dist
@@ -581,6 +613,13 @@ def main_game(stdscr):
                         ox, oy, _, oh, ow, _, _, _, odur = obs_state
                         if (ox <= p_x < ox + ow and oy <= p_y < oy + oh):
                             obstacles_hit_by_projectiles[obs_id] = obstacles_hit_by_projectiles.get(obs_id, 0) + p_power # p_power already has level_damage_modifier
+                            audio_manager.play_sfx(SFX_MAP["enemy_hit"])
+                            particles_to_remove.append(i); collided = True; break
+                    if collided: continue
+                    for boss_id, boss_state in active_bosses.items():
+                        bx, by, _, bh, bw, _, _, _, bhp = boss_state
+                        if (bx <= p_x < bx + bw and by <= p_y < by + bh):
+                            bosses_hit_by_projectiles[boss_id] = bosses_hit_by_projectiles.get(boss_id, 0) + p_power
                             particles_to_remove.append(i); collided = True; break
                     if collided: continue
                     p_terrain = world.get_terrain_at(p_x, p_y)
@@ -605,15 +644,29 @@ def main_game(stdscr):
                                 if dot >= 0:
                                     obstacles_hit_by_projectiles[obs_id] = obstacles_hit_by_projectiles.get(obs_id, 0) + f_power
                 
+                for boss_id, damage in bosses_hit_by_projectiles.items():
+                    if boss_id in active_bosses:
+                        active_bosses[boss_id].hp -= damage
+                        if active_bosses[boss_id].hp <= 0:
+                            play_explosion_cutscene(stdscr, active_bosses[boss_id].art[0], COLOR_PAIR_MAP)
+                            del active_bosses[boss_id]
+                            quest = Quest("kill_boss", "", [KillBossObjective("boss_rick")], {"xp": 1000, "cash": 500})
+                            current_xp += quest.rewards["xp"]
+                            player_cash += quest.rewards["cash"]
+                            play_cutscene(stdscr, [["Quest Complete!"]], 1)
+                            player_quests.remove("kill_boss")
+
                 obstacle_ids_to_remove = []; pickups_to_spawn = []
                 xp_gained_this_frame = 0 # Track XP for potential level up
                 for obs_id, damage in obstacles_hit_by_projectiles.items():
                     if obs_id in active_obstacles:
                         active_obstacles[obs_id][8] -= damage
                         if active_obstacles[obs_id][8] <= 0:
-                            play_explosion_cutscene(stdscr, obs_data["art"], COLOR_PAIR_MAP)
-                            obstacle_ids_to_remove.append(obs_id); obs_state = active_obstacles[obs_id]
+                            obs_state = active_obstacles[obs_id]
                             obs_data = OBSTACLE_DATA[obs_state[2]]
+                            play_explosion_cutscene(stdscr, obs_data["art"], COLOR_PAIR_MAP)
+                            audio_manager.play_sfx(SFX_MAP["explosion"])
+                            obstacle_ids_to_remove.append(obs_id)
                             
                             # Grant XP
                             xp_from_obstacle = obs_data.get("xp_value", 0) * difficulty_mods.get("xp_mult", 1.0)
@@ -701,8 +754,7 @@ def main_game(stdscr):
                             attempts += 1
                         if attempts == 10: obstacle_spawn_timer = min_obstacle_spawn_time
                 
-                if
-                collided_obs_ids = []; pickups_from_collision = []
+
                 fauna_ids_to_remove = []
                 for fauna_id, fauna_state in list(active_fauna.items()):
                     fx, fy, didx, oh, ow, fvx, fvy, fart, fhp = fauna_state
@@ -745,6 +797,7 @@ def main_game(stdscr):
                     osx = ox - (car_world_x - w/2); osy = oy - (car_world_y - h/2)
                     or1 = int(round(osx)); or2 = or1 + ow; ory1 = int(round(osy)); ory2 = ory1 + oh
                     if (car_r1 < or2 and car_r2 > or1 and car_ry1 < ory2 and car_ry2 > ory1):
+                        audio_manager.play_sfx(SFX_MAP["crash"])
                         odata_c = OBSTACLE_DATA[didx]; # _c suffix for collision odata
                         dmg_car = int(odata_c["damage"] * difficulty_mods["enemy_dmg_mult"])
                         speed_f = min(1.0, car_speed/5.0 if car_speed > 0 else 0.0); act_dmg_car = max(1, int(dmg_car * speed_f)); current_durability -= act_dmg_car
@@ -802,43 +855,82 @@ def main_game(stdscr):
                                 gun_name = WEAPONS_DATA[gun_key]["name"]
                                 if not any(item.get("name") == gun_name for item in player_inventory):
                                     player_inventory.append({"type": "gun", "name": gun_name})
-                                    play_cutscene(stdscr, [[f"Picked up {gun_name}"]], 1)
+                                    add_notification(f"Picked up {gun_name}", color="MENU_HIGHLIGHT")
                         pickups_to_remove.append(pid)
                 for pid in pickups_to_remove:
                     if pid in active_pickups: del active_pickups[pid]
 
-                if car_speed < SHOP_INTERACTION_SPEED_THRESHOLD and shop_key:
-                    if shop_key == "SHOP_CITY_HALL":
-                        # Accept quest
-                        player_quests.add("kill_boss")
-                        
-                        # Spawn boss
-                        boss_data = BOSSES["boss_rick"]
-                        boss_car_data = next((c for c in CARS_DATA if c["name"] == boss_data["car"]), None)
-                        if boss_car_data:
-                            bh, bw = get_car_dimensions(boss_car_data["art"])
-                            active_bosses["boss_rick"] = {
-                                "x": car_world_x + random.uniform(-200, 200),
-                                "y": car_world_y + random.uniform(-200, 200),
-                                "hp": boss_car_data["durability"] * boss_data["hp_multiplier"],
-                                "art": boss_car_data["art"],
-                                "width": bw,
-                                "height": bh,
-                            }
-                    
-                    stype_base = shop_key.replace("SHOP_", "")
-                    shop_info = SHOP_DATA.get(stype_base)
-                    if shop_info:
-                        interaction_type = shop_info.get("interaction_type"); cost = 1
-                        if interaction_type == PICKUP_GAS and current_gas < gas_capacity and player_cash >= cost:
-                            refuel = 10 * (SHOP_INTERACTION_SPEED_THRESHOLD - car_speed);
-                            actual = min(refuel, gas_capacity-current_gas); current_gas += actual
-                        elif interaction_type == PICKUP_REPAIR and current_durability < max_durability and player_cash >= cost*2:
-                            repair = 1 * (SHOP_INTERACTION_SPEED_THRESHOLD - car_speed);
-                            actual = min(repair, max_durability-current_durability); current_durability += actual
-                        elif interaction_type == "AMMO" and player_cash >= cost:
-                            refill = 1 * (SHOP_INTERACTION_SPEED_THRESHOLD - car_speed);
-                            for akey in ammo_counts: ammo_counts[akey] += refill
+                if car_speed < SHOP_INTERACTION_SPEED_THRESHOLD:
+                    grid_x = round(car_world_x / CITY_SPACING)
+                    grid_y = round(car_world_y / CITY_SPACING)
+                    city_buildings = get_buildings_in_city(grid_x, grid_y)
+                    for building in city_buildings:
+                        if building['x'] <= car_world_x < building['x'] + building['w'] and \
+                           building['y'] <= car_world_y < building['y'] + building['h']:
+                            if building["type"] in SHOP_DATA:
+                                shop_data = SHOP_DATA[building["type"]]
+                                shop = Shop(shop_data["name"], shop_data["inventory"])
+                                selected_item_index = 0
+                                active_list = "shop"
+                                while True:
+                                    player_stats = {
+                                        "inventory": player_inventory,
+                                        "cash": player_cash,
+                                        "durability": current_durability,
+                                        "max_durability": max_durability,
+                                        "current_gas": current_gas,
+                                        "gas_capacity": gas_capacity
+                                    }
+                                    draw_shop_menu(stdscr, shop, player_stats, selected_item_index, active_list, COLOR_PAIR_MAP)
+                                    key = stdscr.getch()
+                                    if key == curses.KEY_UP:
+                                        if active_list == "shop":
+                                            selected_item_index = (selected_item_index - 1) % len(shop.inventory)
+                                        else:
+                                            selected_item_index = (selected_item_index - 1) % len(player_inventory)
+                                    elif key == curses.KEY_DOWN:
+                                        if active_list == "shop":
+                                            selected_item_index = (selected_item_index + 1) % len(shop.inventory)
+                                        else:
+                                            selected_item_index = (selected_item_index + 1) % len(player_inventory)
+                                    elif key == curses.KEY_LEFT:
+                                        active_list = "shop"
+                                        selected_item_index = 0
+                                    elif key == curses.KEY_RIGHT:
+                                        active_list = "player"
+                                        selected_item_index = 0
+                                    elif key == curses.KEY_ENTER or key == 10 or key == 13:
+                                        if active_list == "shop":
+                                            item_to_buy = shop.inventory[selected_item_index]
+                                            if player_cash >= item_to_buy["price"]:
+                                                player_cash -= item_to_buy["price"]
+                                                player_inventory.append({"type": "item", "name": item_to_buy["item"]})
+                                        else:
+                                            item_to_sell = player_inventory[selected_item_index]
+                                            player_cash += item_to_sell.get("price", 0)
+                                            player_inventory.pop(selected_item_index)
+                                    elif key == 27:
+                                        break
+                                break
+                            elif building["type"] == "GENERIC" and building["name"] == "City Hall":
+                                # Accept quest
+                                player_quests.add("kill_boss")
+                                
+                                # Spawn boss
+                                boss_data = BOSSES["boss_rick"]
+                                boss_car_data = next((c for c in CARS_DATA if c["name"] == boss_data["car"]), None)
+                                if boss_car_data:
+                                    boss = Boss(boss_data["name"], boss_car_data, boss_data["hp_multiplier"])
+                                    boss.x = car_world_x + random.uniform(-200, 200)
+                                    boss.y = car_world_y + random.uniform(-200, 200)
+                                    boss.hp = boss_car_data["durability"] * boss.hp_multiplier
+                                    boss.art = boss_car_data["art"]
+                                    boss.width, boss.height = get_car_dimensions(boss.art)
+                                    active_bosses["boss_rick"] = boss
+                                    audio_manager.stop_music()
+                                    audio_manager.play_music("car/sounds/boss.mid")
+                                    draw_cutscene_modal(stdscr, f"Boss Encounter: {boss.name}", "Prepare for battle!", COLOR_PAIR_MAP)
+                                break
                 
                 if current_durability <= 0:
                     play_death_cutscene(stdscr, COLOR_PAIR_MAP)
@@ -962,6 +1054,22 @@ def main_game(stdscr):
             bg_char = stdscr.inch(int(car_sy + car_height / 2), int(car_sx + car_width / 2))
             draw_sprite(stdscr, car_sy, car_sx, current_art, car_color_pair_num, transparent_bg=True, bg_char=bg_char)
 
+            # Draw mounted weapons
+            for point_name, wep_key in mounted_weapons.items():
+                if wep_key:
+                    point_data = attachment_points.get(point_name)
+                    if point_data:
+                        wep_data = WEAPONS_DATA[wep_key]
+                        wep_art = wep_data["art"][dir_idx]
+                        offset_x = point_data["offset_x"]
+                        offset_y = point_data["offset_y"]
+                        rotated_offset_x = offset_x * math.cos(car_angle) - offset_y * math.sin(car_angle)
+                        rotated_offset_y = offset_x * math.sin(car_angle) + offset_y * math.cos(car_angle)
+                        wep_sx = car_sx + car_width / 2 + rotated_offset_x
+                        wep_sy = car_sy + car_height / 2 + rotated_offset_y
+                        draw_sprite(stdscr, wep_sy, wep_sx, wep_art, car_color_pair_num, transparent_bg=True, bg_char=bg_char)
+
+
             # Draw Level Up Message
             if level_up_message_timer > 0:
                 lvl_up_msg = "LEVEL UP!"
@@ -987,14 +1095,13 @@ def main_game(stdscr):
                 compass_y = 1
                 compass_x = w - 20
                 if h > 1 and w > 20:
-                    # ... (compass drawing)
-                if "kill_boss" in player_quests:
-                    quest = Quest("kill_boss", "", [KillBossObjective("boss_rick")], {"xp": 1000, "cash": 500})
-                    if quest.is_completed({"active_bosses": active_bosses}):
-                        player_quests.remove("kill_boss")
-                        current_xp += quest.rewards["xp"]
-                        player_cash += quest.rewards["cash"]
-                        play_cutscene(stdscr, [["Quest Complete!"]], 1)
+                    if "kill_boss" in player_quests:
+                        quest = Quest("kill_boss", "", [KillBossObjective("boss_rick")], {"xp": 1000, "cash": 500})
+                        if quest.is_completed({"active_bosses": active_bosses}):
+                            player_quests.remove("kill_boss")
+                            current_xp += quest.rewards["xp"]
+                            player_cash += quest.rewards["cash"]
+                            play_cutscene(stdscr, [["Quest Complete!"]], 1)
 
                 if "kill_boss" in player_quests and not active_bosses:
                     boss_data = BOSSES["boss_rick"]
@@ -1042,6 +1149,11 @@ def main_game(stdscr):
                         if boss_sx + boss.width > 0 and boss_sx < w and boss_sy + boss.height > 0 and boss_sy < h:
                             draw_sprite(stdscr, boss_sy, boss_sx, boss.art[0], COLOR_PAIR_MAP.get("OBSTACLE", 0), transparent_bg=True)
 
+                        # Boss modal
+                        dist_to_boss = math.sqrt((boss.x - car_world_x)**2 + (boss.y - car_world_y)**2)
+                        if dist_to_boss < 50:
+                            draw_cutscene_modal(stdscr, f"Boss: {boss.name}", COLOR_PAIR_MAP, persistent=True)
+
                 
                 cname=f"Car: {selected_car_data['name']}";
                 dur_p=(current_durability/max_durability)*100 if max_durability>0 else 0
@@ -1081,6 +1193,8 @@ def main_game(stdscr):
 
             if not menu_open:
                 stdscr.refresh()
+
+            draw_notifications(stdscr, COLOR_PAIR_MAP)
 
         stdscr.nodelay(0)
         game_over_win = draw_game_over_menu(stdscr, game_over_message, COLOR_PAIR_MAP)

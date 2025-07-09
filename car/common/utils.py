@@ -38,3 +38,9 @@ def normalize_angle(angle):
     if angle >= math.pi:
         angle -= 2 * math.pi
     return angle
+
+def draw_box(win, title=""):
+    """Draws a box around a curses window."""
+    win.box()
+    if title:
+        win.addstr(0, 2, f" {title} ")
