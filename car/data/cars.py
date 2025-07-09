@@ -1,171 +1,435 @@
-# --- Car Definitions & Stats ---
-# Replaced emojis in car art
 CARS_DATA = [
-    { # 0: Hatchback
-        "name": "Hatchback",
-        "hp": 100, "weight": 10, "drag": 0.04, "braking": 12, "turn_rate": 0.12,
-        "durability": 80, "gas_capacity": 5000, "gas_consumption": 0.08,
-        "attachment_points": {
-            "hood_center": {"offset_x": 2, "offset_y": 0, "size": 1},
-            "roof": {"offset_x": 0, "offset_y": -1, "size": 2},
-            "bumper": {"offset_x": 3, "offset_y": 0, "size": 1}
-        },
-        "mounted_weapons": {"hood_center": "lmg"},
-        "ammo_bullet": 200, "ammo_heavy_bullet": 0, "ammo_fuel": 0,
-        "inventory": [], # Initial inventory
-        "menu_art": [
-            r"    ╭──╮    ",
-            r"  ╱ ◎ ◎╲  ",
-            r" ╒══════╕ ",
-            r" │ ═══> │ ",
-            r" ╘══════╛ ",
-            r"  ╰─☉☉─╯  ",
-        ],
-        "art": [
-            [ r"  ┌──┐  ", r" ╱ ◎◎\\", r"│(═══>│", r" ╲ ☉☉╱ ", r"  └──┘ " ], # R
-            [ r" ┌──╮ ", r" │◎╲╲", r" │ ◎=│", r" ╰─☉╱ ", r"   ╰┘ " ], # DR
-            [ r"┌────┐", r"│◎──◎│", r"│ V══│", r"│╲☉☉╱│", r"└────┘" ], # D
-            [ r" ╭──┐ ", r"╱╱◎ │", r"│=◎ │", r"╲☉─╯ ", r" └╯   " ], # DL
-            [ r"  ┌──┐  ", r" ╱╱◎◎ ╲", r"│<═══)│", r" ╲ ☉☉╱ ", r"  └──┘  " ], # L
-            [ r" ╭──┘ ", r"╱╱^ │", r"│=◎ │", r"╲☉─╮ ", r" `┘   " ], # UL
-            [ r"┌────┐", r"│◎──◎│", r"│ ^══│", r"│╱☉☉╲│", r"└────┘" ], # U
-            [ r"  ┌──╮", r" ╱^ ◎│", r"│= ◎ │", r" ☉─╯╱ ", r"┘    " ]  # UR
-        ]
-    },
-    { # 1: Sports Car
+    {
         "name": "Sports Car",
-        "hp": 180, "weight": 8, "drag": 0.03, "braking": 15, "turn_rate": 0.20,
-        "durability": 60, "gas_capacity": 4000, "gas_consumption": 0.12,
-        "attachment_points": {
-            "hood_center": {"offset_x": 3, "offset_y": 0, "size": 1},
-            "roof": {"offset_x": 0, "offset_y": -1, "size": 2},
-            "bumper": {"offset_x": 4, "offset_y": 0, "size": 1}
-        },
-        "mounted_weapons": {"hood_center": "lmg"},
-        "ammo_bullet": 150, "ammo_heavy_bullet": 0, "ammo_fuel": 0,
-        "inventory": [], # Initial inventory
-        "menu_art": [
-            r"    ______    ",
-            r" __╱ ◎  ◎ ╲__ ",
-            r"╱__(═ > ═)__╲", # Simple arrow
-            r"╲___☉──☉___╱",
-        ],
         "art": [
-            [ r"   ____╱ ", r" _╱ ◎ ◎\\", r"╱__(═>═)╲", r"╲___☉─☉╱ " ], # R
-            [ r"  __ ╱", r" ╱ ◎╲╲", r"│◎═╦═│", r"╲_☉─╱ ", r"  `┘ " ], # DR
-            [ r" ╱──────╲ ", r"│  ◎  ◎  │", r"│ V════V │", r" ╲☉────☉╱ " ], # D
-            [ r" ╲ __  ", r" ╱╱◎ ╲ ", r"│═╦═◎│", r" ╲─☉_╱ ", r"  └┘  " ], # DL
-            [ r" ╲____   ", r"╱╱ ◎ ◎╲_", r"╱(═<═)__╲", r" ╲☉──☉___╱" ], # L
-            [ r" ╲ _   ", r"╱╱^◎╲ ", r"│═╦═◎│", r" ╲─☉_╲ ", r"   └┘ " ], # UL
-            [ r" ╱──────╲ ", r"│╱╲____╱╲│", r"│ ^════^ │", r"│  ◎  ◎  │" ], # U
-            [ r"   _ ╱ ", r" ╱ ◎^╲╲", r"│◎═╦═│", r" ╲☉─╲ ", r"  └┘  " ]  # UR
-        ]
-    },
-    { # 2: Wagon
-        "name": "Wagon",
-        "hp": 120, "weight": 14, "drag": 0.05, "braking": 10, "turn_rate": 0.10,
-        "durability": 90, "gas_capacity": 5500, "gas_consumption": 0.09,
-        "attachment_points": {
-            "roof_center": {"offset_x": 0, "offset_y": -1, "size": 2},
-            "bumper": {"offset_x": 4, "offset_y": 0, "size": 1}
-        },
-        "mounted_weapons": {"roof_center": "lmg"},
-        "ammo_bullet": 250, "ammo_heavy_bullet": 0, "ammo_fuel": 0,
-        "inventory": [], # Initial inventory
-        "menu_art": [
-            r"  ╭──────────╮ ", r"╭─╢    ____    ╟─╮", r"│ │ ╱ ◎ ◎╲ │ │", r"╞═╧═╡------╞═╧═╡", r"╰─☉─┴──────┴─☉─╯",
+            [ # N
+                "  ______  ",
+                " /|_||_\\`.__ ",
+                "(   _    _ _\\",
+                "=`-(_)--(_)-' ",
+            ],
+            [ # NE
+                "   .---'--`__ ",
+                "  //  _ .--'  ",
+                " // /  `---._ ",
+                " `-'      `--'",
+            ],
+            [ # E
+                "      .---.   ",
+                "  .--'    `--.",
+                " |          |",
+                "  `--.____.--' ",
+            ],
+            [ # SE
+                " __`--'---.   ",
+                "  `--. _  \\\\  ",
+                " _.---'  \\ \\\\ ",
+                "'--'      `-' ",
+            ],
+            [ # S
+                "  ______  ",
+                " /|_||_\\`.__ ",
+                "(   _    _ _\\",
+                "=`-(_)--(_)-' ",
+            ],
+            [ # SW
+                "   .---'--`__ ",
+                "  //  _ .--'  ",
+                " // /  `---._ ",
+                " `-'      `--'",
+            ],
+            [ # W
+                "      .---.   ",
+                "  .--'    `--.",
+                " |          |",
+                "  `--.____.--' ",
+            ],
+            [ # NW
+                " __`--'---.   ",
+                "  `--. _  \\\\  ",
+                " _.---'  \\ \\\\ ",
+                "'--'      `-' ",
+            ],
         ],
-        "art": [
-            [ r" ╭─────────╮", r"╭╢    ____  ║", r"│║ ╱ ◎ ◎╲ ║", r"╞╧═╡─────>╞", r"╰─☉┴──────╯" ], # R
-            [ r" ╭─────╮╱ ", r"╭╢ __ ◎║ ", r"│║╱ ◎ ◎║ ", r"╞╧═╡══V│ ", r"╰─☉┴───╯ " ], # DR
-            [ r" ╭────────╮ ", r" │ □────□ │ ", r" │ ◎OOOO◎ │ ", r" │ V════V │ ", r" ╰─☉────☉─╯ " ], # D
-            [ r" ╲╭─────╮ ", r"  ║◎ __ ╟╮", r"  ║ ◎ ◎╲║│", r"  │V══╞═╧╡", r"  ╰───┴☉─╯" ], # DL
-            [ r" ╭─────────╮ ", r" ║  ____    ╟╮", r" ║ ╱ ◎ ◎╲ ║│", r" ╞<─────╞═╧╡", r" ╰──────┴☉─╯ " ], # L
-            [ r" ╲ ╭───╮ ", r"  ║^ __ ╟╮", r"  ║ ◎ ◎╲║│", r"  │^══╞═╧╡", r"  ╰───┴☉─╯" ], # UL
-            [ r" ╭────────╮ ", r" │ │────│ │ ", r" │ ◎OOOO◎ │ ", r" │ ^════^ │ ", r" ╰─☉────☉─╯ " ], # U
-            [ r"  ╭───╮ ╱ ", r" ╭╢ __ ^║ ", r" │║╱ ◎ ◎║ ", r" ╞╧═╡^^ │ ", r" ╰─☉┴───╯ " ]  # UR
-        ]
-    },
-    { # 3: Truck
-        "name": "Truck",
-        "hp": 150, "weight": 18, "drag": 0.07, "braking": 8, "turn_rate": 0.07,
-        "durability": 120, "gas_capacity": 7000, "gas_consumption": 0.11,
+        "hp": 100, "turn_rate": 0.15, "durability": 80, "gas_capacity": 5000, "gas_consumption": 0.08,
+        "drag": 0.02, "weight": 1200, "braking": 100,
         "attachment_points": {
-            "bed_center": {"offset_x": -2, "offset_y": 0, "size": 2},
-            "roof": {"offset_x": 0, "offset_y": -1, "size": 2},
-            "bumper": {"offset_x": 4, "offset_y": 0, "size": 1}
+            "hood_center": {"offset_x": 0, "offset_y": -1, "size": "small"},
+            "roof": {"offset_x": 0, "offset_y": 0, "size": "medium"},
         },
-        "mounted_weapons": {"bed_center": "hmg"},
-        "ammo_bullet": 0, "ammo_heavy_bullet": 100, "ammo_fuel": 0,
-        "inventory": [], # Initial inventory
-        "menu_art": [
-            r"        ╭──────╮ ", r"     ╭─╢╱╲  ╱╲╟╮", r"    ╒═╡═ ◎  ◎ ╞═╕", r" ╱ ╘═╤══════╤═╛", r"│    │------│  ", r"╰☉───╧══════╧☉─╯",
-        ],
-        "art": [
-            [ r"   ╭─────╮  ", r" ╭─╢╱╲ ╱╲║  ", r"╒═╡═ ◎ ◎ ║> ", r"│ ╘═╤═════╤═╗", r"╰☉─���╧═════╧☉╝" ], # R
-            [ r"  ╭───╮ ", r" ╭╢╱╲◎║ ", r"╒═╡═◎◎║ ", r"│ ╘═╤V │ ", r"╰☉──╧══☉╝" ], # DR
-            [ r" ╭──────╮ ", r" │ ◎  ◎ │ ", r" │██████│ ", r" │ V══V │ ", r"╔╧══════╧╗", r"╚☉──────☉╝" ], # D
-            [ r"   ╭───╮ ", r"  ║◎╱╲╟╮ ", r"  ║◎◎═╞═╕ ", r"  │ V╤═╛ │ ", r" ╚☉══╧──☉╯ " ], # DL
-            [ r"   ╭─────╮ ", r"  ║╱╲ ╱╲╟─╮", r" <║ ◎ ◎ ╞═╕", r"╔═╤═════╤═╛ │", r"╚☉╧═════╧──☉╯" ], # L
-            [ r"   ╭───╮ ", r"  ║^╱╲╟╮ ", r"  ║◎◎═╞═╕ ", r"  │ ^╤═╛ │ ", r" ╚☉══╧──☉╯ " ], # UL
-            [ r" ╭──────╮ ", r" │ │──│ │ ", r" │ ◎  ◎ │ ", r" │ ^══^ │ ", r"╔╧══════╧╗", r"╚☉──────☉╝" ], # U
-            [ r"  ╭───╮ ", r" ╭╢╱╲^ ║ ", r"╒═╡═◎◎║ ", r"│ ╘═╤^ │ ", r"╰☉──╧══☉╝" ]  # UR
-        ]
+        "mounted_weapons": {"roof": "lmg"},
+        "ammo_bullet": 200, "ammo_heavy_bullet": 0, "ammo_fuel": 0,
+        "inventory": [],
     },
-    { # 4: Hotrod
+    {
+        "name": "Sedan",
+        "art": [
+            [ # N
+                "   ____   ",
+                "  / __ \\  ",
+                " | |  | | ",
+                " | |__| | ",
+                "  \\____/  ",
+            ],
+            [ # NE
+                "    /\\    ",
+                "   /  \\   ",
+                "  /____\\  ",
+                " |      | ",
+                " |______| ",
+            ],
+            [ # E
+                "  ______  ",
+                " |      | ",
+                " |______| ",
+                " |      | ",
+                " |______| ",
+            ],
+            [ # SE
+                "    /\\    ",
+                "   /  \\   ",
+                "  /____\\  ",
+                " |      | ",
+                " |______| ",
+            ],
+            [ # S
+                "   ____   ",
+                "  / __ \\  ",
+                " | |  | | ",
+                " | |__| | ",
+                "  \\____/  ",
+            ],
+            [ # SW
+                "    /\\    ",
+                "   /  \\   ",
+                "  /____\\  ",
+                " |      | ",
+                " |______| ",
+            ],
+            [ # W
+                "  ______  ",
+                " |      | ",
+                " |______| ",
+                " |      | ",
+                " |______| ",
+            ],
+            [ # NW
+                "    /\\    ",
+                "   /  \\   ",
+                "  /____\\  ",
+                " |      | ",
+                " |______| ",
+            ],
+        ],
+        "hp": 120, "turn_rate": 0.1, "durability": 100, "gas_capacity": 6000, "gas_consumption": 0.07,
+        "drag": 0.03, "weight": 1500, "braking": 80,
+        "attachment_points": {
+            "hood_center": {"offset_x": 0, "offset_y": -1, "size": "small"},
+            "roof": {"offset_x": 0, "offset_y": 0, "size": "medium"},
+            "trunk": {"offset_x": 0, "offset_y": 1, "size": "medium"},
+        },
+        "mounted_weapons": {"roof": "lmg"},
+        "ammo_bullet": 200, "ammo_heavy_bullet": 0, "ammo_fuel": 0,
+        "inventory": [],
+    },
+    {
         "name": "Hotrod",
-        "hp": 250, "weight": 9, "drag": 0.06, "braking": 11, "turn_rate": 0.15,
-        "durability": 50, "gas_capacity": 3500, "gas_consumption": 0.15,
-        "attachment_points": {
-            "engine_top": {"offset_x": 2, "offset_y": 0, "size": 2},
-            "roof": {"offset_x": 0, "offset_y": -1, "size": 2},
-            "bumper": {"offset_x": 4, "offset_y": 0, "size": 1}
-        },
-        "mounted_weapons": {"engine_top": "hmg"},
-        "ammo_bullet": 0, "ammo_heavy_bullet": 80, "ammo_fuel": 0,
-        "inventory": [], # Initial inventory
-        "menu_art": [
-            r"      ╭────╮    ",
-            r"    ╱ ____ ╲    ",
-            r" ╭╡ ◎!! ◎ ╞╮ ", # Exclamation marks for engine
-            r" │ ╲____╱ │ ",
-            r" ╰─☉────◎◎╯ ",
-        ],
         "art": [
-            [ r"   ╭────╮", r"  ╱ ____ ╲", r" ╞ ◎!! ◎═>>", r" │ ╲____╱ │", r" ╰─☉────◎◎╯" ], # R
-            [ r"  ╭───╮ ", r" ╱__ ◎\\", r"╞ ◎=!!║ ", r"│ ╲__╱ │ ", r"╰─☉──◎╯ " ], # DR
-            [ r" ╭──────╮ ", r"╱ ◎    ◎ ╲", r"│ | V!!V | │", r"│ ╲____╱ │", r" ╰☉────◎◎╯" ], # D
-            [ r"  ╭───╮ ", r" //◎ __╲ ", r" ║!!=◎ ╞ ", r" │ ╲__╱ │ ", r" ╰◎───☉╯ " ], # DL
-            [ r"   ╭────╮   ", r"  ╱ ____ ╲  ", r"<<═◎!! ◎ ╞╮ ", r" │ ╲____╱ │ ", r" ╰◎◎────☉╯ " ], # L
-            [ r"  ╭───╮ ", r" //^ __╲ ", r" ║!!=◎ ╞ ", r" │ ╲__╱\\ ", r" ╰◎───☉╯ " ], # UL
-            [ r" ╭──────╮ ", r"╱ \ ^ ^ /╲ ", r"│ | |!!| | │", r"│ ◎ |=| ◎ │", r" ╰☉────◎◎╯" ], # U
-            [ r"  ╭───╮ ", r" //◎ __^\\", r" ║ ◎=!!╞ ", r" │ ╲__╱ │ ", r" ╰─☉──◎╯ " ]  # UR
-        ]
+            [ # N
+                "   __   ",
+                "  /  \\  ",
+                " |----| ",
+                " |    | ",
+                "  \\__/  ",
+            ],
+            [ # NE
+                "   /\\   ",
+                "  /  \\  ",
+                " /____\\ ",
+                "|      |",
+                "|______|",
+            ],
+            [ # E
+                " ______ ",
+                "|      |",
+                "|______|",
+                "|      |",
+                "|______|",
+            ],
+            [ # SE
+                "   /\\   ",
+                "  /  \\  ",
+                " /____\\ ",
+                "|      |",
+                "|______|",
+            ],
+            [ # S
+                "   __   ",
+                "  /  \\  ",
+                " |----| ",
+                " |    | ",
+                "  \\__/  ",
+            ],
+            [ # SW
+                "   /\\   ",
+                "  /  \\  ",
+                " /____\\ ",
+                "|      |",
+                "|______|",
+            ],
+            [ # W
+                " ______ ",
+                "|      |",
+                "|______|",
+                "|      |",
+                "|______|",
+            ],
+            [ # NW
+                "   /\\   ",
+                "  /  \\  ",
+                " /____\\ ",
+                "|      |",
+                "|______|",
+            ],
+        ],
+        "hp": 80, "turn_rate": 0.2, "durability": 60, "gas_capacity": 4000, "gas_consumption": 0.1,
+        "drag": 0.01, "weight": 1000, "braking": 120,
+        "attachment_points": {
+            "hood_center": {"offset_x": 0, "offset_y": -1, "size": "large"},
+        },
+        "mounted_weapons": {"hood_center": "hmg"},
+        "ammo_bullet": 0, "ammo_heavy_bullet": 100, "ammo_fuel": 0,
+        "inventory": [],
     },
-    { # 5: Minivan
-        "name": "Minivan",
-        "hp": 90, "weight": 16, "drag": 0.08, "braking": 9, "turn_rate": 0.08,
-        "durability": 100, "gas_capacity": 6000, "gas_consumption": 0.07,
-        "attachment_points": {
-            "roof_center": {"offset_x": 0, "offset_y": -1, "size": 3},
-            "right_side": {"offset_x": 0, "offset_y": 1, "size": 2},
-            "bumper": {"offset_x": 4, "offset_y": 0, "size": 1}
-        },
-        "mounted_weapons": {"roof_center": "flamethrower", "right_side": "hmg"},
-        "ammo_bullet": 0, "ammo_heavy_bullet": 50, "ammo_fuel": 300,
-        "inventory": [], # Initial inventory
-        "menu_art": [
-            r"    ╭─────────╮    ", r" ╭─╢ □ □ □ □ ╟─╮ ", r" │ ╞═ ◎    ◎ ═╡ │ ", r" │ │ ║    ║ │ │ ", r" ╰─╧═╧═══╧═╧─╯ ", r"    ╰─☉────☉─╯    ",
-        ],
+    {
+        "name": "Van",
         "art": [
-            [ r"  ╭─────────╮ ", r" ╭╢ □ □ □ □ ║ ", r" │╞═ ◎    ◎ >║ ", r" ││ ║    ║ │ ║ ", r" ╰╧═╧═══╧═╧─╯ ", r"  ╰─☉─��──☉─╯  " ], # R
-            [ r"  ╭───────╮ ", r" ╭╢ □ □ ◎ ║ ", r" │╞═ ◎ = ║ ", r" ││ ║ V ║ │ ", r" ╰╧═╧═══╧─╯ ", r"    ╰─☉───╯  " ], # DR
-            [ r" ╭─────────╮ ", r" │ ◎       ◎ │ ", r" │█████████│ ", r" │ V═════V │ ", r" ╞═╧═════╧═╡ ", r" ╰─☉─────☉─╯ " ], # D
-            [ r"  ╭───────╮ ", r"  ║ ◎ □ □ ╟╮ ", r"  ║ = ◎ ═╡│ ", r"  ║ │ V ║ ││ ", r"  ╰─╧═══╧═╧╯ ", r"    ╰───☉─╯  " ], # DL
-            [ r"  ╭─────────╮ ", r"  ║ □ □ □ □ ╟╮ ", r"  ║< ◎    ◎ ═╡│ ", r"  ║ │ ║    ║ ││ ", r"  ╰─╧═╧═══╧═╧╯ ", r"    ╰─☉────☉─╯ " ], # L
-            [ r"  ╭───────╮ ", r"  ║ ^ □ □ ╟╮ ", r"  ║ = ◎ ═╡│ ", r"  ║ │ ^ ║ ││ ", r"  ╰─╧═══╧═╧╯ ", r"    ╰──���☉─╯  " ], # UL
-            [ r" ╭─────────╮ ", r" │ │───│ │ │ ", r" │ ◎       ◎ │ ", r" │ ^═════^ │ ", r" ╞═╧═════╧═╡ ", r" ╰─☉─────☉─╯ " ], # U
-            [ r"  ╭───────╮ ", r" ╭╢ ◎ □ □^║ ", r" │╞═ = ◎ ║ ", r" ││ │ ^ ║ │ ", r" ╰╧═╧═══╧─╯ ", r"    ╰─☉───╯  " ]  # UR
-        ]
+            [ # N
+                " ________ ",
+                "|  ____  |",
+                "| |    | |",
+                "| |____| |",
+                "|________|",
+            ],
+            [ # NE
+                "   /\\     ",
+                "  /  \\    ",
+                " /____\\   ",
+                "|      |  ",
+                "|______|  ",
+            ],
+            [ # E
+                " ________ ",
+                "|        |",
+                "|________|",
+                "|        |",
+                "|________|",
+            ],
+            [ # SE
+                "   /\\     ",
+                "  /  \\    ",
+                " /____\\   ",
+                "|      |  ",
+                "|______|  ",
+            ],
+            [ # S
+                " ________ ",
+                "|  ____  |",
+                "| |    | |",
+                "| |____| |",
+                "|________|",
+            ],
+            [ # SW
+                "   /\\     ",
+                "  /  \\    ",
+                " /____\\   ",
+                "|      |  ",
+                "|______|  ",
+            ],
+            [ # W
+                " ________ ",
+                "|        |",
+                "|________|",
+                "|        |",
+                "|________|",
+            ],
+            [ # NW
+                "   /\\     ",
+                "  /  \\    ",
+                " /____\\   ",
+                "|      |  ",
+                "|______|  ",
+            ],
+        ],
+        "hp": 150, "turn_rate": 0.05, "durability": 150, "gas_capacity": 8000, "gas_consumption": 0.05,
+        "drag": 0.05, "weight": 2000, "braking": 60,
+        "attachment_points": {
+            "roof": {"offset_x": 0, "offset_y": 0, "size": "large"},
+            "side_left": {"offset_x": -1, "offset_y": 0, "size": "medium"},
+            "side_right": {"offset_x": 1, "offset_y": 0, "size": "medium"},
+        },
+        "mounted_weapons": {"roof": "hmg"},
+        "ammo_bullet": 0, "ammo_heavy_bullet": 200, "ammo_fuel": 0,
+        "inventory": [],
+    },
+    {
+        "name": "Truck",
+        "art": [
+            [ # N
+                "   /---\\",
+                "  /____\\",
+                " |[][][]|",
+                " (o)__(o)",
+            ],
+            [ # ... other directions
+                "   /---\\",
+                "  /____\\",
+                " |[][][]|",
+                " (o)__(o)",
+            ],[                "   /---\\",
+                "  /____\\",
+                " |[][][]|",
+                " (o)__(o)",
+            ],[                "   /---\\",
+                "  /____\\",
+                " |[][][]|",
+                " (o)__(o)",
+            ],[                "   /---\\",
+                "  /____\\",
+                " |[][][]|",
+                " (o)__(o)",
+            ],[                "   /---\\",
+                "  /____\\",
+                " |[][][]|",
+                " (o)__(o)",
+            ],[                "   /---\\",
+                "  /____\\",
+                " |[][][]|",
+                " (o)__(o)",
+            ],[                "   /---\\",
+                "  /____\\",
+                " |[][][]|",
+                " (o)__(o)",
+            ],
+        ],
+        "hp": 200, "turn_rate": 0.07, "durability": 180, "gas_capacity": 9000, "gas_consumption": 0.06,
+        "drag": 0.06, "weight": 2500, "braking": 50,
+        "attachment_points": {
+            "roof": {"offset_x": 0, "offset_y": 0, "size": "large"},
+            "bed": {"offset_x": 0, "offset_y": 2, "size": "large"},
+        },
+        "mounted_weapons": {},
+        "ammo_bullet": 0, "ammo_heavy_bullet": 0, "ammo_fuel": 0,
+        "inventory": [],
+    },
+    {
+        "name": "Panel Wagon",
+        "art": [
+            [ # N
+                " ________",
+                "|  _     |",
+                "| | |    |",
+                "| |_|____|",
+                "|________|",
+            ],
+            [ # ... other directions
+                " ________",
+                "|  _     |",
+                "| | |    |",
+                "| |_|____|",
+                "|________|",
+            ],[
+                " ________",
+                "|  _     |",
+                "| | |    |",
+                "| |_|____|",
+                "|________|",
+            ],[
+                " ________",
+                "|  _     |",
+                "| | |    |",
+                "| |_|____|",
+                "|________|",
+            ],[
+                " ________",
+                "|  _     |",
+                "| | |    |",
+                "| |_|____|",
+                "|________|",
+            ],[
+                " ________",
+                "|  _     |",
+                "| | |    |",
+                "| |_|____|",
+                "|________|",
+            ],[
+                " ________",
+                "|  _     |",
+                "| | |    |",
+                "| |_|____|",
+                "|________|",
+            ],[
+                " ________",
+                "|  _     |",
+                "| | |    |",
+                "| |_|____|",
+                "|________|",
+            ],
+        ],
+        "hp": 160, "turn_rate": 0.06, "durability": 160, "gas_capacity": 7500, "gas_consumption": 0.05,
+        "drag": 0.05, "weight": 2200, "braking": 55,
+        "attachment_points": {
+            "roof": {"offset_x": 0, "offset_y": 0, "size": "large"},
+        },
+        "mounted_weapons": {},
+        "ammo_bullet": 0, "ammo_heavy_bullet": 0, "ammo_fuel": 0,
+        "inventory": [],
+    },
+    {
+        "name": "Motorcycle",
+        "art": [
+            [ # N
+                " o ",
+                "-o-",
+                " o ",
+            ],
+            [ # ... other directions
+                " o ",
+                "-o-",
+                " o ",
+            ],[
+                " o ",
+                "-o-",
+                " o ",
+            ],[
+                " o ",
+                "-o-",
+                " o ",
+            ],[
+                " o ",
+                "-o-",
+                " o ",
+            ],[
+                " o ",
+                "-o-",
+                " o ",
+            ],[
+                " o ",
+                "-o-",
+                " o ",
+            ],[
+                " o ",
+                "-o-",
+                " o ",
+            ],
+        ],
+        "hp": 50, "turn_rate": 0.25, "durability": 40, "gas_capacity": 2000, "gas_consumption": 0.15,
+        "drag": 0.01, "weight": 500, "braking": 90,
+        "attachment_points": {
+            "handlebars": {"offset_x": 0, "offset_y": -1, "size": "small"},
+        },
+        "mounted_weapons": {},
+        "ammo_bullet": 0, "ammo_heavy_bullet": 0, "ammo_fuel": 0,
+        "inventory": [],
     }
 ]
