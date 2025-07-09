@@ -76,7 +76,3 @@ AMMO_FUEL = "fuel"
 PICKUP_GAS = "PICKUP_GAS"
 PICKUP_REPAIR = "PICKUP_REPAIR"
 PICKUP_CASH = "PICKUP_CASH"
-
-# Weapon Keys (example)
-WEAPON_MACHINE_GUN = "machine_gun"
-WEAPON_FLAMETHROWER = "flamethrower"

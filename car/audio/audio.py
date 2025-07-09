@@ -3,6 +3,7 @@ import fluidsynth
 import mido
 import threading
 import time
+import sys
 
 class AudioManager:
     def __init__(self):
@@ -41,11 +42,14 @@ class AudioManager:
             self.music_thread.join()
 
     def play_sfx(self, note):
-        self.fs.noteon(self.sfx_channel, note, 127)
-        # Schedule note off to prevent stuck notes
-        off_thread = threading.Thread(target=self._note_off_sfx, args=(note,))
-        off_thread.daemon = True
-        off_thread.start()
+        if isinstance(note, int) and 0 <= note <= 127:
+            self.fs.noteon(self.sfx_channel, note, 127)
+            # Schedule note off to prevent stuck notes
+            off_thread = threading.Thread(target=self._note_off_sfx, args=(note,))
+            off_thread.daemon = True
+            off_thread.start()
+        else:
+            print(f"DEBUG: Invalid SFX note: {note}", file=sys.stderr)
 
     def _note_off_sfx(self, note):
         time.sleep(0.5) # Duration of the sound effect

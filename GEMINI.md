@@ -94,13 +94,9 @@ The game is built around a central game loop in `car/game.py`. This loop handles
 - **Quest System:** `car/logic/quests.py` - The `Quest` class and `QUESTS` dictionary define the quests in the game. The game loop in `car/game.py` tracks player quests and objectives. When a player accepts a quest, a boss is spawned. The player can then track the boss using a compass on the UI. When the player is near the boss, a persistent modal appears with the boss's name. When the boss is defeated, the player receives a reward and the quest is completed.
 - **Economy:**
     - **Shops:** `car/data/shops.py` - The `SHOP_DATA` dictionary defines the shops in the game. The game loop in `car/game.py` handles currency and transactions at shops.
-- **Cutscenes:**
-    - **Cutscene System:** `car/ui/cutscene.py` - A simple system for blocking, full-screen cutscenes like death sequences and NPC interactions.
-    - **Entity Modal:** `car/ui/entity_modal.py` - A dedicated, persistent modal window in the bottom-right of the screen that handles the complete lifecycle of entity display.
-        - **Display Logic:** The modal finds the closest entity (prioritizing bosses) within the `CUTSCENE_RADIUS` and displays its information.
-        - **Content:** The modal shows the entity's art, name, and a health bar.
-        - **Animations:** When an entity is destroyed, its explosion animation is played *within* this modal, making it a self-contained component for entity visualization.
-    - **Cutscene and entity modal should be the same size and location, the cutscene takes precedence when choosing which to draw**
+- **Cutscenes & Modals:**
+    - **`car/ui/cutscene.py`:** Manages **blocking, full-screen cinematic events**. This module is responsible for scenes that take over the entire screen and pause gameplay, such as the "Game Over" sequence or future narrative events.
+    - **`car/ui/entity_modal.py`:** Handles the **persistent, non-blocking entity display**. This is a core HUD element that dynamically shows information about the closest enemy or boss during live gameplay. It also contains the logic for playing entity-specific animations, like explosions, within its modal window, ensuring that all aspects of an entity's dynamic visualization are handled in one place.
 
 
 ## Tasks
@@ -128,6 +124,7 @@ The game is built around a central game loop in `car/game.py`. This loop handles
     - [ ] Initial state is defined that shows a list of attachment points, and the level of attachment at that point
     - [ ] Allow attachments to be modified for a price at repair stores. 
     - [ ] Add scaling system to weapons where a weapon can have a modifier for damage based off player level and the town reputation it was purchased from. A random modifier based off level, allowing for rare high level weapons can be applied to bosses and even more rare drops from enemies. So a boss can drop with 5% chance of a high modifier but a 35% of ok modifier for player level or 60% for a normal modifier and even more rare for normal enemy drops. 
+- [ ] **Show game over dialog with qoute when you die and prompt for new game, load, or quit**
 
 
 ## Completed Tasks
