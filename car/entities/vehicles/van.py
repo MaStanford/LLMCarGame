@@ -77,3 +77,4 @@ class Van(PlayerCar):
             "left_side_gun": "wep_shotgun",
             "right_side_gun": "wep_shotgun"
         }
+        self.max_attachments = 6

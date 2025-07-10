@@ -17,6 +17,8 @@ def generate_inventory(shop_type, player_level, town_reputation):
     elif shop_type == "mechanic":
         inventory.append({"name": "Tire Patch", "type": "repair", "amount": 25, "price": int(REPAIR_PRICE * price_modifier)})
         inventory.append({"name": "Full Service", "type": "repair", "amount": 100, "price": int(REPAIR_PRICE * 3.5 * price_modifier)})
+        inventory.append({"name": "Purchase New Attachment Point", "type": "purchase_attachment", "price": 500})
+        inventory.append({"name": "Upgrade Attachment Point Size", "type": "upgrade_attachment", "price": 1000})
 
     elif shop_type == "weapon":
         # Add ammo for different weapon types, potentially filtering by player's weapons

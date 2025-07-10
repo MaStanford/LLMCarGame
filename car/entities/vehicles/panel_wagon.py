@@ -76,3 +76,4 @@ class PanelWagon(PlayerCar):
         self.default_weapons = {
             "roof_rack": "wep_hmg"
         }
+        self.max_attachments = 6
