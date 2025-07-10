@@ -86,9 +86,26 @@ The game is built around a central game loop in `car/game.py`. This loop handles
 - **Inventory/Attachments:**
     - **Inventory:** The player's inventory is managed in the game loop.
     - **Attachments:** The `car/ui/inventory.py` menu allows the player to manage car modifications.
-- **AI:**
-    - **Fauna & Enemies:** `car/physics.py` - The physics update loop controls the behavior and movement AI for all non-player entities, including fauna and hostile vehicles.
-    - **Bosses:** `car/logic/boss.py` - The `Boss` class defines the structure for bosses, but their core AI and movement are also handled within the main physics loop in `car/physics.py`.
+- **AI and Phase System:**
+    - **Core Design:** The AI for enemies and bosses is built on a phase-based state machine. Each entity has a `current_phase` that dictates its behavior and a `phase_timer` that determines when to transition to a new phase. This allows for dynamic and varied combat encounters.
+    - **Data Structure:** AI phases are defined directly in the entity's data file (e.g., `car/data/enemies.py`). Each entity has a list of possible phases, and each phase defines its duration, behavior, and a weighted list of possible next phases.
+        - *Example Phase Definition:*
+          ```python
+          "phases": [
+              {
+                  "name": "Chase",
+                  "duration": (3, 5), # Min/max seconds
+                  "behavior": "CHASE",
+                  "next_phases": {"Strafe": 0.7, "Ram": 0.3} # 70% chance to Strafe, 30% to Ram
+              },
+              # ... other phases
+          ]
+          ```
+    - **Execution Flow:** The main AI update loop in `car/logic/physics.py` is responsible for:
+        1.  Initializing an entity's AI state upon spawning (setting the initial phase and timer).
+        2.  Decrementing the `phase_timer` each frame.
+        3.  When the timer expires, selecting a new phase based on the defined probabilities and resetting the timer.
+        4.  Calling the appropriate behavior function (e.g., `_behavior_chase`, `_behavior_strafe`) based on the entity's current phase.
 - **Combat System:**
     - **Damage:** The game loop in `car/game.py` manages damage, experience, and loot drops.
 - **Quest System:** `car/logic/quests.py` - The `Quest` class and `QUESTS` dictionary define the quests in the game. The game loop in `car/game.py` tracks player quests and objectives. When a player accepts a quest, a boss is spawned. The player can then track the boss using a compass on the UI. When the player is near the boss, a persistent modal appears with the boss's name. When the boss is defeated, the player receives a reward and the quest is completed.

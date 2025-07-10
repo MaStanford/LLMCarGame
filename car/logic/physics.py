@@ -275,50 +275,98 @@ def update_physics_and_collisions(game_state, world, audio_manager, stdscr, colo
 
     # --- Enemy AI and Movement ---
     enemy_ids_to_remove = []
-    for enemy_id, enemy_state in list(game_state.active_enemies.items()):
-        ex, ey, didx, eh, ew, evx, evy, eart, edur = enemy_state
-        edata = ENEMIES_DATA[didx]
+    for enemy_id, enemy in list(game_state.active_enemies.items()):
+        update_enemy_ai(enemy, game_state, world)
         
-        # Move enemy
-        nex = ex + evx
-        ney = ey + evy
-        nterrain = world.get_terrain_at(nex + ew / 2, ney + eh / 2)
-        if nterrain.get("passable", True):
-            ex, ey = nex, ney
-        else:
-            evx *= -0.5
-            evy *= -0.5
-
-        # AI logic
-        dx = car_center_world_x - (ex + ew / 2)
-        dy = car_center_world_y - (ey + eh / 2)
-        dsq = dx * dx + dy * dy
-        aggro_sq = (game_state.spawn_radius * 0.9)**2
-        min_dsq = (game_state.car_width + ew)**2
-
-        if min_dsq < dsq < aggro_sq:
-            dist = math.sqrt(dsq)
-            evx = (dx / dist) * edata["speed"]
-            evy = (dy / dist) * edata["speed"]
-        else:
-            if random.random() < 0.05:
-                wangle = random.uniform(0, 2 * math.pi)
-                wspeed = edata["speed"] * 0.5
-                evx = math.cos(wangle) * wspeed
-                evy = math.sin(wangle) * wspeed
-            elif random.random() < 0.1:
-                evx, evy = 0, 0
-        
-        game_state.active_enemies[enemy_id] = [ex, ey, didx, eh, ew, evx, evy, eart, edur]
-
         # Despawn logic
-        dist_car_sq = (ex - game_state.car_world_x)**2 + (ey - game_state.car_world_y)**2
+        dist_car_sq = (enemy["x"] - game_state.car_world_x)**2 + (enemy["y"] - game_state.car_world_y)**2
         if dist_car_sq > game_state.despawn_radius**2:
             enemy_ids_to_remove.append(enemy_id)
 
     for enemy_id in enemy_ids_to_remove:
         if enemy_id in game_state.active_enemies:
             del game_state.active_enemies[enemy_id]
+
+def update_enemy_ai(enemy, game_state, world):
+    """Updates the AI state and movement for a single enemy."""
+    enemy["phase_timer"] -= 1 / 30.0 # Assuming 30 FPS
+
+    if enemy["phase_timer"] <= 0:
+        # Transition to a new phase
+        edata = ENEMIES_DATA[enemy["didx"]]
+        current_phase_info = next((p for p in edata["phases"] if p["name"] == enemy["phase"]), None)
+        
+        if current_phase_info:
+            next_phase_options = list(current_phase_info["next_phases"].keys())
+            next_phase_weights = list(current_phase_info["next_phases"].values())
+            new_phase_name = random.choices(next_phase_options, weights=next_phase_weights, k=1)[0]
+            
+            new_phase_info = next((p for p in edata["phases"] if p["name"] == new_phase_name), None)
+            if new_phase_info:
+                enemy["phase"] = new_phase_info["name"]
+                enemy["phase_timer"] = random.uniform(new_phase_info["duration"][0], new_phase_info["duration"][1])
+
+    # Execute behavior for the current phase
+    edata = ENEMIES_DATA[enemy["didx"]]
+    current_phase_info = next((p for p in edata["phases"] if p["name"] == enemy["phase"]), None)
+    if current_phase_info:
+        behavior = current_phase_info["behavior"]
+        if behavior == "CHASE":
+            _execute_chase_behavior(enemy, game_state, edata)
+        elif behavior == "STRAFE":
+            _execute_strafe_behavior(enemy, game_state, edata)
+        elif behavior == "RAM":
+            _execute_ram_behavior(enemy, game_state, edata)
+        elif behavior == "EVADE":
+            _execute_evade_behavior(enemy, game_state, edata)
+        elif behavior == "STATIONARY":
+            enemy["vx"], enemy["vy"] = 0, 0
+
+    # Update enemy position
+    nex = enemy["x"] + enemy["vx"]
+    ney = enemy["y"] + enemy["vy"]
+    nterrain = world.get_terrain_at(nex + enemy["w"] / 2, ney + enemy["h"] / 2)
+    if nterrain.get("passable", True):
+        enemy["x"], enemy["y"] = nex, ney
+    else:
+        enemy["vx"] *= -0.5
+        enemy["vy"] *= -0.5
+
+def _execute_chase_behavior(enemy, game_state, edata):
+    """Moves the enemy towards the player."""
+    dx = game_state.car_world_x - enemy["x"]
+    dy = game_state.car_world_y - enemy["y"]
+    dist = math.sqrt(dx*dx + dy*dy)
+    if dist > 0:
+        enemy["vx"] = (dx / dist) * edata["speed"]
+        enemy["vy"] = (dy / dist) * edata["speed"]
+
+def _execute_strafe_behavior(enemy, game_state, edata):
+    """Circles the player at a distance."""
+    dx = game_state.car_world_x - enemy["x"]
+    dy = game_state.car_world_y - enemy["y"]
+    # Strafe logic: move perpendicular to the player
+    enemy["vx"] = -dy / (dx**2 + dy**2)**0.5 * edata["speed"]
+    enemy["vy"] = dx / (dx**2 + dy**2)**0.5 * edata["speed"]
+
+def _execute_ram_behavior(enemy, game_state, edata):
+    """Moves aggressively towards the player."""
+    dx = game_state.car_world_x - enemy["x"]
+    dy = game_state.car_world_y - enemy["y"]
+    dist = math.sqrt(dx*dx + dy*dy)
+    if dist > 0:
+        enemy["vx"] = (dx / dist) * edata["speed"] * 1.5 # 50% speed boost
+        enemy["vy"] = (dy / dist) * edata["speed"] * 1.5
+
+def _execute_evade_behavior(enemy, game_state, edata):
+    """Moves away from the player."""
+    dx = game_state.car_world_x - enemy["x"]
+    dy = game_state.car_world_y - enemy["y"]
+    dist = math.sqrt(dx*dx + dy*dy)
+    if dist > 0:
+        enemy["vx"] = -(dx / dist) * edata["speed"]
+        enemy["vy"] = -(dy / dist) * edata["speed"]
+
 
     max_obs = 20
     if game_state.obstacle_spawn_timer <= 0 and len(game_state.active_obstacles) < max_obs:
@@ -381,7 +429,18 @@ def update_physics_and_collisions(game_state, world, audio_manager, stdscr, colo
                 if sterrain.get("passable", True):
                     evx_s, evy_s = 0, 0
                     edur_s = int(edata_s["durability"] * game_state.difficulty_mods["enemy_hp_mult"])
-                    game_state.active_enemies[game_state.next_enemy_id] = [sx, sy, chosen_idx, eh_s, ew_s, evx_s, evy_s, edata_s["art"], edur_s]
+                    
+                    # Initialize AI state
+                    initial_phase = edata_s["phases"][0]
+                    phase_duration = random.uniform(initial_phase["duration"][0], initial_phase["duration"][1])
+                    
+                    game_state.active_enemies[game_state.next_enemy_id] = {
+                        "x": sx, "y": sy, "didx": chosen_idx, "h": eh_s, "w": ew_s, 
+                        "vx": evx_s, "vy": evy_s, "art": edata_s["art"], "dur": edur_s,
+                        "phase": initial_phase["name"],
+                        "phase_timer": phase_duration,
+                        "ai_state": {} # For any other AI state info
+                    }
                     game_state.next_enemy_id += 1
                     game_state.enemy_spawn_timer = random.randint(15, 40)
                     break
