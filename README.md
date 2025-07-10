@@ -14,8 +14,11 @@ Welcome to Car, a terminal-based, open-world, automotive RPG survival game. Play
     -   **Durability:** Damage accumulates from combat and collisions, repaired at mechanic shops.
     -   **Fuel:** Consumed while driving, refilled at gas stations.
     -   **Ammo:** Required for weapons, purchased at weapon shops.
--   **Town Reputation:** Completing quests increases your reputation in a town, which affects shop prices and the quality of loot drops.
--   **Quests:** Accept quests from the Town Hall in cities. There are three types of quests: kill a certain number of enemies, survive for a certain amount of time, or kill a powerful boss.
+-   **Faction Warfare:** The wasteland is a dangerous place, dominated by rival factions.
+    -   **Choose Your Allegiance:** The world is controlled by different factions. You can choose to align with one, or play them against each other.
+    -   **Dynamic Reputation:** Your actions have consequences. Completing quests for a faction will earn you their trust, while attacking their patrols or working for their rivals will make you an enemy.
+    -   **Territory Control:** As you gain and lose reputation, the world will change. Help your allies take over enemy territory, or become a feared outcast hunted by all.
+-   **Quests:** Accept quests from Faction Leaders in their Hub Cities. Quests will pit you against rival factions and other threats in the wasteland.
 -   **Weapon Modifiers:** Weapons can have modifiers that affect their stats, such as damage, fire rate, and range. These can be found as loot or purchased from shops.
 
 ## How to Play
