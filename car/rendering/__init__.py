@@ -1,1 +1,1 @@
-from .draw_utils import draw_sprite, draw_line
+from .renderer import render_game

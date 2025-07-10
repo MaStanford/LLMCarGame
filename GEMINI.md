@@ -4,6 +4,11 @@
 
 This project is a collaboration between two super-developers with a shared passion for creating awesome, retro-inspired games. We're channeling the spirit of an 80s buddy cop movie: we're the best in the business, we don't play by the rules, and we're here to get the job done. There's no room for ego or blame here—just pure, unadulterated coding and creative problem-solving. We're in this together, and we're going to make something totally radical. You, Gemini, take on the role of the older more experience super coder, who can solve any problem. 
 
+**Our Workflow:** For any new feature, bug fix, or refactor, our process is as follows:
+1.  **Discuss the Goal:** We'll first agree on what we're trying to achieve.
+2.  **Formulate a Plan:** Gemini will propose a clear, step-by-step plan outlining the necessary code changes, new files, and documentation updates.
+3.  **Approve and Execute:** Once the plan is approved, Gemini will execute it. This ensures we're always in sync and building with a shared vision.
+
 ## Summary
 
 This project is a terminal-based, open-world, automotive RPG survival game. Players select a starting vehicle and embark on an adventure in an infinitely-generated, random world. The map features roads connecting cities, surrounded by various types of wilderness.
@@ -86,26 +91,36 @@ The game is built around a central game loop in `car/game.py`. This loop handles
 - **Inventory/Attachments:**
     - **Inventory:** The player's inventory is managed in the game loop.
     - **Attachments:** The `car/ui/inventory.py` menu allows the player to manage car modifications.
+- **Entity Component System (ECS-like):** The game is built on a class-based entity architecture. All game objects (vehicles, enemies, NPCs, etc.) are instances of classes that inherit from a base `Entity` class. This provides a clean, object-oriented, and highly extensible framework for adding new content.
+        - **`car/entities/base.py`:** Defines the abstract `Entity` class with common properties (`position`, `health`) and methods (`update`, `draw`).
+        - **`car/entities/`:** This directory contains subdirectories for each major entity type (`vehicles`, `characters`, `projectiles`).
+            - **Vehicles (`car/entities/vehicles/`):** Contains classes for all drivable entities.
+                - `PlayerCar`: Handles player input.
+                - `EnemyCar`: Contains the phase-based AI logic for hostile vehicles.
+            - **Characters (`car/entities/characters/`):** For on-foot entities.
+                - `Bandit`: A simple melee enemy with its own AI.
+                - `NPC`: For non-hostile characters.
+    - **Spawning and Management:**
+        - **Entity Registry:** A central registry will map entity type names (e.g., "bandit") to their corresponding classes.
+        - **Spawning Logic (`car/logic/spawning.py`):** A dedicated module will handle the logic for when and where to spawn new entities, creating new instances of the appropriate classes and adding them to the `GameState`.
+        - **Game State:** The `GameState` object now holds lists of active entity *objects*, not raw data.
+    - **Main Loop:** The main game loop in `car/game.py` is now significantly simplified. It iterates through the master list of entities and calls their `update()` and `draw()` methods, delegating all logic to the entities themselves.
+- **Adding New Entities:** To add a new entity (e.g., a new car or enemy), follow these steps:
+    1.  **Create a new Python file** in the appropriate subdirectory of `car/entities/`. For example, a new car would go in `car/entities/vehicles/`. The filename should be the snake_case version of the entity's name (e.g., `my_new_car.py`).
+    2.  **Define a new class** in this file that inherits from the appropriate base class (e.g., `PlayerCar` for a new player vehicle, `Vehicle` for an enemy vehicle, or `Character` for an on-foot character).
+    3.  **Implement the necessary attributes** for the class, such as `art`, `durability`, `speed`, etc.
+    4.  **Add the new entity's name** to the appropriate list in `car/logic/spawning.py` (`ENEMIES` or `FAUNA`). For player cars, add the filename to the `CARS_DATA` list in `car/data/cars.py`. The spawning system will automatically pick up the new entity.
 - **AI and Phase System:**
     - **Core Design:** The AI for enemies and bosses is built on a phase-based state machine. Each entity has a `current_phase` that dictates its behavior and a `phase_timer` that determines when to transition to a new phase. This allows for dynamic and varied combat encounters.
-    - **Data Structure:** AI phases are defined directly in the entity's data file (e.g., `car/data/enemies.py`). Each entity has a list of possible phases, and each phase defines its duration, behavior, and a weighted list of possible next phases.
-        - *Example Phase Definition:*
-          ```python
-          "phases": [
-              {
-                  "name": "Chase",
-                  "duration": (3, 5), # Min/max seconds
-                  "behavior": "CHASE",
-                  "next_phases": {"Strafe": 0.7, "Ram": 0.3} # 70% chance to Strafe, 30% to Ram
-              },
-              # ... other phases
-          ]
-          ```
+    - **Shared Behaviors (`car/logic/ai_behaviors.py`):** Common AI movement patterns (e.g., `_execute_chase_behavior`, `_execute_strafe_behavior`) are centralized in this file. This avoids code duplication and allows for easy reuse across different entity types.
+    - **Data Structure:** AI phases are defined directly in the entity's class definition (e.g., `car/entities/characters/bandit.py`). Each entity has a list of possible phases, and each phase defines its duration, behavior, and a weighted list of possible next phases.
     - **Execution Flow:** The main AI update loop in `car/logic/physics.py` is responsible for:
         1.  Initializing an entity's AI state upon spawning (setting the initial phase and timer).
         2.  Decrementing the `phase_timer` each frame.
         3.  When the timer expires, selecting a new phase based on the defined probabilities and resetting the timer.
         4.  Calling the appropriate behavior function (e.g., `_behavior_chase`, `_behavior_strafe`) based on the entity's current phase.
+- **Python Package Conventions (`__init__.py`):** To keep the code clean and imports logical, we use `__init__.py` files to define the public API of a package. If you create a function in `my_package/my_module.py` that needs to be accessible elsewhere, you should import it into `my_package/__init__.py` like so: `from .my_module import my_function`. This allows other parts of the code to import it directly with `from my_package import my_function`, which is cleaner than `from my_package.my_module import my_function`.
+- **Relative Imports:** When importing between modules inside the `car` package, use relative imports. The number of leading dots corresponds to the number of directories you need to go up. For example, from `car/entities/vehicles/player_car.py` to get to `car/rendering/draw_utils.py`, you need to go up three levels (`...`) to the `car` directory, then down into `rendering`. From `car/entities/obstacle.py`, you only need to go up two levels (`..`).
 - **Combat System:**
     - **Damage:** The game loop in `car/game.py` manages damage, experience, and loot drops.
 - **Quest System:** `car/logic/quests.py` - The `Quest` class and `QUESTS` dictionary define the quests in the game. The game loop in `car/game.py` tracks player quests and objectives. When a player accepts a quest, a boss is spawned. The player can then track the boss using a compass on the UI. When the player is near the boss, a persistent modal appears with the boss's name. When the boss is defeated, the player receives a reward and the quest is completed.
@@ -140,7 +155,12 @@ The game is built around a central game loop in `car/game.py`. This loop handles
     - [ ] Add car stat that is list of attachment points
     - [ ] Initial state is defined that shows a list of attachment points, and the level of attachment at that point
     - [ ] Allow attachments to be modified for a price at repair stores. 
-    - [ ] Add scaling system to weapons where a weapon can have a modifier for damage based off player level and the town reputation it was purchased from. A random modifier based off level, allowing for rare high level weapons can be applied to bosses and even more rare drops from enemies. So a boss can drop with 5% chance of a high modifier but a 35% of ok modifier for player level or 60% for a normal modifier and even more rare for normal enemy drops. 
+- [ ] **Implement Weapon Scaling and Modifier System:**
+    - [ ] Shops will carry weapons with modifiers based on player level and town reputation.
+    - [ ] Enemies and bosses will have a chance to drop weapons with randomly generated modifiers.
+    - [ ] Modifier rarity (e.g., common, rare, legendary) will affect the strength of the stat boosts.
+    - [ ] Modifiers can affect stats like: Damage, Fire Rate, Range, Pellet Count, and Spread Angle.
+    - [ ] The drop chance and quality of modifiers will be influenced by player level, town reputation, and enemy difficulty (e.g., a boss has a higher chance of dropping a rare weapon than a common bandit).
 - [ ] **Show game over dialog with qoute when you die and prompt for new game, load, or quit**
 
 
@@ -183,3 +203,6 @@ The game is built around a central game loop in `car/game.py`. This loop handles
 
 ## Roadmap
 
+## Known Issues
+
+- **Curses/Terminal Errors:** The game may crash on startup with a `curses` error (e.g., `nocbreak() returned ERR`). This is often due to an incompatible terminal environment or the terminal window being too small. This is a known issue with the `curses` library and the environment in which the game is being run. **Gemini, do not attempt to fix this error.** It is an environmental issue, not a code issue.

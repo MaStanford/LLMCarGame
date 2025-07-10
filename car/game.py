@@ -1,53 +1,43 @@
 import curses
-import time
-import os
-import sys
-import traceback
 import math
 import random
-
-from .audio.audio import AudioManager
-from .logic.input import handle_input
-from .logic.physics import update_physics_and_collisions
-from .rendering.renderer import render_game
-from .ui.shop import draw_shop_menu
-from .logic.shop import Shop
-from .data.shops import SHOP_DATA
-from .data.game_constants import CUTSCENE_RADIUS
-from .logic.quests import Quest, KillBossObjective, KillCountObjective, SurvivalObjective
-from .logic.save_load import save_game, load_game, get_save_files
+import sys
+from .logic.entity_loader import PLAYER_CARS
+from .data.colors import COLOR_PAIRS_DEFS
+from .logic.spawning import spawn_enemy, spawn_fauna, spawn_obstacle
+from .logic.boss import Boss
+from .logic.pause_menu_logic import handle_pause_menu
+from .logic.menu_logic import handle_menu
 from .logic.shop_logic import handle_shop_interaction
 from .logic.quest_logic import handle_quest_interaction, update_quests
-from .logic.menu_logic import handle_menu
-from .logic.pause_menu_logic import handle_pause_menu
-from .logic.npcs import handle_npc_interaction
-from .data import *
-from .logic.boss import Boss
-from .data.enemies import ENEMIES_DATA
-from .rendering import *
-from .ui import *
-from .ui.new_game import draw_new_game_menu
-from .ui.pause_menu import draw_pause_menu
-from .ui.cutscene import play_cutscene, draw_entity_modal
 from .ui.entity_modal import update_and_draw_entity_modal
-from .ui.notifications import add_notification, draw_notifications
-from .world import *
-from .world.generation import get_city_name
-from .world.world import World
+from .ui.notifications import draw_notifications
+from .ui.cutscene import play_death_cutscene
+from .ui.game_over import draw_game_over_menu
+from .rendering import render_game
+from .world import World
 from .game_state import GameState
+from .logic.input import handle_input
+from .logic.physics import update_physics_and_collisions
+from .audio.audio import AudioManager
+from .logic.main_menu_logic import handle_main_menu
+from .logic.new_game_logic import handle_new_game_setup
 
 def main_game(stdscr):
     """Main function to run the game using curses."""
     # --- Initial Setup ---
     curses.curs_set(0)
-    stdscr.nodelay(1) # Start in non-blocking mode for game loop
-    stdscr.timeout(50) # Loop delay (milliseconds)
+    stdscr.nodelay(1)
+    stdscr.timeout(50)
     h, w = stdscr.getmaxyx()
     try:
         curses.cbreak()
         stdscr.keypad(True)
     except Exception as e:
         print(f"Warning: Could not set cbreak/keypad: {e}", file=sys.stderr)
+
+    # --- Audio Setup ---
+    audio_manager = AudioManager()
 
     # --- Color Setup ---
     COLOR_PAIR_MAP = {}
@@ -113,123 +103,44 @@ def main_game(stdscr):
         for name in COLOR_PAIRS_DEFS: COLOR_PAIR_MAP[name] = 0
         print("Terminal does not support colors.")
 
-    # --- Audio Setup ---
-    audio_manager = AudioManager()
+    # --- Game Start ---
+    game_state = None
+    while game_state is None:
+        action, loaded_state = handle_main_menu(stdscr, audio_manager, COLOR_PAIR_MAP)
 
-    # --- Main Menu ---
-    selected_option = 0
-    audio_manager.play_music("car/sounds/main_menu.mid")
-    while True:
-        main_menu_win = draw_main_menu(stdscr, selected_option, COLOR_PAIR_MAP)
-        if main_menu_win is None:
+        if action == 'quit':
             return
+        elif action == 'load_game':
+            game_state = loaded_state
+        elif action == 'new_game':
+            new_game_settings = handle_new_game_setup(stdscr, COLOR_PAIR_MAP)
+            if new_game_settings:
+                game_state = GameState(**new_game_settings)
+            else: # User backed out of new game setup
+                continue
 
-        key = stdscr.getch()
-        if key == curses.KEY_UP:
-            selected_option = (selected_option - 1) % 4
-        elif key == curses.KEY_DOWN:
-            selected_option = (selected_option + 1) % 4
-        elif key == curses.KEY_ENTER or key == 10 or key == 13:
-            if selected_option == 0: # New Game
-                audio_manager.stop_music()
-                audio_manager.play_music("car/sounds/world.mid")
-                break
-            elif selected_option == 1: # Load Game
-                save_files = get_save_files()
-                if not save_files:
-                    continue
-                
-                selected_save_option = 0
-                while True:
-                    load_game_win = draw_load_game_menu(stdscr, save_files, selected_save_option, COLOR_PAIR_MAP)
-                    if load_game_win is None:
-                        break
-                        
-                    key = stdscr.getch()
-                    if key == curses.KEY_UP:
-                        selected_save_option = (selected_save_option - 1) % len(save_files)
-                    elif key == curses.KEY_DOWN:
-                        selected_save_option = (selected_save_option + 1) % len(save_files)
-                    elif key == curses.KEY_ENTER or key == 10 or key == 13:
-                        game_state = load_game(save_files[selected_save_option])
-                        # This is a bit of a hack, we should probably have a better way to load state
-                        break
-                    elif key == 27: # ESC
-                        break
-                break
-            elif selected_option == 2: # Settings
-                # Placeholder for settings logic
-                pass
-            elif selected_option == 3: # Quit
-                return
-    
-    # --- Car Selection & Difficulty ---
-    selected_car_index = 0
-    selected_color_index = 0
-    selected_difficulty_index = 1  # Default to Normal
+    world = World(seed=12345) # Or load from game_state if saved
 
-    selected_weapon_index = 0
-    preview_angle = 0.0
-    car_color_names = [name for name in COLOR_PAIRS_DEFS if name.startswith("CAR_")]
+    # --- Main Game Loop ---
     while True:
-        draw_new_game_menu(stdscr, selected_car_index, selected_color_index, selected_difficulty_index, selected_weapon_index, car_color_names, COLOR_PAIR_MAP, preview_angle)
-        key = stdscr.getch()
-
-        if key == curses.KEY_LEFT:
-            selected_car_index = (selected_car_index - 1) % len(CARS_DATA)
-        elif key == curses.KEY_RIGHT:
-            selected_car_index = (selected_car_index + 1) % len(CARS_DATA)
-        elif key == curses.KEY_UP:
-            selected_difficulty_index = (selected_difficulty_index - 1) % len(DIFFICULTY_LEVELS)
-        elif key == curses.KEY_DOWN:
-            selected_difficulty_index = (selected_difficulty_index + 1) % len(DIFFICULTY_LEVELS)
-        elif key == ord('c'):
-            selected_color_index = (selected_color_index + 1) % len(car_color_names)
-        elif key == ord('w'):
-            selected_weapon_index = (selected_weapon_index - 1)
-        elif key == ord('s'):
-            selected_weapon_index = (selected_weapon_index + 1)
-        elif key == ord('a'):
-            preview_angle = (preview_angle + math.pi / 4) % (2 * math.pi)
-        elif key == ord('d'):
-            preview_angle = (preview_angle - math.pi / 4) % (2 * math.pi)
-        elif key == curses.KEY_ENTER or key == 10 or key == 13:
-            chosen_difficulty = DIFFICULTY_LEVELS[selected_difficulty_index]
-            difficulty_mods = DIFFICULTY_MODIFIERS[chosen_difficulty]
-            break
-
-    world = World(seed=12345)
-
-    # --- Game Setup ---
-    stdscr.nodelay(1) # Switch back to non-blocking for game
-    stdscr.clear(); stdscr.refresh()
-
-    if car_color_names:
-        chosen_car_pair_name = car_color_names[selected_color_index]
-        car_color_pair_num = COLOR_PAIR_MAP.get(chosen_car_pair_name, 0)
-    else:
-        car_color_pair_num = 0
-
-    game_state = GameState(selected_car_index, chosen_difficulty, difficulty_mods, car_color_names, car_color_pair_num)
-    
-    # --- Game Loop ---
-    game_menu_win = None
-    menu_sections = ["weapons", "inventory"]
-
-    while True: # Outer loop (allows restarting)
         if game_state.play_again:
-            game_state = GameState(selected_car_index, chosen_difficulty, difficulty_mods, car_color_names, car_color_pair_num)
-            if game_menu_win: del game_menu_win; game_menu_win = None
-            stdscr.nodelay(1); stdscr.clear(); stdscr.refresh()
+            # This logic might need adjustment depending on how you want to restart
+            new_game_settings = handle_new_game_setup(stdscr)
+            game_state = GameState(**new_game_settings)
+            stdscr.nodelay(1)
+            stdscr.clear()
+            stdscr.refresh()
 
         # --- Inner Game Loop ---
         while not game_state.game_over:
             h, w = stdscr.getmaxyx()
+            game_state.screen_width = w
+            game_state.screen_height = h
             game_state.spawn_radius = max(w, h) * 0.7
             game_state.despawn_radius = max(w, h) * 1.2
             game_state.frame += 1
             if game_state.level_up_message_timer > 0:
-                game_state.level_up_message_timer -=1
+                game_state.level_up_message_timer -= 1
             if game_state.shop_cooldown > 0:
                 game_state.shop_cooldown -= 1
 
@@ -238,51 +149,65 @@ def main_game(stdscr):
 
             if actions["toggle_menu"]:
                 game_state.menu_open = not game_state.menu_open
-                if game_state.menu_open:
-                    game_state.menu_selected_section_idx = 0
-                    game_state.menu_selected_item_idx = 0
-                else:
-                    if game_menu_win:
-                        try: game_menu_win.erase(); game_menu_win.refresh(); del game_menu_win
-                        except Exception: pass
-                        game_menu_win = None
 
             if game_state.menu_open:
                 handle_menu(stdscr, game_state, COLOR_PAIR_MAP)
-                continue # Skip the rest of the game loop
-            
-            # --- Normal Game Update (Menu is Closed) ---
-            if game_menu_win:
-                try: del game_menu_win
-                except: pass
-                game_menu_win = None
+                continue
 
             handle_pause_menu(stdscr, game_state, COLOR_PAIR_MAP)
             
             update_physics_and_collisions(game_state, world, audio_manager, stdscr, COLOR_PAIR_MAP)
+
+            for entity in game_state.all_entities:
+                entity.update(game_state, world)
+
+            game_state.enemy_spawn_timer -= 1
+            if game_state.enemy_spawn_timer <= 0:
+                spawn_enemy(game_state, world)
+                game_state.enemy_spawn_timer = random.randint(15, 40)
+
+            game_state.fauna_spawn_timer -= 1
+            if game_state.fauna_spawn_timer <= 0:
+                spawn_fauna(game_state, world)
+                game_state.fauna_spawn_timer = random.randint(15, 40)
+
+            game_state.obstacle_spawn_timer -= 1
+            if game_state.obstacle_spawn_timer <= 0:
+                spawn_obstacle(game_state, world)
+                game_state.obstacle_spawn_timer = random.randint(15, 40)
+
+            stdscr.erase()
             render_game(stdscr, game_state, world, COLOR_PAIR_MAP)
+            
             update_and_draw_entity_modal(stdscr, game_state, COLOR_PAIR_MAP)
+            draw_notifications(stdscr, game_state.notifications, COLOR_PAIR_MAP)
+            stdscr.refresh()
 
             handle_shop_interaction(stdscr, game_state, world, COLOR_PAIR_MAP)
             handle_quest_interaction(game_state, world, audio_manager)
             update_quests(game_state, audio_manager)
             
-            if game_state.current_durability <= 0:
+            if game_state.player_car.durability <= 0:
                 play_death_cutscene(stdscr, COLOR_PAIR_MAP)
                 game_state.game_over = True
                 game_state.game_over_message = "CAR DESTROYED!"
-            elif game_state.current_gas <= 0 and game_state.car_speed <= 0.01:
+            elif game_state.player_car.fuel <= 0 and game_state.car_speed <= 0.01:
                 game_state.game_over = True
                 game_state.game_over_message = "OUT OF GAS!"
 
         stdscr.nodelay(0)
         game_over_win = draw_game_over_menu(stdscr, game_state.game_over_message, COLOR_PAIR_MAP)
-        if game_over_win is None: break
+        if game_over_win is None:
+            break
 
         while True:
             gm_key = stdscr.getch()
-            if gm_key == ord('p') or gm_key == ord('P'): game_state.play_again = True; break
-            elif gm_key == ord('e') or gm_key == ord('E') or gm_key == 27: game_state.play_again = False; break
-        if game_over_win: del game_over_win; game_over_win = None
-        stdscr.clear(); stdscr.refresh()
-        if not game_state.play_again: break
+            if gm_key == ord('p') or gm_key == ord('P'):
+                game_state.play_again = True
+                break
+            elif gm_key == ord('e') or gm_key == ord('E') or gm_key == 27:
+                game_state.play_again = False
+                break
+        
+        if not game_state.play_again:
+            break

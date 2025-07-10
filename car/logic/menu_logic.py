@@ -4,6 +4,7 @@ from ..data.weapons import WEAPONS_DATA
 from ..world.generation import get_city_name
 from ..ui.inventory import draw_inventory_menu
 from ..data.game_constants import CITY_SPACING
+from ..entities.weapon import Weapon
 
 def handle_menu(stdscr, game_state, color_pair_map):
     """Handles all logic for the inventory menu."""
@@ -38,15 +39,14 @@ def handle_menu(stdscr, game_state, color_pair_map):
         elif current_section_name == "weapons":
             mount_point = list(game_state.attachment_points.keys())[game_state.menu_selected_item_idx]
             if game_state.mounted_weapons.get(mount_point):
-                weapon_key = game_state.mounted_weapons[mount_point]
-                game_state.player_inventory.append({"type": "gun", "name": WEAPONS_DATA[weapon_key]["name"]})
+                weapon = game_state.mounted_weapons[mount_point]
+                game_state.player_inventory.append(weapon)
                 del game_state.mounted_weapons[mount_point]
             else:
                 for i, item in enumerate(game_state.player_inventory):
-                    if item["type"] == "gun":
-                        weapon_key = [k for k, v in WEAPONS_DATA.items() if v["name"] == item["name"]][0]
-                        if WEAPONS_DATA[weapon_key]["slots"] <= game_state.attachment_points[mount_point]["size"]:
-                            game_state.mounted_weapons[mount_point] = weapon_key
+                    if isinstance(item, Weapon):
+                        if item.base_stats["slots"] <= game_state.attachment_points[mount_point]["size"]:
+                            game_state.mounted_weapons[mount_point] = item
                             game_state.player_inventory.pop(i)
                             break
     elif game_state.actions["menu_back"]:
@@ -67,20 +67,22 @@ def handle_menu(stdscr, game_state, color_pair_map):
         "current_xp": game_state.current_xp,
         "xp_to_next_level": game_state.xp_to_next_level,
         "mounted_weapons": game_state.mounted_weapons,
-        "weapons_data": WEAPONS_DATA,
         "quests": [game_state.current_quest.name] if game_state.current_quest else []
     }
 
     current_selection = (menu_sections[game_state.menu_selected_section_idx], game_state.menu_selected_item_idx)
     
-    game_state.selected_car_data["weapons_data"] = WEAPONS_DATA
-    game_state.selected_car_data["menu_art"] = game_state.all_car_art[0]
+    car_data_for_menu = {
+        "name": game_state.player_car.__class__.__name__.replace('_', ' ').title(),
+        "attachment_points": game_state.attachment_points,
+        "menu_art": game_state.player_car.art,
+    }
     
     grid_x = round(game_state.car_world_x / CITY_SPACING)
     grid_y = round(game_state.car_world_y / CITY_SPACING)
     loc_desc_ui = get_city_name(grid_x, grid_y)
     
-    game_menu_win = draw_inventory_menu(stdscr, game_state.selected_car_data, car_stats_for_menu, loc_desc_ui, game_state.frame, current_selection, color_pair_map)
+    game_menu_win = draw_inventory_menu(stdscr, car_data_for_menu, car_stats_for_menu, loc_desc_ui, game_state.frame, current_selection, color_pair_map)
 
     if game_menu_win is None:
         game_state.menu_open = False

@@ -159,13 +159,14 @@ def draw_menu(stdscr, car_data, car_stats, location_desc, frame_count, menu_sele
         # Draw Weapon List with Highlighting
         mount_index = 0 # Use 0-based index for selection logic
         flash_on = (frame_count // 15) % 2 == 0
-        weapon_items = list(car_data['mounted_weapons'].items()) # Get weapons as a list
+        weapon_items = list(car_stats['mounted_weapons'].items()) # Get weapons as a list
 
-        for point_name, wep_key in weapon_items:
+        for point_name, weapon in weapon_items:
             is_selected = (menu_selection[0] == "weapons" and menu_selection[1] == mount_index)
             point_info = car_data['attachment_points'].get(point_name, {})
-            point_size = point_info.get('size', '?'); wep_name = WEAPONS_DATA.get(wep_key, {}).get('name', 'UNKNOWN')
-            wep_slots = WEAPONS_DATA.get(wep_key, {}).get('slots', '?')
+            point_size = point_info.get('size', '?')
+            wep_name = weapon.name if weapon else "Empty"
+            wep_slots = weapon.base_stats['slots'] if weapon else "?"
             # Display 1-based index for user
             mount_line = f"{mount_index+1:<3}{point_name:<15}{point_size:<6}{wep_name:<12}{wep_slots:<6}"
 

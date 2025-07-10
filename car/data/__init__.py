@@ -1,5 +1,3 @@
-from .fauna import FAUNA_DATA, TOTAL_FAUNA_SPAWN_RATE
-from .cars import CARS_DATA
 from .colors import COLOR_PAIRS_DEFS
 from .game_constants import *
 from .experience import *
