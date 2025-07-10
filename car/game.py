@@ -143,6 +143,8 @@ def main_game(stdscr):
                 game_state.level_up_message_timer -= 1
             if game_state.shop_cooldown > 0:
                 game_state.shop_cooldown -= 1
+            if game_state.menu_toggle_cooldown > 0:
+                game_state.menu_toggle_cooldown -= 1
 
             actions = handle_input(stdscr, game_state)
             game_state.actions = actions
@@ -164,17 +166,17 @@ def main_game(stdscr):
             game_state.enemy_spawn_timer -= 1
             if game_state.enemy_spawn_timer <= 0:
                 spawn_enemy(game_state, world)
-                game_state.enemy_spawn_timer = random.randint(15, 40)
+                game_state.enemy_spawn_timer = random.randint(150, 400)
 
             game_state.fauna_spawn_timer -= 1
             if game_state.fauna_spawn_timer <= 0:
                 spawn_fauna(game_state, world)
-                game_state.fauna_spawn_timer = random.randint(15, 40)
+                game_state.fauna_spawn_timer = random.randint(150, 400)
 
             game_state.obstacle_spawn_timer -= 1
             if game_state.obstacle_spawn_timer <= 0:
                 spawn_obstacle(game_state, world)
-                game_state.obstacle_spawn_timer = random.randint(15, 40)
+                game_state.obstacle_spawn_timer = random.randint(150, 400)
 
             stdscr.erase()
             render_game(stdscr, game_state, world, COLOR_PAIR_MAP)

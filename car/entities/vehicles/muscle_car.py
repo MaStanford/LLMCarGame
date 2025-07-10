@@ -11,7 +11,7 @@ class MuscleCar(Vehicle):
             " |    | ",
             "  \\__/  ",
         ]
-        super().__init__(x, y, art, durability=100, speed=1.25, acceleration=0.7, handling=0.7)
+        super().__init__(x, y, art, durability=30, speed=1.25, acceleration=0.7, handling=0.7)
         self.phases = [
             {"name": "AggressiveChase", "duration": (4, 6), "behavior": "CHASE", "next_phases": {"StrafeAndShoot": 1.0}},
             {"name": "StrafeAndShoot", "duration": (4, 6), "behavior": "STRAFE", "next_phases": {"AggressiveChase": 0.7, "RammingRun": 0.3}},

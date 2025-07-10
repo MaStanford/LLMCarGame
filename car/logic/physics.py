@@ -154,6 +154,17 @@ def update_physics_and_collisions(game_state, world, audio_manager, stdscr, colo
             enemy_ids_to_remove.append(enemy)
 
     for enemy in enemy_ids_to_remove:
+        cash_dropped = int(enemy.cash_value * game_state.player_level * game_state.difficulty_mods.get("xp_mult", 1.0))
+        game_state.active_pickups[game_state.next_pickup_id] = {
+            "type": "cash",
+            "x": enemy.x,
+            "y": enemy.y,
+            "value": cash_dropped,
+            "char": PICKUP_DATA[PICKUP_CASH]["art"][0],
+            "color": PICKUP_DATA[PICKUP_CASH]["color_pair_name"]
+        }
+        game_state.next_pickup_id += 1
+        add_notification(game_state, f"Destroyed {enemy.__class__.__name__}!", "success")
         game_state.active_enemies.remove(enemy)
 
     unique_indices = sorted(list(set(particles_to_remove)), reverse=True)
@@ -186,3 +197,20 @@ def update_physics_and_collisions(game_state, world, audio_manager, stdscr, colo
                 if random.random() < obstacle.drop_rate:
                     # This needs to be implemented properly
                     pass
+
+    # Collision with pickups
+    pickups_to_remove = []
+    for pickup_id, pickup in game_state.active_pickups.items():
+        if (game_state.player_car.x < pickup["x"] + 1 and
+            game_state.player_car.x + game_state.player_car.width > pickup["x"] and
+            game_state.player_car.y < pickup["y"] + 1 and
+            game_state.player_car.y + game_state.player_car.height > pickup["y"]):
+            
+            if pickup["type"] == "cash":
+                game_state.player_cash += pickup["value"]
+                add_notification(game_state, f"Picked up {pickup['value']} cash!", "success")
+            
+            pickups_to_remove.append(pickup_id)
+
+    for pickup_id in pickups_to_remove:
+        del game_state.active_pickups[pickup_id]

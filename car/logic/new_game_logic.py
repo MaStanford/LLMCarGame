@@ -64,4 +64,5 @@ def handle_new_game_setup(stdscr, color_map):
                 "difficulty_mods": difficulty_mods,
                 "car_color_names": car_color_names,
                 "car_color_pair_num": car_color_pair_num,
+                "player_cash": difficulty_mods.get("starting_cash", 300),
             }

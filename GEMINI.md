@@ -8,6 +8,7 @@ This project is a collaboration between two super-developers with a shared passi
 1.  **Discuss the Goal:** We'll first agree on what we're trying to achieve.
 2.  **Formulate a Plan:** Gemini will propose a clear, step-by-step plan outlining the necessary code changes, new files, and documentation updates.
 3.  **Approve and Execute:** Once the plan is approved, Gemini will execute it. This ensures we're always in sync and building with a shared vision.
+4.  **Commit Changes:** After the changes are made, Gemini will keep track of the modified files and prompt to either commit the changes or wait for more changes.
 
 ## Summary
 
@@ -162,6 +163,13 @@ The game is built around a central game loop in `car/game.py`. This loop handles
     - [ ] Modifiers can affect stats like: Damage, Fire Rate, Range, Pellet Count, and Spread Angle.
     - [ ] The drop chance and quality of modifiers will be influenced by player level, town reputation, and enemy difficulty (e.g., a boss has a higher chance of dropping a rare weapon than a common bandit).
 - [ ] **Show game over dialog with qoute when you die and prompt for new game, load, or quit**
+- [ ] **Combat system** 
+    - [ ] For minor enemies open world combat. 
+    - [ ] For major enemioes, combat system modal when in range, short range like pokemon battles. 
+        - [ ] Phase based combat
+        - [ ] Enemy dialog in phases
+        - [ ] Enemy tactic and weapon changes in phases
+        - [ ] Phases based off enemy health, or player health, or time or other factors
 
 
 ## Completed Tasks

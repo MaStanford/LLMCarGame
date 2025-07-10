@@ -1,20 +1,65 @@
+from ..entities.weapon import Weapon
+
 class Shop:
     def __init__(self, name, inventory):
         self.name = name
         self.inventory = inventory
 
-    def buy(self, item, player):
-        if item in self.inventory and player.cash >= item.price:
-            player.cash -= item.price
-            player.inventory.append(item)
-            self.inventory.remove(item)
+    def buy(self, item_info, game_state, world):
+        """
+        Handles the purchase of an item.
+        item_info (dict): Contains item details like name, type, price.
+        game_state (GameState): The current state of the game.
+        """
+        price = item_info.get("price", 0)
+        if game_state.player_cash < price:
+            return False  # Not enough cash
+
+        item_type = item_info.get("type")
+        
+        # Based on item type, perform the specific action
+        if item_type == "fuel":
+            amount = item_info.get("amount", 0)
+            if game_state.current_gas < game_state.gas_capacity:
+                game_state.player_cash -= price
+                game_state.current_gas = min(game_state.gas_capacity, game_state.current_gas + amount)
+                return True
+        elif item_type == "repair":
+            amount = item_info.get("amount", 0)
+            if game_state.current_durability < game_state.max_durability:
+                game_state.player_cash -= price
+                game_state.current_durability = min(game_state.max_durability, game_state.current_durability + amount)
+                return True
+        elif item_type == "ammo":
+            ammo_type = item_info.get("ammo_type")
+            amount = item_info.get("amount", 0)
+            if ammo_type:
+                game_state.player_cash -= price
+                if ammo_type not in game_state.ammo_counts:
+                    game_state.ammo_counts[ammo_type] = 0
+                game_state.ammo_counts[ammo_type] += amount
+                return True
+        elif item_type == "weapon":
+            # Assuming the item_info contains the necessary details to create a Weapon instance
+            # This part might need adjustment based on how weapons are defined and stored
+            game_state.player_cash -= price
+            weapon_id = item_info.get("weapon_id")
+            if weapon_id:
+                game_state.player_inventory.append(Weapon(weapon_id))
             return True
+        
         return False
 
-    def sell(self, item, player):
-        if item in player.inventory:
-            player.cash += item.price
-            player.inventory.remove(item)
-            self.inventory.append(item)
+    def sell(self, item_info, game_state, world):
+        """
+        Handles the selling of an item from the player's inventory.
+        item_info (dict): The item to sell.
+        game_state (GameState): The current state of the game.
+        """
+        # For now, only weapons can be sold from inventory
+        if item_info in game_state.player_inventory:
+            price = item_info.get("price", 0) # In a real scenario, sell price would be lower
+            game_state.player_cash += price
+            game_state.player_inventory.remove(item_info)
             return True
         return False

@@ -1,5 +1,6 @@
 import curses
 import time
+import math
 from ..data.weapons import WEAPONS_DATA
 from ..world.generation import get_city_name
 from ..ui.inventory import draw_inventory_menu
@@ -11,6 +12,7 @@ def handle_menu(stdscr, game_state, color_pair_map):
     if not game_state.menu_open:
         return
 
+    h, w = stdscr.getmaxyx()
     menu_sections = ["weapons", "inventory"]
     num_weapons = len(game_state.mounted_weapons)
     num_inventory = len(game_state.player_inventory)
@@ -51,6 +53,10 @@ def handle_menu(stdscr, game_state, color_pair_map):
                             break
     elif game_state.actions["menu_back"]:
         game_state.menu_open = False
+    elif game_state.actions["turn_left"]:
+        game_state.menu_preview_angle = (game_state.menu_preview_angle - math.pi / 4) % (2 * math.pi)
+    elif game_state.actions["turn_right"]:
+        game_state.menu_preview_angle = (game_state.menu_preview_angle + math.pi / 4) % (2 * math.pi)
 
     car_stats_for_menu = {
         "cash": game_state.player_cash,
@@ -82,7 +88,7 @@ def handle_menu(stdscr, game_state, color_pair_map):
     grid_y = round(game_state.car_world_y / CITY_SPACING)
     loc_desc_ui = get_city_name(grid_x, grid_y)
     
-    game_menu_win = draw_inventory_menu(stdscr, car_data_for_menu, car_stats_for_menu, loc_desc_ui, game_state.frame, current_selection, color_pair_map)
+    game_menu_win = draw_inventory_menu(stdscr, car_data_for_menu, car_stats_for_menu, loc_desc_ui, game_state.frame, current_selection, color_pair_map, game_state.menu_preview_angle)
 
     if game_menu_win is None:
         game_state.menu_open = False

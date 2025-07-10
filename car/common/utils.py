@@ -1,5 +1,22 @@
 import math
 
+def get_directional_sprite(art_dict, angle):
+    """
+    Returns the correct ASCII art from a dictionary based on the angle (in radians).
+    The dictionary keys are "N", "NE", "E", "SE", "S", "SW", "W", "NW".
+    """
+    # Normalize angle to be between 0 and 2*pi
+    angle = angle % (2 * math.pi)
+    
+    # Determine the direction index (0-7)
+    # 0: E, 1: NE, 2: N, 3: NW, 4: W, 5: SW, 6: S, 7: SE
+    index = int((angle + math.pi / 8) / (math.pi / 4)) % 8
+    
+    directions = ["E", "NE", "N", "NW", "W", "SW", "S", "SE"]
+    direction_key = directions[index]
+    
+    return art_dict.get(direction_key, art_dict.get("N", ["?"]))
+
 def get_car_dimensions(car_art_list):
     """Calculates the height and max width across all directional sprites."""
     if not car_art_list or not car_art_list[0]:

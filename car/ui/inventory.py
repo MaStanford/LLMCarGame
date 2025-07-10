@@ -2,8 +2,9 @@ import curses
 import sys
 import traceback
 from ..rendering.draw_utils import draw_weapon_stats_modal
+from ..common.utils import get_directional_sprite
 
-def draw_inventory_menu(stdscr, car_data, car_stats, location_desc, frame_count, menu_selection, color_map):
+def draw_inventory_menu(stdscr, car_data, car_stats, location_desc, frame_count, menu_selection, color_map, menu_preview_angle):
     """Draws the status menu modal. Returns the menu window object or None.
         menu_selection is a tuple: (section, index) e.g., ("weapons", 0) or ("inventory", 1)
     """
@@ -108,7 +109,7 @@ def draw_inventory_menu(stdscr, car_data, car_stats, location_desc, frame_count,
             current_stat_y += 1
             add_stat_line(current_stat_y, stats_inner_x, "Quests:", stats_col_width-2)
             if not car_stats['quests']:
-                add_stat_.addstr(current_stat_y, stats_inner_x + 2, f"- (None)", stats_col_width-4)
+                menu_win.addstr(current_stat_y, stats_inner_x + 2, f"- (None)", stats_col_width-4)
             else:
                 for quest in car_stats['quests']:
                     add_stat_line(current_stat_y, stats_inner_x + 2, f"- {quest}", stats_col_width-4)
@@ -165,7 +166,7 @@ def draw_inventory_menu(stdscr, car_data, car_stats, location_desc, frame_count,
 
 
         # --- Draw Car Art and Mounts (Left Side) ---
-        large_art = car_data.get("menu_art", ["No Art"])
+        large_art = get_directional_sprite(car_data["menu_art"], menu_preview_angle)
         art_h = len(large_art)
         art_w = max(len(line) for line in large_art) if art_h > 0 else 0
         available_art_width = stats_x - 3 # Width available left of stats
@@ -242,6 +243,8 @@ def draw_inventory_menu(stdscr, car_data, car_stats, location_desc, frame_count,
                             pass
                 mount_y += 1
             mount_index += 1
+        
+        return menu_win
     except Exception:
         # In case of any other error, end curses and print the traceback
         curses.endwin()

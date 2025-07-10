@@ -17,10 +17,11 @@ def draw_shop_menu(stdscr, shop, player_stats, selected_item_index, active_list,
     draw_box(shop_win, "Shop Inventory")
 
     for i, item in enumerate(shop.inventory):
-        item_text = f"{item['item'].name} - ${item['price']}"
+        item_text = f"{item['name']} - ${item['price']}"
         if active_list == "shop" and i == selected_item_index:
             shop_win.addstr(2 + i, 2, item_text, curses.A_REVERSE)
-            draw_weapon_stats_modal(stdscr, item['item'], 2 + i, shop_win_w + 2)
+            if item.get('type') == 'weapon':
+                draw_weapon_stats_modal(stdscr, item['item'], 2 + i, shop_win_w + 2)
         else:
             shop_win.addstr(2 + i, 2, item_text)
 
@@ -31,10 +32,11 @@ def draw_shop_menu(stdscr, shop, player_stats, selected_item_index, active_list,
     draw_box(player_win, "Player Inventory")
 
     for i, item in enumerate(player_stats["inventory"]):
-        item_text = f"{item.name} - ${item.get('price', 0)}"
+        item_text = f"{item.get('name')} - ${item.get('price', 0)}"
         if active_list == "player" and i == selected_item_index:
             player_win.addstr(2 + i, 2, item_text, curses.A_REVERSE)
-            draw_weapon_stats_modal(stdscr, item, 2 + i, w // 2 + 1 + player_win_w + 2)
+            if item.get('type') == 'weapon':
+                draw_weapon_stats_modal(stdscr, item, 2 + i, w // 2 + 1 + player_win_w + 2)
         else:
             player_win.addstr(2 + i, 2, item_text)
 
