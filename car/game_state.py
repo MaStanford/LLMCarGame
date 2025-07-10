@@ -99,7 +99,7 @@ class GameState:
         
         # --- Quest State ---
         self.current_quest = None
-        self.town_reputation = {}
+        self.faction_reputation = {}
 
         # --- UI and Game Flow State ---
         self.shop_cooldown = 0

@@ -134,23 +134,24 @@ The game is built around a central game loop in `car/game.py`. This loop handles
 
 ## Tasks
 
-- [ ] **Town Reputation System:**
-    - [ ] Implement `town_reputation` variable for each town.
-    - [ ] Increase reputation upon quest completion.
-    - [ ] Use reputation as a modifier for shop prices and loot drops.
-- [ ] **Refine quests:**
-    - [ ] Add 3 quest types, kill n enemies, survive n seconds, kill boss
-    - [ ] Add handling of quests
-    - [ ] Show UI for each quest type
-    - [ ] Increment town reputation when quest complete
-- [ ] **Fix backgound for entities:**
-    - [ ] Cars, enemies, etc need to have a background that matches the tile under it, so it looks just like the entity character is overlayed the environment tile. 
-    - [ ] Make method to find the tile under the character we want to draw and then change the characters background to match the environment character. 
-- [ ] **Add randomness to town location**
-    - [ ] Roads to town can twist and turn to make it to the town. 
-    - [ ] Towns won't lie perfectly up and down from each other. 
-- [ ] **Add compass showing which direction you are going**
-- [ ] **Add compass showing direction of boss in boss quest**
+### Stage 1: Faction and Reputation Foundation (In Progress)
+- [ ] **Create `FACTION_DATA`:** Create a new file, `car/data/factions.py`, to define factions, their Hub City coordinates, and their relationships.
+- [ ] **Update `GameState`:** Replace `town_reputation` with `faction_reputation` in `car/game_state.py`.
+- [ ] **Update World Generation:** Modify `car/world/generation.py` to include a `get_city_faction` function that determines a city's faction based on proximity to a Hub City.
+- [ ] **Update Quest Logic:** Modify the `Quest` class in `car/logic/quests.py` to include `quest_giver_faction` and `target_faction`.
+- [ ] **Update Reputation Gain:** Modify the quest completion logic in `car/logic/quest_logic.py` to correctly increase reputation with the `quest_giver_faction`.
+
+### Stage 2: Conflict and Consequences
+- [ ] **Implement Opposed Quests:** Generate quests that target rival factions based on the `FACTION_DATA` relationships.
+- [ ] **Implement Reputation Loss:** Add logic to handle losing reputation by completing opposed quests or attacking allied units.
+- [ ] **Implement Quest Failure:** Add timers and escape conditions to quests, and apply reputation penalties on failure.
+
+### Stage 3: Dynamic World and Territory Control
+- [ ] **Implement Faction-Based Spawning:** Refactor the `spawn_enemy` logic to change spawn rates and enemy types based on the player's location and faction alignment.
+- [ ] **Implement Territory Takeover:** Create the logic for a faction to take over a rival's Hub City when their reputation with the player drops to zero.
+- [ ] **Implement Win/Lose Conditions:** Define the final win state (chosen faction dominates) and lose state (player is hostile with all factions).
+
+### General Tasks
 - [ ] **Refine weapons:**
     - [ ] Add Car stat for max attachments
     - [ ] Add car stat that is list of attachment points
@@ -159,9 +160,6 @@ The game is built around a central game loop in `car/game.py`. This loop handles
 - [ ] **Implement Weapon Scaling and Modifier System:**
     - [ ] Shops will carry weapons with modifiers based on player level and town reputation.
     - [ ] Enemies and bosses will have a chance to drop weapons with randomly generated modifiers.
-    - [ ] Modifier rarity (e.g., common, rare, legendary) will affect the strength of the stat boosts.
-    - [ ] Modifiers can affect stats like: Damage, Fire Rate, Range, Pellet Count, and Spread Angle.
-    - [ ] The drop chance and quality of modifiers will be influenced by player level, town reputation, and enemy difficulty (e.g., a boss has a higher chance of dropping a rare weapon than a common bandit).
 - [ ] **Show game over dialog with qoute when you die and prompt for new game, load, or quit**
 - [ ] **Combat system** 
     - [ ] For minor enemies open world combat. 

@@ -5,7 +5,7 @@ from ..common.utils import get_car_dimensions
 from .boss import Boss
 from ..ui.notifications import add_notification
 from ..data.game_constants import CITY_SPACING
-from ..world.generation import get_buildings_in_city
+from ..world.generation import get_buildings_in_city, get_city_faction
 
 def handle_quest_interaction(game_state, world, audio_manager):
     """Handles the player's interaction with quest givers (City Hall)."""
@@ -17,7 +17,7 @@ def handle_quest_interaction(game_state, world, audio_manager):
         for building in city_buildings:
             if building['x'] <= game_state.car_world_x < building['x'] + building['w'] and \
                building['y'] <= game_state.car_world_y < building['y'] + building['h']:
-                if building["type"] == "GENERIC" and building["name"] == "City Hall":
+                if building["type"] == "city_hall":
                     quest_key = random.choice(list(QUESTS.keys()))
                     quest_data = QUESTS[quest_key]
                     
@@ -30,9 +30,10 @@ def handle_quest_interaction(game_state, world, audio_manager):
                         description=quest_data["description"],
                         objectives=objectives,
                         rewards=quest_data["rewards"],
-                        city_id=building["city_id"]
+                        city_id=building["city_id"],
+                        quest_giver_faction=get_city_faction(game_state.car_world_x, game_state.car_world_y)
                     )
-                    add_notification(f"New Quest: {game_state.current_quest.name}", color="MENU_HIGHLIGHT")
+                    add_notification(f"New Quest: {game_state.current_quest.name}", "success")
 
                     if "boss" in quest_data:
                         boss_data = quest_data["boss"]
@@ -50,7 +51,7 @@ def handle_quest_interaction(game_state, world, audio_manager):
                             audio_manager.play_music("car/sounds/boss.mid")
                     return True # Quest accepted
     else:
-        add_notification("You already have an active quest.", color="UI_LOCATION")
+        add_notification("You already have an active quest.", "warning")
     return False
 
 def update_quests(game_state, audio_manager):
@@ -67,16 +68,15 @@ def update_quests(game_state, audio_manager):
             game_state.gain_xp(rewards.get("xp", 0))
             game_state.player_cash += rewards.get("cash", 0)
             
-            # Increase town reputation
-            if game_state.current_quest.city_id:
-                if game_state.current_quest.city_id not in game_state.town_reputation:
-                    game_state.town_reputation[game_state.current_quest.city_id] = 0
-                game_state.town_reputation[game_state.current_quest.city_id] += 10
+            # Increase faction reputation
+            if game_state.current_quest.quest_giver_faction:
+                faction_id = game_state.current_quest.quest_giver_faction
+                if faction_id not in game_state.faction_reputation:
+                    game_state.faction_reputation[faction_id] = 0
+                game_state.faction_reputation[faction_id] += 10
+                add_notification(f"Reputation with {faction_id.replace('_', ' ').title()} increased!", "success")
 
-            add_notification(f"Quest Complete: {game_state.current_quest.name}", color="MENU_HIGHLIGHT")
-            from ..ui.cutscene import play_cutscene
-            # This is a temporary solution, we should have a better way to do this
-            # play_cutscene(stdscr, [[f"Quest Complete!"]], 1)
+            add_notification(f"Quest Complete: {game_state.current_quest.name}", "success")
             game_state.current_quest = None
             audio_manager.stop_music()
             audio_manager.play_music("car/sounds/world.mid")
