@@ -131,25 +131,33 @@ The game is built around a central game loop in `car/game.py`. This loop handles
     - **`car/ui/cutscene.py`:** Manages **blocking, full-screen cinematic events**. This module is responsible for scenes that take over the entire screen and pause gameplay, such as the "Game Over" sequence or future narrative events.
     - **`car/ui/entity_modal.py`:** Handles the **persistent, non-blocking entity display**. This is a core HUD element that dynamically shows information about the closest enemy or boss during live gameplay. It also contains the logic for playing entity-specific animations, like explosions, within its modal window, ensuring that all aspects of an entity's dynamic visualization are handled in one place.
 
+- **Faction and Reputation System:** The game features a dynamic faction and reputation system that influences gameplay and world state.
+    - **Hub Cities and Factions:** The world is anchored by a few non-procedural **Hub Cities**, each serving as the capital for a specific **Faction**. The rest of the world is procedurally generated, with territory control determined by proximity to the nearest Hub City.
+    - **Reputation:** The player's reputation with each faction is tracked in the `GameState`. Reputation is gained by completing quests for a faction and lost by completing quests against them or attacking their units.
+    - **Dynamic Quests:** Quests are dynamically generated based on faction relationships. Faction leaders in Hub Cities offer quests that target their rivals, creating a system of conflict and consequence.
+    - **Faction-Based Spawning:** Enemy spawn rates and types are determined by the player's location and their reputation with the controlling faction. Allied territory is safer, while hostile territory is more dangerous and populated with that faction's specific units.
+    - **Territory Control:** If a player's actions cause a faction's reputation to drop to zero, the faction with the highest player reputation will take over the defeated faction's Hub City, altering the game world.
+    - **Win/Loss Conditions:** The game has clear win/loss states based on the faction system. A player can win by helping their chosen faction achieve total domination or lose by becoming an enemy to all factions.
+
 
 ## Tasks
 
-### Stage 1: Faction and Reputation Foundation (In Progress)
-- [ ] **Create `FACTION_DATA`:** Create a new file, `car/data/factions.py`, to define factions, their Hub City coordinates, and their relationships.
-- [ ] **Update `GameState`:** Replace `town_reputation` with `faction_reputation` in `car/game_state.py`.
-- [ ] **Update World Generation:** Modify `car/world/generation.py` to include a `get_city_faction` function that determines a city's faction based on proximity to a Hub City.
-- [ ] **Update Quest Logic:** Modify the `Quest` class in `car/logic/quests.py` to include `quest_giver_faction` and `target_faction`.
-- [ ] **Update Reputation Gain:** Modify the quest completion logic in `car/logic/quest_logic.py` to correctly increase reputation with the `quest_giver_faction`.
+### Stage 1: Faction and Reputation Foundation (Completed)
+- [x] **Create `FACTION_DATA`:** Create a new file, `car/data/factions.py`, to define factions, their Hub City coordinates, and their relationships.
+- [x] **Update `GameState`:** Replace `town_reputation` with `faction_reputation` in `car/game_state.py`.
+- [x] **Update World Generation:** Modify `car/world/generation.py` to include a `get_city_faction` function that determines a city's faction based on proximity to a Hub City.
+- [x] **Update Quest Logic:** Modify the `Quest` class in `car/logic/quests.py` to include `quest_giver_faction` and `target_faction`.
+- [x] **Update Reputation Gain:** Modify the quest completion logic in `car/logic/quest_logic.py` to correctly increase reputation with the `quest_giver_faction`.
 
-### Stage 2: Conflict and Consequences
-- [ ] **Implement Opposed Quests:** Generate quests that target rival factions based on the `FACTION_DATA` relationships.
-- [ ] **Implement Reputation Loss:** Add logic to handle losing reputation by completing opposed quests or attacking allied units.
-- [ ] **Implement Quest Failure:** Add timers and escape conditions to quests, and apply reputation penalties on failure.
+### Stage 2: Conflict and Consequences (Completed)
+- [x] **Implement Opposed Quests:** Generate quests that target rival factions based on the `FACTION_DATA` relationships.
+- [x] **Implement Reputation Loss:** Add logic to handle losing reputation by completing opposed quests or attacking allied units.
+- [x] **Implement Quest Failure:** Add timers and escape conditions to quests, and apply reputation penalties on failure.
 
-### Stage 3: Dynamic World and Territory Control
-- [ ] **Implement Faction-Based Spawning:** Refactor the `spawn_enemy` logic to change spawn rates and enemy types based on the player's location and faction alignment.
-- [ ] **Implement Territory Takeover:** Create the logic for a faction to take over a rival's Hub City when their reputation with the player drops to zero.
-- [ ] **Implement Win/Lose Conditions:** Define the final win state (chosen faction dominates) and lose state (player is hostile with all factions).
+### Stage 3: Dynamic World and Territory Control (Completed)
+- [x] **Implement Faction-Based Spawning:** Refactor the `spawn_enemy` logic to change spawn rates and enemy types based on the player's location and faction alignment.
+- [x] **Implement Territory Takeover:** Create the logic for a faction to take over a rival's Hub City when their reputation with the player drops to zero.
+- [x] **Implement Win/Lose Conditions:** Define the final win state (chosen faction dominates) and lose state (player is hostile with all factions).
 
 ### General Tasks
 - [ ] **Refine weapons:**
