@@ -166,30 +166,3 @@ The game is built around a central game loop in `car/game.py`. This loop handles
 
 ## Roadmap
 
-1.  **Main Menu:** Implemented the initial screen with "New Game," "Load Game," and "Quit" options.
-2.  **Save/Load:** Implemented the ability to save and load game progress using `pickle`.
-3.  **New Game Flow:**
-    -   **Car Selection Screen:**
-        -   Displayed a list of available starting cars with their stats.
-        -   Allowed the player to select their car, color, difficulty, and initial weapon.
-    -   Transitioned to the main game loop.
-4.  **Load Game Flow:**
-    -   Displayed a list of saved game files.
-    -   On selection, loaded the game state and transitioned to the main game loop.
-5.  **Initial Game World & Core Gameplay:**
-    -   Generated the starting area of the world and placed the player.
-    -   Implemented driving, combat, progression, and resource management basics.
-6.  **In-Game UI:**
-    -   Developed the tab-based inventory and management menu.
-    -   Developed the escape-key pause menu.
-    -   Developed the shop menu.
-7.  **Content Expansion:**
-    -   Added quests, NPCs, and fauna.
-    -   Expanded the variety of cars, weapons, and attachments.
-    -   Fleshed out the economy with more shops and items.
-8.  **Visual Polish:**
-    -   Allowed the player to select their car's color.
-    -   Improved the rendering of entities to blend with the environment.
-    -   Added a cutscene system for events like explosions, deaths, and NPC interactions.
-    -   Added a boss system with a compass pointer and on-screen health bar.
-

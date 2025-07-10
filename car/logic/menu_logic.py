@@ -3,6 +3,7 @@ import time
 from ..data.weapons import WEAPONS_DATA
 from ..world.generation import get_city_name
 from ..ui.inventory import draw_inventory_menu
+from ..data.game_constants import CITY_SPACING
 
 def handle_menu(stdscr, game_state, color_pair_map):
     """Handles all logic for the inventory menu."""
@@ -75,8 +76,8 @@ def handle_menu(stdscr, game_state, color_pair_map):
     game_state.selected_car_data["weapons_data"] = WEAPONS_DATA
     game_state.selected_car_data["menu_art"] = game_state.all_car_art[0]
     
-    grid_x = round(game_state.car_world_x / game_state.city_spacing)
-    grid_y = round(game_state.car_world_y / game_state.city_spacing)
+    grid_x = round(game_state.car_world_x / CITY_SPACING)
+    grid_y = round(game_state.car_world_y / CITY_SPACING)
     loc_desc_ui = get_city_name(grid_x, grid_y)
     
     game_menu_win = draw_inventory_menu(stdscr, game_state.selected_car_data, car_stats_for_menu, loc_desc_ui, game_state.frame, current_selection, color_pair_map)
