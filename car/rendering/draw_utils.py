@@ -1,6 +1,6 @@
 import curses
 
-def draw_sprite(stdscr, y, x, art, color_pair_num, attributes=0, transparent_bg=False, bg_char=None):
+def draw_sprite(stdscr, y, x, art, color_pair_num, attributes=0, transparent_bg=False):
     """Draws the specified ASCII art at the given screen coordinates with color and attributes."""
     h, w = stdscr.getmaxyx()
     
@@ -19,13 +19,25 @@ def draw_sprite(stdscr, y, x, art, color_pair_num, attributes=0, transparent_bg=
 
             try:
                 if transparent_bg:
-                    if bg_char is not None:
-                        bg_char_and_attr = bg_char
-                    else:
-                        bg_char_and_attr = stdscr.inch(draw_y, draw_x)
+                    bg_char_and_attr = stdscr.inch(draw_y, draw_x)
                     bg_attr = bg_char_and_attr & (curses.A_ATTRIBUTES | curses.A_COLOR)
                     
-                    final_attr = bg_attr | attributes | curses.color_pair(color_pair_num)
+                    # Extract foreground color from the provided color_pair_num
+                    fg_color, _ = curses.pair_content(color_pair_num)
+                    
+                    # Create a new color pair with the original foreground and the new background
+                    # This assumes we have a free color pair to use. A more robust solution
+                    # would be to manage a pool of temporary color pairs.
+                    # For now, we'll use a hardcoded temporary pair number.
+                    temp_pair_num = 255 # Assuming this is a safe, unused pair number
+                    
+                    # Get the background color from the bg_attr
+                    bg_color_pair_num = bg_attr & curses.A_COLOR
+                    _, bg_color = curses.pair_content(bg_color_pair_num)
+
+                    curses.init_pair(temp_pair_num, fg_color, bg_color)
+                    
+                    final_attr = attributes | curses.color_pair(temp_pair_num)
                     stdscr.addch(draw_y, draw_x, char, final_attr)
                 else:
                     color_attr = curses.color_pair(color_pair_num) if curses.has_colors() else 0

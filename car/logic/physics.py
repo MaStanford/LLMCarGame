@@ -100,6 +100,7 @@ def update_physics_and_collisions(game_state, world, audio_manager, stdscr, colo
 
     particles_to_remove = []
     obstacles_hit_by_projectiles = {}
+    enemies_hit_by_projectiles = {}
     bosses_hit_by_projectiles = {}
     for i, p_state in enumerate(game_state.active_particles):
         p_x, p_y, p_angle, p_speed, p_power, p_range_left, p_char = p_state
@@ -115,6 +116,15 @@ def update_physics_and_collisions(game_state, world, audio_manager, stdscr, colo
             ox, oy, _, oh, ow, _, _, _, odur = obs_state
             if (ox <= p_x < ox + ow and oy <= p_y < oy + oh):
                 obstacles_hit_by_projectiles[obs_id] = obstacles_hit_by_projectiles.get(obs_id, 0) + p_power
+                audio_manager.play_sfx("enemy_hit")
+                particles_to_remove.append(i)
+                collided = True
+                break
+        if collided: continue
+        for enemy_id, enemy_state in game_state.active_enemies.items():
+            ex, ey, _, eh, ew, _, _, _, edur = enemy_state
+            if (ex <= p_x < ex + ew and ey <= p_y < ey + eh):
+                enemies_hit_by_projectiles[enemy_id] = enemies_hit_by_projectiles.get(enemy_id, 0) + p_power
                 audio_manager.play_sfx("enemy_hit")
                 particles_to_remove.append(i)
                 collided = True
@@ -163,6 +173,13 @@ def update_physics_and_collisions(game_state, world, audio_manager, stdscr, colo
                 play_explosion_in_modal(stdscr, boss.art, color_pair_map)
                 del game_state.active_bosses[boss_id]
 
+    enemy_ids_to_remove = []
+    for enemy_id, damage in enemies_hit_by_projectiles.items():
+        if enemy_id in game_state.active_enemies:
+            game_state.active_enemies[enemy_id][8] -= damage
+            if game_state.active_enemies[enemy_id][8] <= 0:
+                enemy_ids_to_remove.append(enemy_id)
+
     obstacle_ids_to_remove = []
     pickups_to_spawn = []
     xp_gained_this_frame = 0
@@ -203,9 +220,10 @@ def update_physics_and_collisions(game_state, world, audio_manager, stdscr, colo
     if xp_gained_this_frame > 0:
         game_state.gain_xp(xp_gained_this_frame)
 
-    for obs_id in obstacle_ids_to_remove:
-        if obs_id in game_state.active_obstacles:
-            del game_state.active_obstacles[obs_id]
+    for enemy_id in enemy_ids_to_remove:
+        if enemy_id in game_state.active_enemies:
+            del game_state.active_enemies[enemy_id]
+
     unique_indices = sorted(list(set(particles_to_remove)), reverse=True)
     for i in unique_indices:
         if i < len(game_state.active_particles):

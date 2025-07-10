@@ -109,8 +109,7 @@ def render_game(stdscr, game_state, world, color_pair_map):
     current_art = game_state.all_car_art[dir_idx]
     car_sx = w / 2 - game_state.car_width / 2
     car_sy = h / 2 - game_state.car_height / 2
-    bg_char = stdscr.inch(int(car_sy + game_state.car_height / 2), int(car_sx + game_state.car_width / 2))
-    draw_sprite(stdscr, car_sy, car_sx, current_art, game_state.car_color_pair_num, transparent_bg=True, bg_char=bg_char)
+    draw_sprite(stdscr, car_sy, car_sx, current_art, game_state.car_color_pair_num, transparent_bg=True)
 
     # Render mounted weapons
     for point_name, wep_key in game_state.mounted_weapons.items():
@@ -125,7 +124,7 @@ def render_game(stdscr, game_state, world, color_pair_map):
                 rotated_offset_y = offset_x * math.sin(game_state.car_angle) + offset_y * math.cos(game_state.car_angle)
                 wep_sx = car_sx + game_state.car_width / 2 + rotated_offset_x
                 wep_sy = car_sy + game_state.car_height / 2 + rotated_offset_y
-                draw_sprite(stdscr, wep_sy, wep_sx, wep_art, game_state.car_color_pair_num, transparent_bg=True, bg_char=bg_char)
+                draw_sprite(stdscr, wep_sy, wep_sx, wep_art, game_state.car_color_pair_num, transparent_bg=True)
 
     # Render UI
     render_ui(stdscr, game_state, color_pair_map)
