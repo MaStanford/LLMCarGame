@@ -44,7 +44,7 @@ class SurvivalObjective(Objective):
             self.completed = True
 
 class Quest:
-    def __init__(self, name, description, objectives, rewards, city_id=None, quest_giver_faction=None, target_faction=None):
+    def __init__(self, name, description, objectives, rewards, city_id=None, quest_giver_faction=None, target_faction=None, time_limit=None):
         self.name = name
         self.description = description
         self.objectives = objectives
@@ -52,9 +52,17 @@ class Quest:
         self.city_id = city_id
         self.quest_giver_faction = quest_giver_faction
         self.target_faction = target_faction
+        self.time_limit = time_limit
         self.completed = False
+        self.failed = False
 
     def update(self, game_state):
+        if self.time_limit is not None:
+            self.time_limit -= 1
+            if self.time_limit <= 0:
+                self.failed = True
+                return
+
         all_completed = True
         for objective in self.objectives:
             objective.update(game_state)
@@ -62,54 +70,49 @@ class Quest:
                 all_completed = False
         self.completed = all_completed
 
-# --- Quest Definitions ---
-QUESTS = {
-    "kill_rick": {
-        "name": "Bounty: 'Road Rash' Rick",
-        "description": "A notorious bandit named 'Road Rash' Rick has been terrorizing the area. Hunt him down and destroy his vehicle.",
+# --- Quest Templates ---
+QUEST_TEMPLATES = {
+    "raid_convoy": {
+        "name": "Raid Convoy: {target_faction_name}",
+        "description": "The {quest_giver_faction_name} wants you to disrupt a supply convoy from the {target_faction_name}. Destroy 5 of their transport vehicles.",
         "objectives": [
-            (KillBossObjective, ["boss_rick"]),
+            (KillCountObjective, [5]),
+        ],
+        "rewards": {
+            "xp": 750,
+            "cash": 300,
+        },
+        "time_limit": 3600 # 2 minutes
+    },
+    "assassinate_rival": {
+        "name": "Assassinate: {target_faction_name} Captain",
+        "description": "Take out a high-value target from the {target_faction_name}. They are leading a patrol in this sector.",
+        "objectives": [
+            (KillBossObjective, ["faction_captain"]),
+        ],
+        "rewards": {
+            "xp": 1200,
+            "cash": 600,
+        },
+        "boss": {
+            "name": "{target_faction_name} Captain",
+            "car": "muscle_car",
+            "hp_multiplier": 2.5,
+            "damage_multiplier": 1.8,
+            "xp_value": 600,
+            "cash_value": 300,
+        },
+        "time_limit": 4800 # 2.6 minutes
+    },
+    "defend_outpost": {
+        "name": "Defend Outpost from {target_faction_name}",
+        "description": "An outpost is under attack from the {target_faction_name}. Hold them off until reinforcements arrive.",
+        "objectives": [
+            (SurvivalObjective, [3000, "rival_lieutenant"]), # 150 seconds
         ],
         "rewards": {
             "xp": 1000,
             "cash": 500,
-        },
-        "boss": {
-            "name": "'Road Rash' Rick",
-            "car": "hotrod", # Uses a car from CARS_DATA
-            "hp_multiplier": 2.0,
-            "damage_multiplier": 1.5,
-            "xp_value": 500,
-            "cash_value": 250,
-            "art": [
-                r"   ______   ",
-                r"  / _  _ \  ",
-                r" |(o)(o)| ",
-                r" |  \/  | ",
-                r"  \____/  ",
-            ]
-        }
-    },
-    "clear_the_road": {
-        "name": "Clear the Road",
-        "description": "Bandits have been blocking a key trade route. Clear out 10 of them to make it safe again.",
-        "objectives": [
-            (KillCountObjective, [10]),
-        ],
-        "rewards": {
-            "xp": 500,
-            "cash": 250,
-        }
-    },
-    "survive_the_onslaught": {
-        "name": "Survive the Onslaught",
-        "description": "A rival gang is trying to take over your turf. Survive their initial assault and then take out their leader.",
-        "objectives": [
-            (SurvivalObjective, [3000, "mini_boss_brute"]), # 50ms * 3000 = 150 seconds
-        ],
-        "rewards": {
-            "xp": 1500,
-            "cash": 750,
         }
     }
 }

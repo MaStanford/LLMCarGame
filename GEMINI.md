@@ -162,12 +162,13 @@ The game is built around a central game loop in `car/game.py`. This loop handles
     - [ ] Enemies and bosses will have a chance to drop weapons with randomly generated modifiers.
 - [ ] **Show game over dialog with qoute when you die and prompt for new game, load, or quit**
 - [ ] **Combat system** 
-    - [ ] For minor enemies open world combat. 
+    - [ ] For minor enemies open world combat. Running away just means getting out of aggro range. 
     - [ ] For major enemioes, combat system modal when in range, short range like pokemon battles. 
         - [ ] Phase based combat
         - [ ] Enemy dialog in phases
         - [ ] Enemy tactic and weapon changes in phases
         - [ ] Phases based off enemy health, or player health, or time or other factors
+        - [ ] You can try to run, failing quest if in a quest, but otherwise surviving. 
 
 
 ## Completed Tasks
