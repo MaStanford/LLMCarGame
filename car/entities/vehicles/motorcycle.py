@@ -65,3 +65,4 @@ class Motorcycle(PlayerCar):
         self.default_weapons = {
             "handlebar_gun": "wep_pistol"
         }
+        self.max_attachments = 2

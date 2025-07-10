@@ -1,11 +1,12 @@
 from ..entities.weapon import Weapon
+from ..ui.mechanic_shop import draw_attachment_management_menu
 
 class Shop:
     def __init__(self, name, inventory):
         self.name = name
         self.inventory = inventory
 
-    def buy(self, item_info, game_state, world):
+    def buy(self, item_info, game_state, world, stdscr, color_map):
         """
         Handles the purchase of an item.
         item_info (dict): Contains item details like name, type, price.
@@ -40,12 +41,16 @@ class Shop:
                 game_state.ammo_counts[ammo_type] += amount
                 return True
         elif item_type == "weapon":
-            # Assuming the item_info contains the necessary details to create a Weapon instance
-            # This part might need adjustment based on how weapons are defined and stored
             game_state.player_cash -= price
             weapon_id = item_info.get("weapon_id")
             if weapon_id:
                 game_state.player_inventory.append(Weapon(weapon_id))
+            return True
+        elif item_type == "purchase_attachment":
+            draw_attachment_management_menu(stdscr, game_state, color_map, "purchase")
+            return True
+        elif item_type == "upgrade_attachment":
+            draw_attachment_management_menu(stdscr, game_state, color_map, "upgrade")
             return True
         
         return False

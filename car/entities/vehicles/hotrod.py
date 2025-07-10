@@ -68,3 +68,4 @@ class Hotrod(PlayerCar):
         self.default_weapons = {
             "engine_gun": "wep_flamethrower"
         }
+        self.max_attachments = 3

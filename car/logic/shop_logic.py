@@ -56,7 +56,7 @@ def handle_shop_interaction(stdscr, game_state, world, color_pair_map):
                             if active_list == "shop":
                                 if shop.inventory:
                                     item_to_buy = shop.inventory[selected_item_index]
-                                    shop.buy(item_to_buy, game_state, world)
+                                    shop.buy(item_to_buy, game_state, world, stdscr, color_pair_map)
                             else:
                                 if game_state.player_inventory:
                                     item_to_sell = game_state.player_inventory[selected_item_index]

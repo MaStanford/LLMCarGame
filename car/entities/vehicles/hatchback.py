@@ -65,6 +65,7 @@ class Hatchback(PlayerCar):
                 "hatch_gun": {"level": "medium", "offset_x": 0, "offset_y": 2}
             }
         )
+        self.max_attachments = 4
         self.default_weapons = {
             "hatch_gun": "wep_shotgun"
         }
