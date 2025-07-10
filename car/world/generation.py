@@ -1,5 +1,6 @@
 import random
 import string
+import math
 from ..data.game_constants import (
     CITY_SPACING, CITY_SIZE, MIN_BUILDINGS_PER_CITY, MAX_BUILDINGS_PER_CITY,
     MIN_BUILDING_DIM, MAX_BUILDING_DIM, ROAD_WIDTH, BUILDING_SHOP_BUFFER
@@ -8,12 +9,29 @@ from ..data.cosmetics import BUILDING_NAME_CHARS
 from ..data.buildings import BUILDING_DATA
 from ..data.shops import SHOP_DATA
 from ..data.terrain import TERRAIN_DATA
+from ..data.factions import FACTION_DATA
 
 # Cache for building layouts to avoid regenerating every frame
 building_cache = {}
 
+def get_city_faction(x, y):
+    """Determines the faction for a given world coordinate."""
+    closest_faction = None
+    min_dist = float('inf')
+    for faction_id, faction_info in FACTION_DATA.items():
+        hub_x, hub_y = faction_info["hub_city_coordinates"]
+        dist = math.sqrt((x - hub_x * CITY_SPACING)**2 + (y - hub_y * CITY_SPACING)**2)
+        if dist < min_dist:
+            min_dist = dist
+            closest_faction = faction_id
+    return closest_faction
+
 def get_city_name(grid_x, grid_y):
     """Generates a city name based on grid coordinates."""
+    for faction_id, faction_info in FACTION_DATA.items():
+        if (grid_x, grid_y) == faction_info["hub_city_coordinates"]:
+            return faction_info["name"]
+
     name = ""
     index = abs(grid_x * 31 + grid_y * 17 + (grid_x ^ grid_y))
     if index == 0: return "City Prime"
