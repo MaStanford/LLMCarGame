@@ -53,7 +53,9 @@ def handle_input(stdscr, game_state):
             actions["brake"] = True
 
     if 9 in keys: # TAB
-        actions["toggle_menu"] = True
+        if game_state.menu_toggle_cooldown == 0:
+            actions["toggle_menu"] = True
+            game_state.menu_toggle_cooldown = 5 # 5 frames cooldown
     
     if 27 in keys: # ESC
         if game_state.menu_open:

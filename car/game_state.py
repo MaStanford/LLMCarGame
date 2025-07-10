@@ -6,13 +6,16 @@ from .logic.entity_loader import PLAYER_CARS
 from .data import *
 
 class GameState:
-    def __init__(self, selected_car_index, difficulty, difficulty_mods, car_color_names, car_color_pair_num):
+    def __init__(self, selected_car_index, difficulty, difficulty_mods, car_color_names, car_color_pair_num, player_cash=300):
         # --- Game Configuration ---
         self.selected_car_index = selected_car_index
         self.difficulty = difficulty
         self.difficulty_mods = difficulty_mods
         self.car_color_names = car_color_names
         self.car_color_pair_num = car_color_pair_num
+        
+        # --- Player State ---
+        self.player_cash = player_cash
         
         # --- Player Car ---
         car_class = PLAYER_CARS[self.selected_car_index]
@@ -96,9 +99,11 @@ class GameState:
         
         # --- Quest State ---
         self.current_quest = None
+        self.town_reputation = {}
 
         # --- UI and Game Flow State ---
         self.shop_cooldown = 0
+        self.menu_toggle_cooldown = 0
         self.game_over = False
         self.game_over_message = ""
         self.menu_open = False
@@ -106,6 +111,7 @@ class GameState:
         self.frame = 0
         self.menu_selected_section_idx = 0
         self.menu_selected_item_idx = 0
+        self.menu_preview_angle = 0.0
         self.spawn_radius = 0
         self.despawn_radius = 0
         self.screen_width = 0

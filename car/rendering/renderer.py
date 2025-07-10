@@ -3,11 +3,11 @@ import math
 from .draw_utils import draw_sprite, draw_line
 from ..data.game_constants import CITY_SPACING, CITY_SIZE
 from ..world.generation import get_buildings_in_city, get_city_name
-from ..data.shops import SHOP_DATA
 from ..data.cosmetics import BUILDING_OUTLINE
 from ..data.weapons import WEAPONS_DATA
 from ..data.obstacles import OBSTACLE_DATA
 from ..logic.quests import KillBossObjective
+from ..data.buildings import BUILDING_DATA
 
 
 def render_game(stdscr, game_state, world, color_pair_map):
@@ -45,14 +45,14 @@ def render_game(stdscr, game_state, world, color_pair_map):
                 b_screen_x = b["x"] - world_start_x
                 b_screen_y = b["y"] - world_start_y
                 if b_screen_x + b["w"] > 0 and b_screen_x < w and b_screen_y + b["h"] > 0 and b_screen_y < h:
-                    if b.get("type") == "GENERIC":
+                    b_data = BUILDING_DATA.get(b.get("type"))
+                    if b_data:
+                        b_art = b_data["art"]
+                        b_cname = b_data["color_pair_name"]
+                        b_cnum = color_pair_map.get(b_cname, 0)
+                        draw_sprite(stdscr, b_screen_y, b_screen_x, b_art, b_cnum)
+                    else:
                         draw_building_outline(stdscr, b_screen_x, b_screen_y, b["w"], b["h"], b.get("name", ""), color_pair_map)
-                    elif b.get("type") in SHOP_DATA:
-                        sinfo = SHOP_DATA[b["type"]]
-                        sart = sinfo["art"]
-                        scname = sinfo["color_pair_name"]
-                        scnum = color_pair_map.get(scname, 0)
-                        draw_sprite(stdscr, b_screen_y, b_screen_x, sart, scnum)
 
     # Render entities
     for entity in game_state.all_entities:

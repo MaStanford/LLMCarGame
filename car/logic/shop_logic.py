@@ -1,8 +1,9 @@
 import curses
 from .shop import Shop
-from ..data.shops import SHOP_DATA
+from ..data.buildings import BUILDING_DATA
 from ..data.game_constants import CITY_SPACING
 from ..world.generation import get_buildings_in_city
+from .inventory_generation import generate_inventory
 
 def handle_shop_interaction(stdscr, game_state, world, color_pair_map):
     """Handles the player's interaction with shops."""
@@ -15,9 +16,10 @@ def handle_shop_interaction(stdscr, game_state, world, color_pair_map):
             if building['x'] <= game_state.car_world_x < building['x'] + building['w'] and \
                building['y'] <= game_state.car_world_y < building['y'] + building['h']:
                 
-                if building["type"] in SHOP_DATA:
-                    shop_data = SHOP_DATA[building["type"]]
-                    shop = Shop(shop_data["name"], shop_data["inventory"])
+                building_data = BUILDING_DATA.get(building["type"])
+                if building_data and "shop_type" in building_data:
+                    shop_inventory = generate_inventory(building_data["shop_type"], game_state.player_level, game_state.town_reputation.get(building["city_id"], 0))
+                    shop = Shop(building_data["name"], shop_inventory)
                     selected_item_index = 0
                     active_list = "shop"
                     
@@ -52,15 +54,13 @@ def handle_shop_interaction(stdscr, game_state, world, color_pair_map):
                             selected_item_index = 0
                         elif key == curses.KEY_ENTER or key in [10, 13]:
                             if active_list == "shop":
-                                item_to_buy = shop.inventory[selected_item_index]
-                                if game_state.player_cash >= item_to_buy["price"]:
-                                    game_state.player_cash -= item_to_buy["price"]
-                                    game_state.player_inventory.append({"type": "item", "name": item_to_buy["item"]})
+                                if shop.inventory:
+                                    item_to_buy = shop.inventory[selected_item_index]
+                                    shop.buy(item_to_buy, game_state, world)
                             else:
                                 if game_state.player_inventory:
                                     item_to_sell = game_state.player_inventory[selected_item_index]
-                                    game_state.player_cash += item_to_sell.get("price", 0)
-                                    game_state.player_inventory.pop(selected_item_index)
+                                    shop.sell(item_to_sell, game_state, world)
                         elif key == 27: # ESC
                             game_state.shop_cooldown = 100
                             break

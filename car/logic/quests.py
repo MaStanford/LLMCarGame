@@ -44,11 +44,12 @@ class SurvivalObjective(Objective):
             self.completed = True
 
 class Quest:
-    def __init__(self, name, description, objectives, rewards):
+    def __init__(self, name, description, objectives, rewards, city_id=None):
         self.name = name
         self.description = description
         self.objectives = objectives
         self.rewards = rewards
+        self.city_id = city_id
         self.completed = False
 
     def update(self, game_state):

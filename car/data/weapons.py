@@ -4,19 +4,19 @@ from .game_constants import FLAME_CHAR
 # --- Weapon Definitions ---
 WEAPONS_DATA = {
     "wep_lmg": {
-        "id": "wep_lmg", "name": "LMG", "slots": 1, "fire_rate": 5, "power": 3, "range": 40, "speed": 1.5, "ammo_type": AMMO_BULLET, "particle": "¤", "price": 500,
+        "id": "wep_lmg", "name": "LMG", "slots": 1, "fire_rate": 5, "power": 5, "range": 40, "speed": 1.5, "ammo_type": AMMO_BULLET, "particle": "¤", "price": 500,
         "art": {
             "N": ["-"], "NE": ["/"], "E": ["|"], "SE": ["\\"], "S": ["-"], "SW": ["/"], "W": ["|"], "NW": ["\\"]
         }
     },
     "wep_hmg": {
-        "id": "wep_hmg", "name": "HMG", "slots": 2, "fire_rate": 10, "power": 8, "range": 60, "speed": 2.0, "ammo_type": AMMO_HEAVY_BULLET, "particle": "●", "price": 1500,
+        "id": "wep_hmg", "name": "HMG", "slots": 2, "fire_rate": 10, "power": 15, "range": 60, "speed": 2.0, "ammo_type": AMMO_HEAVY_BULLET, "particle": "●", "price": 1500,
         "art": {
             "N": ["="], "NE": ["//"], "E": ["||"], "SE": ["\\\\"], "S": ["="], "SW": ["//"], "W": ["||"], "NW": ["\\\\"]
         }
     },
     "wep_flamethrower": {
-        "id": "wep_flamethrower", "name": "Flamethrower", "slots": 3, "fire_rate": 2, "power": 5, "range": 15, "speed": 1.0, "ammo_type": AMMO_FUEL, "particle": FLAME_CHAR, "price": 2500,
+        "id": "wep_flamethrower", "name": "Flamethrower", "slots": 3, "fire_rate": 2, "power": 10, "range": 15, "speed": 1.0, "ammo_type": AMMO_FUEL, "particle": FLAME_CHAR, "price": 2500,
         "art": {
             "N": ["{"], "NE": ["{"], "E": ["{"], "SE": ["{"], "S": ["}"], "SW": ["}"], "W": ["}"], "NW": ["}"]
         }
@@ -34,7 +34,7 @@ WEAPONS_DATA = {
         }
     },
     "wep_shotgun": {
-        "id": "wep_shotgun", "name": "Shotgun", "slots": 2, "fire_rate": 15, "power": 1, "range": 20, "speed": 1.8, "ammo_type": AMMO_BULLET, "particle": "o", "price": 750,
+        "id": "wep_shotgun", "name": "Shotgun", "slots": 2, "fire_rate": 15, "power": 5, "range": 20, "speed": 1.8, "ammo_type": AMMO_BULLET, "particle": "o", "price": 750,
         "pellet_count": 5, "spread_angle": 0.5,
         "art": {
             "N": ["<"], "NE": ["<"], "E": ["<"], "SE": ["<"], "S": [">"], "SW": [">"], "W": [">"], "NW": [">"]

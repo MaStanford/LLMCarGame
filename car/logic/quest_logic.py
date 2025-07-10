@@ -29,7 +29,8 @@ def handle_quest_interaction(game_state, world, audio_manager):
                         name=quest_data["name"],
                         description=quest_data["description"],
                         objectives=objectives,
-                        rewards=quest_data["rewards"]
+                        rewards=quest_data["rewards"],
+                        city_id=building["city_id"]
                     )
                     add_notification(f"New Quest: {game_state.current_quest.name}", color="MENU_HIGHLIGHT")
 
@@ -65,6 +66,13 @@ def update_quests(game_state, audio_manager):
             rewards = game_state.current_quest.rewards
             game_state.gain_xp(rewards.get("xp", 0))
             game_state.player_cash += rewards.get("cash", 0)
+            
+            # Increase town reputation
+            if game_state.current_quest.city_id:
+                if game_state.current_quest.city_id not in game_state.town_reputation:
+                    game_state.town_reputation[game_state.current_quest.city_id] = 0
+                game_state.town_reputation[game_state.current_quest.city_id] += 10
+
             add_notification(f"Quest Complete: {game_state.current_quest.name}", color="MENU_HIGHLIGHT")
             from ..ui.cutscene import play_cutscene
             # This is a temporary solution, we should have a better way to do this

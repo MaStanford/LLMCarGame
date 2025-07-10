@@ -59,3 +59,7 @@ class Weapon:
     @property
     def speed(self):
         return self.base_stats["speed"]
+
+    @property
+    def slots(self):
+        return self.base_stats["slots"]

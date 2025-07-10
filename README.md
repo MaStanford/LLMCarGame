@@ -14,8 +14,9 @@ Welcome to Car, a terminal-based, open-world, automotive RPG survival game. Play
     -   **Durability:** Damage accumulates from combat and collisions, repaired at mechanic shops.
     -   **Fuel:** Consumed while driving, refilled at gas stations.
     -   **Ammo:** Required for weapons, purchased at weapon shops.
--   **Quests:** Accept quests from NPCs in cities to earn rewards.
--   **Boss Fights:** Battle powerful bosses with unique vehicles and abilities. Track them down using the compass and take them out to complete quests.
+-   **Town Reputation:** Completing quests increases your reputation in a town, which affects shop prices and the quality of loot drops.
+-   **Quests:** Accept quests from the Town Hall in cities. There are three types of quests: kill a certain number of enemies, survive for a certain amount of time, or kill a powerful boss.
+-   **Weapon Modifiers:** Weapons can have modifiers that affect their stats, such as damage, fire rate, and range. These can be found as loot or purchased from shops.
 
 ## How to Play
 
@@ -29,6 +30,7 @@ Welcome to Car, a terminal-based, open-world, automotive RPG survival game. Play
 -   **Python 3:** The game is written in Python 3.
 -   **curses:** The game uses the `curses` library for rendering. This is included with Python on Linux and macOS, but requires a separate installation on Windows.
 -   **pygame:** The game uses the `pygame` library for audio.
+-   **fluidsynth:** The game uses `fluidsynth` for MIDI audio.
 
 ## Installation and Running the Game
 
@@ -39,8 +41,9 @@ Welcome to Car, a terminal-based, open-world, automotive RPG survival game. Play
     ```
     pip install -r requirements.txt
     ```
-3.  **Download SoundFont:** Download the `GeneralUser_GS_v1.471.sf2` SoundFont from [this link](https://www.schristiancollins.com/soundfonts.php) and place it in the `car/sounds` directory.
-4.  **Run the game:** Open a command prompt, navigate to the project's root directory, and run the following command:
+3.  **Install FluidSynth:** Download and install FluidSynth from the [official FluidSynth website](https://www.fluidsynth.org/downloads/).
+4.  **Download SoundFont:** Download the `GeneralUser_GS_v1.471.sf2` SoundFont from [this link](https://www.schristiancollins.com/soundfonts.php) and place it in the `car/sounds` directory.
+5.  **Run the game:** Open a command prompt, navigate to the project's root directory, and run the following command:
     ```
     run_game.bat
     ```
@@ -57,16 +60,25 @@ Welcome to Car, a terminal-based, open-world, automotive RPG survival game. Play
         sudo apt-get update
         sudo apt-get install python3 python3-pip
         ```
-2.  **Install dependencies:** Open a terminal and run the following command:
+2.  **Install FluidSynth:**
+    *   **macOS:**
+        ```
+        brew install fluidsynth
+        ```
+    *   **Linux:**
+        ```
+        sudo apt-get install fluidsynth
+        ```
+3.  **Install dependencies:** Open a terminal and run the following command:
     ```
     pip3 install -r requirements.txt
     ```
-3.  **Download SoundFont:** Download the `GeneralUser_GS_v1.471.sf2` SoundFont from [this link](https://www.schristiancollins.com/soundfonts.php) and place it in the `car/sounds` directory.
-4.  **Make the script executable:** Open a terminal, navigate to the project's root directory, and run the following command. You only need to do this once.
+4.  **Download SoundFont:** Download the `GeneralUser_GS_v1.471.sf2` SoundFont from [this link](https://www.schristiancollins.com/soundfonts.php) and place it in the `car/sounds` directory.
+5.  **Make the script executable:** Open a terminal, navigate to the project's root directory, and run the following command. You only need to do this once.
     ```
     chmod +x run_game.sh
     ```
-5.  **Run the game:** Run the following command from the project's root directory:
+6.  **Run the game:** Run the following command from the project's root directory:
     ```
     ./run_game.sh
     ```
