@@ -70,7 +70,7 @@ def get_buildings_in_city(grid_x, grid_y):
                     overlaps = True; break
             
             if not (on_horiz_road_center or on_vert_road_center) and not overlaps:
-                buildings.append({"x": b_x, "y": b_y, "w": b_w, "h": b_h, "type": building_type})
+                buildings.append({"x": b_x, "y": b_y, "w": b_w, "h": b_h, "type": building_type, "city_id": cache_key})
                 placed = True; break
 
     # --- Place Generic Buildings ---
@@ -101,7 +101,7 @@ def get_buildings_in_city(grid_x, grid_y):
             
             if not (on_horiz_road_center or on_vert_road_center) and not overlaps:
                 building_name = generate_building_name(local_random, b_w)
-                buildings.append({"x": b_x, "y": b_y, "w": b_w, "h": b_h, "type": "GENERIC", "name": building_name})
+                buildings.append({"x": b_x, "y": b_y, "w": b_w, "h": b_h, "type": "GENERIC", "name": building_name, "city_id": cache_key})
                 placed = True; break
 
     building_cache[cache_key] = buildings
