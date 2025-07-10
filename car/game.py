@@ -4,6 +4,7 @@ import random
 import sys
 from .logic.entity_loader import PLAYER_CARS
 from .data.colors import COLOR_PAIRS_DEFS
+from .data.factions import FACTION_DATA
 from .logic.spawning import spawn_enemy, spawn_fauna, spawn_obstacle
 from .logic.boss import Boss
 from .logic.pause_menu_logic import handle_pause_menu
@@ -189,6 +190,19 @@ def main_game(stdscr):
             handle_quest_interaction(game_state, world, audio_manager)
             update_quests(game_state, audio_manager)
             
+            # Check for win/loss conditions
+            num_factions = len(FACTION_DATA)
+            defeated_factions = sum(1 for f in FACTION_DATA.values() if "Defeated" in f.get("relationships", {}).values())
+            
+            if defeated_factions >= num_factions - 1:
+                game_state.game_over = True
+                game_state.game_over_message = "VICTORY! You control the wasteland."
+
+            hostile_factions = sum(1 for rep in game_state.faction_reputation.values() if rep <= -100)
+            if hostile_factions >= num_factions:
+                game_state.game_over = True
+                game_state.game_over_message = "OUTCAST! Hunted by all, you are alone."
+
             if game_state.player_car.durability <= 0:
                 play_death_cutscene(stdscr, COLOR_PAIR_MAP)
                 game_state.game_over = True

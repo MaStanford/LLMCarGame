@@ -115,6 +115,7 @@ def update_quests(game_state, audio_manager):
             game_state.current_quest = None
             audio_manager.stop_music()
             audio_manager.play_music("car/sounds/world.mid")
+            check_for_faction_takeover(game_state)
 
         elif game_state.current_quest.failed:
             giver_faction_id = game_state.current_quest.quest_giver_faction
@@ -128,3 +129,32 @@ def update_quests(game_state, audio_manager):
             game_state.current_quest = None
             audio_manager.stop_music()
             audio_manager.play_music("car/sounds/world.mid")
+
+def check_for_faction_takeover(game_state):
+    """Checks if a faction's reputation has dropped low enough to be taken over."""
+    for faction_id, rep in list(game_state.faction_reputation.items()):
+        if rep <= -100: # Takeover threshold
+            # Find the faction with the highest reputation
+            player_allies = [f_id for f_id, r in game_state.faction_reputation.items() if r > 0]
+            if not player_allies:
+                continue # No one to take over
+
+            strongest_ally = max(player_allies, key=lambda f_id: game_state.faction_reputation[f_id])
+            
+            # Update faction data
+            defeated_faction_name = FACTION_DATA[faction_id]["name"]
+            victor_faction_name = FACTION_DATA[strongest_ally]["name"]
+            
+            add_notification(f"{defeated_faction_name} has been defeated! Their territory is now controlled by {victor_faction_name}!", "success")
+            
+            # Transfer control of the hub city
+            FACTION_DATA[faction_id]["name"] = f"{victor_faction_name} (Occupied)"
+            FACTION_DATA[faction_id]["units"] = FACTION_DATA[strongest_ally]["units"]
+            
+            # Update relationships
+            for f_id in FACTION_DATA:
+                if f_id != faction_id:
+                    FACTION_DATA[f_id]["relationships"][faction_id] = "Defeated"
+            
+            del game_state.faction_reputation[faction_id]
+
