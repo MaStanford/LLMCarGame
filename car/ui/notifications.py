@@ -12,7 +12,7 @@ def add_notification(text, duration=3, color="DEFAULT"):
         "start_time": time.time()
     })
 
-def draw_notifications(stdscr, color_map):
+def draw_notifications(stdscr, notifications, color_map):
     """Draws active notifications."""
     h, w = stdscr.getmaxyx()
     

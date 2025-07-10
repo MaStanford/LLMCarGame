@@ -1,6 +1,6 @@
 import random
 from .quests import Quest, KillBossObjective, KillCountObjective, SurvivalObjective, QUESTS
-from ..data.cars import CARS_DATA
+from ..logic.entity_loader import PLAYER_CARS
 from ..common.utils import get_car_dimensions
 from .boss import Boss
 from ..ui.notifications import add_notification
@@ -35,13 +35,14 @@ def handle_quest_interaction(game_state, world, audio_manager):
 
                     if "boss" in quest_data:
                         boss_data = quest_data["boss"]
-                        boss_car_data = next((c for c in CARS_DATA if c["name"] == boss_data["car"]), None)
-                        if boss_car_data:
-                            boss = Boss(boss_data["name"], boss_car_data, boss_data["hp_multiplier"])
+                        boss_car_class = next((c for c in PLAYER_CARS if c.__name__.lower() == boss_data["car"].lower().replace(" ", "_")), None)
+                        if boss_car_class:
+                            boss_car_instance = boss_car_class(0, 0)
+                            boss = Boss(boss_data["name"], boss_car_instance, boss_data["hp_multiplier"])
                             boss.x = game_state.car_world_x + random.uniform(-200, 200)
                             boss.y = game_state.car_world_y + random.uniform(-200, 200)
-                            boss.hp = boss_car_data["durability"] * boss.hp_multiplier
-                            boss.art = boss_car_data["art"]
+                            boss.hp = boss_car_instance.durability * boss.hp_multiplier
+                            boss.art = boss_car_instance.art
                             boss.width, boss.height = get_car_dimensions(boss.art)
                             game_state.active_bosses[quest_key] = boss
                             audio_manager.stop_music()

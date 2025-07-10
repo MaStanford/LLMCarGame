@@ -2,8 +2,8 @@ import curses
 import time
 import random
 from ..data.game_constants import CUTSCENE_RADIUS
-from ..data.enemies import ENEMIES_DATA
 from .cutscene import draw_entity_modal
+
 
 def update_and_draw_entity_modal(stdscr, game_state, color_map):
     """
@@ -30,16 +30,15 @@ def update_and_draw_entity_modal(stdscr, game_state, color_map):
 
     # If no boss is in range, check for the closest enemy
     if not boss_in_range:
-        for enemy_id, enemy_state in game_state.active_enemies.items():
-            ex, ey, didx, eh, ew, evx, evy, eart, edur = enemy_state
-            dist_sq = (ex - game_state.car_world_x)**2 + (ey - game_state.car_world_y)**2
+        for enemy in game_state.active_enemies:
+            dist_sq = (enemy.x - game_state.car_world_x)**2 + (enemy.y - game_state.car_world_y)**2
             if dist_sq < closest_dist_sq:
                 closest_dist_sq = dist_sq
                 closest_entity = {
-                    "name": ENEMIES_DATA[didx]["name"],
-                    "hp": edur,
-                    "max_hp": ENEMIES_DATA[didx]["durability"],
-                    "art": eart,
+                    "name": enemy.__class__.__name__.replace("_", " ").title(),
+                    "hp": enemy.durability,
+                    "max_hp": enemy.max_durability,
+                    "art": enemy.art,
                     "type": "enemy"
                 }
 

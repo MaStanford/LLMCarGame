@@ -1,4 +1,3 @@
-from .cars import CARS_DATA
 from ..common import get_car_dimensions
 
 # --- Game Constants ---
@@ -17,12 +16,7 @@ MIN_BUILDING_DIM = 8
 MAX_BUILDING_DIM = 15
 BUILDING_SHOP_BUFFER = 2
 BUILDING_SPACING = 20
-
-MAX_CAR_WIDTH_ACROSS_ALL = 0
-for car_data in CARS_DATA:
-    _, width = get_car_dimensions(car_data["art"])
-    MAX_CAR_WIDTH_ACROSS_ALL = max(MAX_CAR_WIDTH_ACROSS_ALL, width)
-ROAD_WIDTH = MAX_CAR_WIDTH_ACROSS_ALL + 6 # Make road wider than widest car + padding
+ROAD_WIDTH = 20
 
 # Total spawn rate for obstacles
 TOTAL_SPAWN_RATE = 1.0

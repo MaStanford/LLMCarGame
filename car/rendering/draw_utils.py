@@ -10,7 +10,7 @@ def draw_sprite(stdscr, y, x, art, color_pair_num, attributes=0, transparent_bg=
             continue
             
         for j, char in enumerate(line):
-            if char == ' ': # Skip spaces for transparency
+            if transparent_bg and char == ' ':
                 continue
                 
             draw_x = int(x + j)
@@ -18,31 +18,13 @@ def draw_sprite(stdscr, y, x, art, color_pair_num, attributes=0, transparent_bg=
                 continue
 
             try:
-                if transparent_bg:
-                    bg_char_and_attr = stdscr.inch(draw_y, draw_x)
-                    bg_attr = bg_char_and_attr & (curses.A_ATTRIBUTES | curses.A_COLOR)
-                    
-                    # Extract foreground color from the provided color_pair_num
-                    fg_color, _ = curses.pair_content(color_pair_num)
-                    
-                    # Create a new color pair with the original foreground and the new background
-                    # This assumes we have a free color pair to use. A more robust solution
-                    # would be to manage a pool of temporary color pairs.
-                    # For now, we'll use a hardcoded temporary pair number.
-                    temp_pair_num = 255 # Assuming this is a safe, unused pair number
-                    
-                    # Get the background color from the bg_attr
-                    bg_color_pair_num = bg_attr & curses.A_COLOR
-                    _, bg_color = curses.pair_content(bg_color_pair_num)
-
-                    curses.init_pair(temp_pair_num, fg_color, bg_color)
-                    
-                    final_attr = attributes | curses.color_pair(temp_pair_num)
-                    stdscr.addch(draw_y, draw_x, char, final_attr)
-                else:
-                    color_attr = curses.color_pair(color_pair_num) if curses.has_colors() else 0
-                    final_attr = color_attr | attributes
-                    stdscr.addch(draw_y, draw_x, char, final_attr)
+                # Get the existing character and its attributes at the target location
+                bg_char_and_attr = stdscr.inch(draw_y, draw_x)
+                
+                # The final attribute is a combination of the new color and any other attributes
+                final_attr = curses.color_pair(color_pair_num) | attributes
+                
+                stdscr.addch(draw_y, draw_x, char, final_attr)
             except curses.error:
                 pass
 
@@ -78,3 +60,38 @@ def draw_line(stdscr, y1, x1, y2, x2, char, color_pair_num):
         if color_attr != 0:
             try: stdscr.attroff(color_attr)
             except: pass
+
+def draw_weapon_stats_modal(stdscr, weapon, y, x):
+    """Draws a modal with weapon stats."""
+    h, w = stdscr.getmaxyx()
+    
+    stats = [
+        f"Damage: {weapon.damage:.1f}",
+        f"Fire Rate: {weapon.fire_rate:.1f}",
+        f"Range: {weapon.range:.1f}",
+    ]
+    if weapon.pellet_count > 1:
+        stats.append(f"Pellets: {weapon.pellet_count}")
+        
+    if weapon.modifiers:
+        stats.append("")
+        stats.append("Modifiers:")
+        for key, value in weapon.modifiers.items():
+            stats.append(f"  {key.replace('_', ' ').title()}: {value:.2f}")
+            
+    win_h = len(stats) + 2
+    win_w = max(len(s) for s in stats) + 4
+    
+    win_y = y - win_h
+    win_x = x
+    
+    if win_y < 0: win_y = y + 1
+    if win_x + win_w > w: win_x = w - win_w
+    
+    win = curses.newwin(win_h, win_w, win_y, win_x)
+    win.box()
+    
+    for i, stat in enumerate(stats):
+        win.addstr(i + 1, 2, stat)
+        
+    win.refresh()

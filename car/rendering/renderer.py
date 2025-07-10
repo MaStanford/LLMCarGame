@@ -7,9 +7,8 @@ from ..data.shops import SHOP_DATA
 from ..data.cosmetics import BUILDING_OUTLINE
 from ..data.weapons import WEAPONS_DATA
 from ..data.obstacles import OBSTACLE_DATA
-from ..data.enemies import ENEMIES_DATA
-from ..data.fauna import FAUNA_DATA
 from ..logic.quests import KillBossObjective
+
 
 def render_game(stdscr, game_state, world, color_pair_map):
     """Renders the entire game screen."""
@@ -56,26 +55,17 @@ def render_game(stdscr, game_state, world, color_pair_map):
                         draw_sprite(stdscr, b_screen_y, b_screen_x, sart, scnum)
 
     # Render entities
-    for oid, ostate in game_state.active_obstacles.items():
-        ox, oy, didx, oh_obs, ow_obs, _, _, oart, odur = ostate
-        osx = ox - world_start_x
-        osy = oy - world_start_y
-        if osx + ow_obs > 0 and osx < w and osy + oh_obs > 0 and osy < h:
-            draw_sprite(stdscr, osy, osx, oart, color_pair_map.get("OBSTACLE", 0), transparent_bg=True)
+    for entity in game_state.all_entities:
+        entity.draw(stdscr, game_state, world_start_x, world_start_y, color_pair_map)
 
-    for eid, estate in game_state.active_enemies.items():
-        ex, ey, didx, eh_obs, ew_obs, _, _, eart, edur = estate
-        esx = ex - world_start_x
-        esy = ey - world_start_y
-        if esx + ew_obs > 0 and esx < w and esy + eh_obs > 0 and esy < h:
-            draw_sprite(stdscr, esy, esx, eart, color_pair_map.get("ENEMY", 0), transparent_bg=True)
+    for enemy in game_state.active_enemies:
+        enemy.draw(stdscr, game_state, world_start_x, world_start_y, color_pair_map)
 
-    for fid, fstate in game_state.active_fauna.items():
-        fx, fy, didx, fh_fauna, fw_fauna, _, _, fart, fhp = fstate
-        fsx = fx - world_start_x
-        fsy = fy - world_start_y
-        if fsx + fw_fauna > 0 and fsx < w and fsy + fh_fauna > 0 and fsy < h:
-            draw_sprite(stdscr, fsy, fsx, fart, color_pair_map.get("FAUNA", 0), transparent_bg=True)
+    for fauna in game_state.active_fauna:
+        fauna.draw(stdscr, game_state, world_start_x, world_start_y, color_pair_map)
+
+    for obstacle in game_state.active_obstacles:
+        obstacle.draw(stdscr, game_state, world_start_x, world_start_y, color_pair_map)
 
     for pid, pstate in game_state.active_pickups.items():
         px, py, _, part, pcname = pstate
@@ -104,26 +94,26 @@ def render_game(stdscr, game_state, world, color_pair_map):
     # Render player car
     positive_angle = game_state.car_angle % (2 * math.pi)
     dir_idx = int((positive_angle + math.pi / 8) / (math.pi / 4)) % 8
-    if not (0 <= dir_idx < len(game_state.all_car_art)):
-        dir_idx = 0
-    current_art = game_state.all_car_art[dir_idx]
-    car_sx = w / 2 - game_state.car_width / 2
-    car_sy = h / 2 - game_state.car_height / 2
+    direction_keys = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+    direction = direction_keys[dir_idx]
+    
+    current_art = game_state.player_car.art[direction]
+    car_sx = w / 2 - game_state.player_car.width / 2
+    car_sy = h / 2 - game_state.player_car.height / 2
     draw_sprite(stdscr, car_sy, car_sx, current_art, game_state.car_color_pair_num, transparent_bg=True)
 
     # Render mounted weapons
-    for point_name, wep_key in game_state.mounted_weapons.items():
-        if wep_key:
+    for point_name, weapon in game_state.mounted_weapons.items():
+        if weapon:
             point_data = game_state.attachment_points.get(point_name)
             if point_data:
-                wep_data = WEAPONS_DATA[wep_key]
-                wep_art = wep_data["art"][dir_idx]
+                wep_art = weapon.art[direction]
                 offset_x = point_data["offset_x"]
                 offset_y = point_data["offset_y"]
                 rotated_offset_x = offset_x * math.cos(game_state.car_angle) - offset_y * math.sin(game_state.car_angle)
                 rotated_offset_y = offset_x * math.sin(game_state.car_angle) + offset_y * math.cos(game_state.car_angle)
-                wep_sx = car_sx + game_state.car_width / 2 + rotated_offset_x
-                wep_sy = car_sy + game_state.car_height / 2 + rotated_offset_y
+                wep_sx = car_sx + game_state.player_car.width / 2 + rotated_offset_x
+                wep_sy = car_sy + game_state.player_car.height / 2 + rotated_offset_y
                 draw_sprite(stdscr, wep_sy, wep_sx, wep_art, game_state.car_color_pair_num, transparent_bg=True)
 
     # Render UI
@@ -217,7 +207,7 @@ def render_ui(stdscr, game_state, color_pair_map):
                 boss_hp_bar = f"[{'█'*boss_hp_f}{'░'*(boss_hp_bl-boss_hp_f)}]"
                 stdscr.addstr(0, w - 40, f"Boss HP: {boss_hp_bar}")
 
-        cname = f"Car: {game_state.selected_car_data['name']}"
+        cname = f"Car: {game_state.player_car.__class__.__name__.replace('_', ' ').title()}"
         dur_p = (game_state.current_durability / game_state.max_durability) * 100 if game_state.max_durability > 0 else 0
         dur_bl = 10
         dur_f = int(dur_bl * dur_p / 100)
@@ -230,11 +220,16 @@ def render_ui(stdscr, game_state, color_pair_map):
         stat2 = f"Gas: {gas_bar} {game_state.current_gas:.0f}/{int(game_state.gas_capacity)}"
         stat3 = f"Speed: {game_state.car_speed:.1f}"
         stat4 = f"Cash: ${game_state.player_cash}"
+        
         ammo_lns = []
-        for pname, wkey in game_state.mounted_weapons.items():
-            atype = WEAPONS_DATA[wkey]["ammo_type"]
-            ammo_lns.append(f"{wkey.upper()}: {game_state.ammo_counts.get(atype,0)}")
+        for weapon in game_state.mounted_weapons.values():
+            if weapon:
+                weapon_data = WEAPONS_DATA[weapon.weapon_type_id]
+                ammo_type = weapon_data["ammo_type"]
+                ammo_count = game_state.ammo_counts.get(ammo_type, 0)
+                ammo_lns.append(f"{weapon_data['name']}: {ammo_count}")
         ammo_disp = " | ".join(ammo_lns)
+        
         diff_disp = f"Difficulty: {game_state.difficulty}"
         level_disp = f"Level: {game_state.player_level}"
         xp_p_ui = (game_state.current_xp / game_state.xp_to_next_level) * 100 if game_state.xp_to_next_level > 0 else 100
