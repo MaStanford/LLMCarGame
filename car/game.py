@@ -189,10 +189,10 @@ def main_game(stdscr):
             draw_notifications(stdscr, game_state.notifications, COLOR_PAIR_MAP)
             stdscr.refresh()
 
-            if game_state.city_hall_cooldown == 0:
-                handle_city_hall_interaction(stdscr, game_state, COLOR_PAIR_MAP)
+            handle_city_hall_interaction(stdscr, game_state, world, COLOR_PAIR_MAP)
             handle_shop_interaction(stdscr, game_state, world, COLOR_PAIR_MAP)
             update_quests(game_state, audio_manager)
+
             
             # Check for win/loss conditions
             num_factions = len(FACTION_DATA)

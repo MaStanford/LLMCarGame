@@ -131,13 +131,9 @@ def draw_inventory_menu(stdscr, car_data, car_stats, location_desc, frame_count,
                         is_selected = (menu_selection[0] == "inventory" and menu_selection[1] == idx)
                         item_name = item.name
                         item_str = f"- {item_name}"[:inventory_col_width-2]
+                        line_attr = curses.color_pair(highlight_pair) | curses.A_BOLD if is_selected else curses.color_pair(text_pair)
                         
-                        if is_selected:
-                            menu_win.attron(curses.color_pair(highlight_pair) | curses.A_BOLD)
-                            menu_win.addstr(current_inv_y, inv_inner_x, item_str.ljust(inventory_col_width - 2))
-                            menu_win.attroff(curses.color_pair(highlight_pair) | curses.A_BOLD)
-                        else:
-                            menu_win.addstr(current_inv_y, inv_inner_x, item_str)
+                        menu_win.addstr(current_inv_y, inv_inner_x, item_str.ljust(inventory_col_width - 2), line_attr)
                             
                         if is_selected:
                             draw_weapon_stats_modal(stdscr, item, current_inv_y, inventory_x + inventory_col_width + 2)
@@ -230,13 +226,8 @@ def draw_inventory_menu(stdscr, car_data, car_stats, location_desc, frame_count,
             mount_line = f"{mount_index+1:<3}{point_name:<15}{point_size:<6}{wep_name:<12}{wep_slots:<6}"
 
             if mount_y < menu_h - 2 and art_x + len(mount_line) < available_art_width:
-                
-                if is_selected:
-                    menu_win.attron(curses.color_pair(highlight_pair) | curses.A_BOLD)
-                    menu_win.addstr(mount_y, art_x, mount_line.ljust(available_art_width - art_x))
-                    menu_win.attroff(curses.color_pair(highlight_pair) | curses.A_BOLD)
-                else:
-                    menu_win.addstr(mount_y, art_x, mount_line)
+                line_attr = curses.color_pair(highlight_pair) | curses.A_BOLD if is_selected else curses.color_pair(text_pair)
+                menu_win.addstr(mount_y, art_x, mount_line.ljust(available_art_width - art_x), line_attr)
                     
                 if is_selected and weapon:
                     draw_weapon_stats_modal(stdscr, weapon, mount_y, art_x + len(mount_line) + 2)
