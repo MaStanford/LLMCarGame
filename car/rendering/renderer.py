@@ -28,10 +28,7 @@ def render_game(stdscr, game_state, world, color_pair_map):
             tchar = terrain["char"]
             tcnum = color_pair_map.get(terrain["color_pair_name"], 0)
             pair_num = tcnum if 0 <= tcnum < curses.COLOR_PAIRS else 0
-            try:
-                stdscr.addch(sy_draw_terrain, sx_draw_terrain, tchar, curses.color_pair(pair_num))
-            except curses.error:
-                pass
+            rendering_queue.add(0, stdscr.addch, sy_draw_terrain, sx_draw_terrain, tchar, curses.color_pair(pair_num))
 
     # Render buildings
     min_gx = math.floor((world_start_x - CITY_SIZE / 2) / CITY_SPACING)
@@ -92,9 +89,10 @@ def render_game(stdscr, game_state, world, color_pair_map):
         draw_line(stdscr, sy1, sx1, sy2, sx2, "~", color_pair_map.get("FLAME", 0))
 
     # Render player car
-    positive_angle = game_state.car_angle % (2 * math.pi)
+    # Adjust angle for sprite direction (art is designed with 0 radians as East)
+    positive_angle = (game_state.car_angle + math.pi / 2) % (2 * math.pi)
     dir_idx = int((positive_angle + math.pi / 8) / (math.pi / 4)) % 8
-    direction_keys = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+    direction_keys = ["E", "NE", "N", "NW", "W", "SW", "S", "SE"] # This order is correct for the new angle setup
     direction = direction_keys[dir_idx]
     
     current_art = game_state.player_car.art[direction]
@@ -103,17 +101,29 @@ def render_game(stdscr, game_state, world, color_pair_map):
     draw_sprite(stdscr, car_sy, car_sx, current_art, game_state.car_color_pair_num, transparent_bg=True)
 
     # Render mounted weapons
+    # Adjust angle for world coordinates (0 is North, but math functions treat 0 as East)
+    adjusted_angle = game_state.car_angle
+    car_cos = math.cos(adjusted_angle)
+    car_sin = math.sin(adjusted_angle)
+    
     for point_name, weapon in game_state.mounted_weapons.items():
         if weapon:
             point_data = game_state.attachment_points.get(point_name)
             if point_data:
                 wep_art = weapon.art[direction]
-                offset_x = point_data["offset_x"]
-                offset_y = point_data["offset_y"]
-                rotated_offset_x = offset_x * math.cos(game_state.car_angle) - offset_y * math.sin(game_state.car_angle)
-                rotated_offset_y = offset_x * math.sin(game_state.car_angle) + offset_y * math.cos(game_state.car_angle)
-                wep_sx = car_sx + game_state.player_car.width / 2 + rotated_offset_x
-                wep_sy = car_sy + game_state.player_car.height / 2 + rotated_offset_y
+                
+                # Muzzle position in car's local space
+                muzzle_local_x = point_data["offset_x"]
+                muzzle_local_y = point_data["offset_y"]
+                
+                # Rotated muzzle position
+                rotated_muzzle_x = muzzle_local_x * car_cos - muzzle_local_y * car_sin
+                rotated_muzzle_y = muzzle_local_x * car_sin + muzzle_local_y * car_cos
+                
+                # Final weapon position on screen
+                wep_sx = car_sx + game_state.player_car.width / 2 + rotated_muzzle_x
+                wep_sy = car_sy + game_state.player_car.height / 2 + rotated_muzzle_y
+                
                 draw_sprite(stdscr, wep_sy, wep_sx, wep_art, game_state.car_color_pair_num, transparent_bg=True)
 
     # Render UI

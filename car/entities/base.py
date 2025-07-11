@@ -7,8 +7,8 @@ class Entity(ABC):
         self.vx = 0
         self.vy = 0
         self.art = art
-        self.width = max(len(line) for line in art) if art else 0
-        self.height = len(art) if art else 0
+        self.width = 0
+        self.height = 0
         self.durability = durability
         self.max_durability = durability
 

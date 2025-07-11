@@ -9,6 +9,8 @@ class Obstacle(Entity):
         self.drop_item = drop_item
         self.drop_rate = drop_rate
         self.cash_value = cash_value
+        self.width = max(len(line) for line in art) if art else 0
+        self.height = len(art) if art else 0
 
     def update(self, game_state, world):
         # Obstacles are static by default, so no update logic is needed here.
