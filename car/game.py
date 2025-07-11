@@ -10,7 +10,8 @@ from .logic.boss import Boss
 from .logic.pause_menu_logic import handle_pause_menu
 from .logic.menu_logic import handle_menu
 from .logic.shop_logic import handle_shop_interaction
-from .logic.quest_logic import handle_quest_interaction, update_quests
+from .logic.city_hall_logic import handle_city_hall_interaction
+from .logic.quest_logic import update_quests
 from .ui.entity_modal import update_and_draw_entity_modal
 from .ui.notifications import draw_notifications
 from .ui.cutscene import play_death_cutscene
@@ -187,7 +188,7 @@ def main_game(stdscr):
             stdscr.refresh()
 
             handle_shop_interaction(stdscr, game_state, world, COLOR_PAIR_MAP)
-            handle_quest_interaction(game_state, world, audio_manager)
+            handle_city_hall_interaction(stdscr, game_state)
             update_quests(game_state, audio_manager)
             
             # Check for win/loss conditions
