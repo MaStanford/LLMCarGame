@@ -65,11 +65,81 @@ def draw_inventory_menu(stdscr, car_data, car_stats, location_desc, frame_count,
 
         # --- Draw Stats (Middle-Left Side) ---
         if stats_h > 2 and stats_col_width > 2 and stats_x > 1:
-            # ... (stat drawing logic remains the same)
+            stats_inner_y = stats_y + 1
+            stats_inner_x = stats_x + 1
+            current_stat_y = stats_inner_y
+
+            add_stat_line(menu_win, current_stat_y, stats_inner_x, f"Location: {location_desc}", stats_col_width-2)
+            current_stat_y += 2
+            add_stat_line(menu_win, current_stat_y, stats_inner_x, f"Cash: ${car_stats['cash']}", stats_col_width-2)
+            current_stat_y += 1
+            add_stat_line(menu_win, current_stat_y, stats_inner_x, f"Durability: {car_stats['durability']}/{car_stats['max_durability']}", stats_col_width-2)
+            current_stat_y += 1
+            add_stat_line(menu_win, current_stat_y, stats_inner_x, f"Gas: {car_stats['current_gas']:.0f}/{car_stats['gas_capacity']}", stats_col_width-2)
+            current_stat_y += 1
+            
+            # XP and Level for Menu
+            add_stat_line(menu_win, current_stat_y, stats_inner_x, f"Level: {car_stats['player_level']}", stats_col_width-2)
+            current_stat_y += 1
+            xp_p = (car_stats['current_xp'] / car_stats['xp_to_next_level']) * 100 if car_stats['xp_to_next_level'] > 0 else 100
+            xp_bl = 10
+            xp_f = int(xp_bl * xp_p / 100)
+            xp_bar_str = f"[{'█'*xp_f}{'░'*(xp_bl-xp_f)}]"
+            add_stat_line(menu_win, current_stat_y, stats_inner_x, f"XP: {xp_bar_str} {car_stats['current_xp']}/{car_stats['xp_to_next_level']}", stats_col_width-2)
+            current_stat_y += 2
+
+            add_stat_line(menu_win, current_stat_y, stats_inner_x, "Ammo:", stats_col_width-2)
+            current_stat_y += 1
+            for ammo_type, count in car_stats['ammo_counts'].items():
+                add_stat_line(menu_win, current_stat_y, stats_inner_x + 2, f"- {ammo_type}: {count}", stats_col_width-4)
+                current_stat_y += 1
+            
+            current_stat_y += 1
+            add_stat_line(menu_win, current_stat_y, stats_inner_x, "Quests:", stats_col_width-2)
+            current_stat_y += 1
+            if not car_stats['quests']:
+                menu_win.addstr(current_stat_y, stats_inner_x + 2, f"- (None)", stats_col_width-4)
+            else:
+                for quest in car_stats['quests']:
+                    add_stat_line(menu_win, current_stat_y, stats_inner_x + 2, f"- {quest}", stats_col_width-4)
+                    current_stat_y += 1
 
         # --- Draw Inventory (Middle Side) ---
         if stats_h > 2 and inventory_col_width > 2 and inventory_x > 1:
-            # ... (inventory drawing logic remains the same)
+            inv_inner_y = stats_y + 1
+            inv_inner_x = inventory_x + 1
+            current_inv_y = inv_inner_y
+
+            inv_header = "Inventory"
+            if len(inv_header) < inventory_col_width - 1:
+                try:
+                    menu_win.addstr(current_inv_y, inv_inner_x + (inventory_col_width - 2 - len(inv_header)) // 2, inv_header, curses.A_UNDERLINE)
+                except curses.error:
+                    pass
+            current_inv_y += 2
+
+            inventory_items = car_stats.get('inventory', [])
+            if not inventory_items:
+                if current_inv_y < menu_h - 2:
+                    try:
+                        menu_win.addstr(current_inv_y, inv_inner_x, "(Empty)", curses.A_DIM)
+                    except curses.error:
+                        pass
+            else:
+                for idx, item in enumerate(inventory_items):
+                    if current_inv_y < menu_h - 2:
+                        is_selected = (menu_selection[0] == "inventory" and menu_selection[1] == idx)
+                        item_name = item.name
+                        item_str = f"- {item_name}"[:inventory_col_width-2]
+                        line_attr = curses.color_pair(highlight_pair) | curses.A_BOLD if is_selected else curses.color_pair(text_pair)
+                        try:
+                            padded_line = item_str.ljust(inventory_col_width - 2)
+                            menu_win.addstr(current_inv_y, inv_inner_x, padded_line, line_attr)
+                            if is_selected:
+                                draw_weapon_stats_modal(stdscr, item, current_inv_y, inventory_x + inventory_col_width + 2)
+                        except curses.error:
+                            pass
+                        current_inv_y += 1
 
         # --- Draw Factions (Rightmost Side) ---
         if stats_h > 2 and factions_col_width > 2 and factions_x > 1:
@@ -119,7 +189,11 @@ def draw_inventory_menu(stdscr, car_data, car_stats, location_desc, frame_count,
         
         return menu_win
     except Exception:
-        # ... (exception handling remains the same)
+        # In case of any other error, end curses and print the traceback
+        curses.endwin()
+        print("Error in draw_inventory_menu:")
+        traceback.print_exc()
+        sys.exit(1)
     finally:
         if menu_win:
             menu_win.refresh()
