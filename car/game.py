@@ -188,7 +188,7 @@ def main_game(stdscr):
             stdscr.refresh()
 
             handle_shop_interaction(stdscr, game_state, world, COLOR_PAIR_MAP)
-            handle_city_hall_interaction(stdscr, game_state)
+            handle_city_hall_interaction(stdscr, game_state, COLOR_PAIR_MAP)
             update_quests(game_state, audio_manager)
             
             # Check for win/loss conditions
