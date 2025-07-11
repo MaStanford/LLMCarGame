@@ -39,10 +39,7 @@ def draw_entity_modal(stdscr, entity, color_map, art=None):
         hp_bl = 20
         hp_f = int(hp_bl * hp_p / 100)
         hp_bar = f"HP: [{'█'*hp_f}{'░'*(hp_bl-hp_f)}]"
-        
-        stdscr.attron(color_map.get("MENU_TEXT", 0) | curses.A_BOLD)
-        stdscr.addstr(win_y - 1, win_x + (win_w - len(hp_bar)) // 2, hp_bar)
-        stdscr.attroff(color_map.get("MENU_TEXT", 0) | curses.A_BOLD)
+        stdscr.addstr(win_y - 1, win_x + (win_w - len(hp_bar)) // 2, hp_bar, color_map.get("MENU_TEXT", 0) | curses.A_BOLD)
 
 
     win = curses.newwin(win_h, win_w, win_y, win_x)
