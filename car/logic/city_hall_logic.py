@@ -64,7 +64,9 @@ def handle_city_hall_interaction(stdscr, game_state, color_map):
                 faction_id = get_city_faction(game_state.car_world_x, game_state.car_world_y)
                 info = CITY_INFO.get(f"{faction_id}_hub", CITY_INFO["generic_procedural"])
                 draw_dialog_modal(stdscr, [info["description"]])
+                stdscr.nodelay(0) # Wait for user input
                 stdscr.getch()
+                stdscr.nodelay(1) # Return to non-blocking mode
             elif selected_option == 2: # Leave
                 game_state.city_hall_cooldown = 100
                 return
