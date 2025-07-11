@@ -166,6 +166,9 @@ The game is built around a central game loop in `car/game.py`. This loop handles
     - [ ] If you challenge them before their rep is 0, it's stats will be even more increased. But it will have a massive rep gain or loss, and if it brings it to 0 you still need to fight him he will just have less stats for the final fight like normal.  
 - [ ] Neutral city
     - [ ] 0,0 is a neutral hub city. Quests help no faction. Shops don't have faction bonuses. This city will always be neutral and always have 0 spawn chance. 
+- [ ] Add shop keeper dialog, they will say something when we get in the shop. This is shop and faction specific and dynamically generated. 
+    - [ ] When buying or selling high modifier equipment the shop keeper will make a comment, different comments based on the modifier. 
+    - [ ] When you try to buy something without enough money, shop keeper makes a wise crack
 
 ## Completed Tasks
 

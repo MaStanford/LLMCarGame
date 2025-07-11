@@ -13,9 +13,10 @@ def handle_menu(stdscr, game_state, color_pair_map):
         return
 
     h, w = stdscr.getmaxyx()
-    menu_sections = ["weapons", "inventory"]
+    menu_sections = ["weapons", "inventory", "factions"]
     num_weapons = len(game_state.mounted_weapons)
     num_inventory = len(game_state.player_inventory)
+    num_factions = len(game_state.faction_reputation)
     current_section_name = menu_sections[game_state.menu_selected_section_idx]
 
     if game_state.actions["menu_up"]:
@@ -23,11 +24,15 @@ def handle_menu(stdscr, game_state, color_pair_map):
             game_state.menu_selected_item_idx = (game_state.menu_selected_item_idx - 1) % num_weapons
         elif current_section_name == "inventory" and num_inventory > 0:
             game_state.menu_selected_item_idx = (game_state.menu_selected_item_idx - 1) % num_inventory
+        elif current_section_name == "factions" and num_factions > 0:
+            game_state.menu_selected_item_idx = (game_state.menu_selected_item_idx - 1) % num_factions
     elif game_state.actions["menu_down"]:
         if current_section_name == "weapons" and num_weapons > 0:
             game_state.menu_selected_item_idx = (game_state.menu_selected_item_idx + 1) % num_weapons
         elif current_section_name == "inventory" and num_inventory > 0:
             game_state.menu_selected_item_idx = (game_state.menu_selected_item_idx + 1) % num_inventory
+        elif current_section_name == "factions" and num_factions > 0:
+            game_state.menu_selected_item_idx = (game_state.menu_selected_item_idx + 1) % num_factions
     elif game_state.actions["menu_left"]:
         game_state.menu_selected_section_idx = (game_state.menu_selected_section_idx - 1) % len(menu_sections)
         game_state.menu_selected_item_idx = 0
@@ -73,7 +78,8 @@ def handle_menu(stdscr, game_state, color_pair_map):
         "current_xp": game_state.current_xp,
         "xp_to_next_level": game_state.xp_to_next_level,
         "mounted_weapons": game_state.mounted_weapons,
-        "quests": [game_state.current_quest.name] if game_state.current_quest else []
+        "quests": [game_state.current_quest.name] if game_state.current_quest else [],
+        "faction_reputation": game_state.faction_reputation
     }
 
     current_selection = (menu_sections[game_state.menu_selected_section_idx], game_state.menu_selected_item_idx)
