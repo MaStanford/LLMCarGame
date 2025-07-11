@@ -5,7 +5,13 @@ from ..rendering.draw_utils import draw_weapon_stats_modal, add_stat_line
 from ..common.utils import get_directional_sprite
 from ..data.factions import FACTION_DATA
 
+from ..rendering.renderer import rendering_queue
+
 def draw_inventory_menu(stdscr, car_data, car_stats, location_desc, frame_count, menu_selection, color_map, menu_preview_angle):
+    """Adds the status menu modal to the rendering queue."""
+    rendering_queue.add(10, _draw_inventory_menu_internal, car_data, car_stats, location_desc, frame_count, menu_selection, color_map, menu_preview_angle)
+
+def _draw_inventory_menu_internal(stdscr, car_data, car_stats, location_desc, frame_count, menu_selection, color_map, menu_preview_angle):
     """Draws the status menu modal. Returns the menu window object or None.
         menu_selection is a tuple: (section, index) e.g., ("weapons", 0) or ("inventory", 1)
     """

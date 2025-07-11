@@ -10,6 +10,8 @@ from ..logic.quests import KillBossObjective
 from ..data.buildings import BUILDING_DATA
 
 
+from .rendering_queue import rendering_queue
+
 def render_game(stdscr, game_state, world, color_pair_map):
     """Renders the entire game screen."""
     h, w = stdscr.getmaxyx()
@@ -119,6 +121,7 @@ def render_game(stdscr, game_state, world, color_pair_map):
     # Render UI
     render_ui(stdscr, game_state, color_pair_map)
 
+    rendering_queue.draw(stdscr)
     stdscr.refresh()
 
 def draw_building_outline(stdscr, bsx, bsy, bw, bh, name, color_pair_map):
@@ -191,14 +194,45 @@ def render_ui(stdscr, game_state, color_pair_map):
                 angle_to_boss = math.atan2(boss.y - game_state.car_world_y, boss.x - game_state.car_world_x)
                 angle_diff = (angle_to_boss - game_state.car_angle + math.pi) % (2 * math.pi) - math.pi
                 compass = ""
-                if abs(angle_diff) < math.pi / 8:
-                    compass = "↑"
-                elif abs(angle_diff - math.pi) < math.pi / 8:
-                    compass = "↓"
-                elif angle_diff > 0:
-                    compass = "→"
+                # 16-point compass logic mapping to 8 distinct, readable arrows.
+                # Each of the 16 slices is 22.5 degrees (math.pi / 8).
+                slice = math.pi / 8
+
+                # The angle_diff is from -pi to pi. A positive value is to the player's right.
+                if -slice/2 <= angle_diff < slice/2:        # -11.25 to 11.25 deg
+                    compass = "↑"  # N
+                elif slice/2 <= angle_diff < 3*slice/2:     # 11.25 to 33.75 deg
+                    compass = "↗"  # NNE
+                elif 3*slice/2 <= angle_diff < 5*slice/2:   # 33.75 to 56.25 deg
+                    compass = "↗"  # NE
+                elif 5*slice/2 <= angle_diff < 7*slice/2:   # 56.25 to 78.75 deg
+                    compass = "→"  # ENE
+                elif 7*slice/2 <= angle_diff < 9*slice/2:   # 78.75 to 101.25 deg
+                    compass = "→"  # E
+                elif 9*slice/2 <= angle_diff < 11*slice/2:  # 101.25 to 123.75 deg
+                    compass = "↘"  # ESE
+                elif 11*slice/2 <= angle_diff < 13*slice/2: # 123.75 to 146.25 deg
+                    compass = "↘"  # SE
+                elif 13*slice/2 <= angle_diff < 15*slice/2: # 146.25 to 168.75 deg
+                    compass = "↓"  # SSE
+                elif angle_diff >= 15*slice/2 or angle_diff < -15*slice/2: # 168.75 to 180, and -180 to -168.75 deg
+                    compass = "↓"  # S
+                elif -15*slice/2 <= angle_diff < -13*slice/2:# -168.75 to -146.25 deg
+                    compass = "↓"  # SSW
+                elif -13*slice/2 <= angle_diff < -11*slice/2:# -146.25 to -123.75 deg
+                    compass = "↙"  # SW
+                elif -11*slice/2 <= angle_diff < -9*slice/2: # -123.75 to -101.25 deg
+                    compass = "↙"  # WSW
+                elif -9*slice/2 <= angle_diff < -7*slice/2:  # -101.25 to -78.75 deg
+                    compass = "←"  # W
+                elif -7*slice/2 <= angle_diff < -5*slice/2:  # -78.75 to -56.25 deg
+                    compass = "←"  # WNW
+                elif -5*slice/2 <= angle_diff < -3*slice/2:  # -56.25 to -33.75 deg
+                    compass = "↖"  # NW
+                elif -3*slice/2 <= angle_diff < -slice/2:   # -33.75 to -11.25 deg
+                    compass = "↖"  # NNW
                 else:
-                    compass = "←"
+                    compass = "?" # Fallback, should not be reached
                 stdscr.addstr(1, w - 20, f"Boss: {compass}")
 
                 boss_hp_p = (boss.hp / (boss.car["durability"] * boss.hp_multiplier)) * 100
