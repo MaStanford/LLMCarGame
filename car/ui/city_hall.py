@@ -19,7 +19,9 @@ def draw_city_hall_menu(stdscr, menu_options, selected_option, game_state, color
         y = i + 3
         x = (left_w - len(option)) // 2
         if i == selected_option:
-            left_win.addstr(y, x, option, color_map.get("MENU_HIGHLIGHT", 0) | curses.A_BOLD)
+            left_win.attron(color_map.get("MENU_HIGHLIGHT", 0) | curses.A_BOLD)
+            left_win.addstr(y, x, option)
+            left_win.attroff(color_map.get("MENU_HIGHLIGHT", 0) | curses.A_BOLD)
         else:
             left_win.addstr(y, x, option, color_map.get("MENU_TEXT", 0))
 
@@ -78,7 +80,9 @@ def draw_quest_briefing(stdscr, quest, color_map):
             y = briefing_h - 3 + i
             x = (briefing_w - len(option)) // 2
             if i == selected_option:
-                briefing_win.addstr(y, x, option, color_map.get("MENU_HIGHLIGHT", 0) | curses.A_BOLD)
+                briefing_win.attron(color_map.get("MENU_HIGHLIGHT", 0) | curses.A_BOLD)
+                briefing_win.addstr(y, x, option)
+                briefing_win.attroff(color_map.get("MENU_HIGHLIGHT", 0) | curses.A_BOLD)
             else:
                 briefing_win.addstr(y, x, option, color_map.get("MENU_TEXT", 0))
         briefing_win.refresh()
