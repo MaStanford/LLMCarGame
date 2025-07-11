@@ -3,6 +3,36 @@ import math
 from .loot_generation import handle_enemy_loot_drop
 from ..ui.entity_modal import play_explosion_in_modal
 from ..ui.notifications import add_notification
+from ..world.generation import get_buildings_in_city
+
+def find_safe_exit_spot(world, building):
+    """
+    Finds a safe, non-colliding spot to place the player after exiting a building.
+    It checks in a spiral pattern around the building's center.
+    """
+    center_x, center_y = building['x'] + building['w'] // 2, building['y'] + building['h'] // 2
+    
+    # Spiral search
+    x, y = 0, 0
+    dx, dy = 0, -1
+    max_dist = max(building['w'], building['h']) * 2 # Search a reasonable area
+    
+    for _ in range(max_dist**2):
+        check_x, check_y = center_x + x, center_y + y
+        terrain = world.get_terrain_at(check_x, check_y)
+        
+        # Check if the spot is passable and not inside any building
+        if terrain.get("passable", True) and not any(
+            b['x'] <= check_x < b['x'] + b['w'] and b['y'] <= check_y < b['y'] + b['h']
+            for b in get_buildings_in_city(round(check_x / 1000), round(check_y / 1000))
+        ):
+            return check_x, check_y
+            
+        if x == y or (x < 0 and x == -y) or (x > 0 and x == 1 - y):
+            dx, dy = -dy, dx
+        x, y = x + dx, y + dy
+        
+    return building['x'], building['y'] # Fallback
 
 def handle_collisions(game_state, world, audio_manager, stdscr, color_pair_map):
     """

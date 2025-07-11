@@ -1,4 +1,5 @@
 from .base import Entity
+import logging
 
 class Obstacle(Entity):
     def __init__(self, x, y, art, durability, damage, xp_value=0, drop_item=None, drop_rate=0.0, cash_value=0):

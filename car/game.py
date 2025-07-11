@@ -221,6 +221,7 @@ def main_game(stdscr, logger):
                     "name": game_state.player_car.__class__.__name__.replace('_', ' ').title(),
                     "attachment_points": game_state.attachment_points,
                     "menu_art": game_state.player_car.art,
+                    "color_pair": game_state.car_color_pair_num,
                 }
                 grid_x = round(game_state.car_world_x / CITY_SPACING)
                 grid_y = round(game_state.car_world_y / CITY_SPACING)

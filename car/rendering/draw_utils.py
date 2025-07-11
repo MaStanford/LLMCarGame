@@ -44,7 +44,7 @@ def draw_weapon_stats_modal(stdscr, y, x, h, w, weapon, color_pair, z_index=1):
     draw_box(stdscr, y, x, h, w, weapon.name, z_index)
     add_stat_line(stdscr, y + 1, x + 2, "Damage", weapon.damage, color_pair, z_index + 1)
     add_stat_line(stdscr, y + 2, x + 2, "Range", weapon.range, color_pair, z_index + 1)
-    add_stat_line(stdscr, y + 3, x + 2, "Cooldown", weapon.cooldown, color_pair, z_index + 1)
+    add_stat_line(stdscr, y + 3, x + 2, "Fire Rate", weapon.fire_rate, color_pair, z_index + 1)
 
 def draw_box(stdscr, y, x, h, w, title="", z_index=10):
     """Adds the drawing of a box to the rendering queue."""

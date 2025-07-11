@@ -4,6 +4,10 @@ from ..data.buildings import BUILDING_DATA
 from ..data.game_constants import CITY_SPACING
 from ..world.generation import get_buildings_in_city, get_city_faction
 from .inventory_generation import generate_inventory
+from ..ui.shop import draw_shop_menu
+from ..rendering.rendering_queue import rendering_queue
+
+from .collision_detection import find_safe_exit_spot
 
 def handle_shop_interaction(stdscr, game_state, world, color_pair_map):
     """Handles the player's interaction with shops."""
@@ -34,8 +38,9 @@ def handle_shop_interaction(stdscr, game_state, world, color_pair_map):
                             "current_gas": game_state.current_gas,
                             "gas_capacity": game_state.gas_capacity
                         }
-                        from ..ui.shop import draw_shop_menu
+                        stdscr.erase()
                         draw_shop_menu(stdscr, shop, player_stats, selected_item_index, active_list, color_pair_map)
+                        rendering_queue.draw(stdscr)
                         
                         key = stdscr.getch()
                         if key == curses.KEY_UP:
@@ -65,6 +70,7 @@ def handle_shop_interaction(stdscr, game_state, world, color_pair_map):
                                     shop.sell(item_to_sell, game_state, world)
                         elif key == 27: # ESC
                             game_state.shop_cooldown = 100
+                            game_state.car_world_x, game_state.car_world_y = find_safe_exit_spot(world, building)
                             break
                     return True # Interaction happened
     return False # No interaction
