@@ -6,7 +6,7 @@ from .logic.entity_loader import PLAYER_CARS
 from .data import *
 
 class GameState:
-    def __init__(self, selected_car_index, difficulty, difficulty_mods, car_color_names, car_color_pair_num, player_cash=300):
+    def __init__(self, selected_car_index, difficulty, difficulty_mods, car_color_names, car_color_pair_num):
         # --- Game Configuration ---
         self.selected_car_index = selected_car_index
         self.difficulty = difficulty
@@ -15,7 +15,7 @@ class GameState:
         self.car_color_pair_num = car_color_pair_num
         
         # --- Player State ---
-        self.player_cash = player_cash
+        self.player_cash = self.difficulty_mods.get("starting_cash", 300)
         
         # --- Player Car ---
         car_class = PLAYER_CARS[self.selected_car_index]
@@ -56,7 +56,6 @@ class GameState:
         self.distance_traveled = 0.0
 
         # --- Player State ---
-        self.player_cash = 0
         self.player_inventory = []
         self.mounted_weapons = {
             mount_point: Weapon(weapon_type_id, instance_id=f"{weapon_type_id}_default") 

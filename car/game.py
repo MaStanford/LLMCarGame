@@ -127,11 +127,14 @@ def main_game(stdscr):
     while True:
         if game_state.play_again:
             # This logic might need adjustment depending on how you want to restart
-            new_game_settings = handle_new_game_setup(stdscr)
-            game_state = GameState(**new_game_settings)
-            stdscr.nodelay(1)
-            stdscr.clear()
-            stdscr.refresh()
+            new_game_settings = handle_new_game_setup(stdscr, COLOR_PAIR_MAP)
+            if new_game_settings:
+                game_state = GameState(**new_game_settings)
+                stdscr.nodelay(1)
+                stdscr.clear()
+                stdscr.refresh()
+            else: # User backed out of new game setup
+                break
 
         # --- Inner Game Loop ---
         while not game_state.game_over:

@@ -36,10 +36,13 @@ def handle_city_hall_interaction(stdscr, game_state, world, color_map):
                 draw_city_hall_menu(stdscr, menu_options, selected_option, game_state, color_map)
                 key = stdscr.getch()
 
-                if key == curses.KEY_UP:
+                if key == curses.KEY_UP or key == ord('w'):
                     selected_option = (selected_option - 1) % len(menu_options)
-                elif key == curses.KEY_DOWN:
+                elif key == curses.KEY_DOWN or key == ord('s'):
                     selected_option = (selected_option + 1) % len(menu_options)
+                elif key == 27: # ESC
+                    game_state.city_hall_cooldown = 100
+                    return
                 elif key == curses.KEY_ENTER or key in [10, 13]:
                     if selected_option == 0: # View Contracts
                         # Generate a quest

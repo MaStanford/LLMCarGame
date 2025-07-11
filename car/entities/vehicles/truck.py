@@ -1,61 +1,61 @@
 from .player_car import PlayerCar
 
 class Truck(PlayerCar):
+    """
+    A big, durable American pickup truck. What it lacks in speed, it makes
+    up for in sheer toughness and its capacity to carry heavy weapons.
+    A true wasteland workhorse.
+    """
     def __init__(self, x, y):
+        # Redesigned 8-directional art set for a classic pickup truck
         art = {
+            # North (Facing Up)
             "N": [
-                "  ________  ",
-                " |  ____  | ",
-                " | |    | | ",
-                " | |____| | ",
-                "  \\______/  "
+                "  ▄▄███▄▄  ",
+                " ▟███████▙ ",
+                "(█)      (█)"
             ],
+            # North-East
             "NE": [
-                "  ________. ",
-                " |  ____/ | ",
-                " | |    | | ",
-                " | |____|/  ",
-                "  \\______/   "
+                "    ▄▄████▄",
+                "   ▟██▒▒▀▀█",
+                "  (█)══(█)◥◣",
             ],
+            # East (Facing Right)
             "E": [
-                "  ________ ",
-                " |        |",
-                " |________|",
-                "   | O  O | "
+                "   ▄▄█████ ",
+                "  ▟██▒▒▀▀▀█",
+                " (█)════(█)"
             ],
+            # South-East
             "SE": [
-                " .________  ",
-                " | \\____  | ",
-                " | |    | | ",
-                "  \\|____| | ",
-                "   \\______/  "
+                "  (█)════(█)",
+                "  ◢◤▀▀▀▒▒██",
+                "   ▀▀▀▀████"
             ],
+            # South (Facing Down)
             "S": [
-                "  ________  ",
-                " |        | ",
-                " | |    | | ",
-                " | |____| | ",
-                "  \\______/  "
+                "(█)      (█)",
+                " ██▄▄▄▄▄▄██ ",
+                " ▀▀▀▀▀▀▀▀▀▀ "
             ],
+            # South-West
             "SW": [
-                "   .________ ",
-                "  | \\____  |",
-                "  | |    | |",
-                "   \\|____| |",
-                "    \\______/ "
+                " (█)════(█) ",
+                " ██▒▒▀▀▀◥◣ ",
+                "  ████▀▀▀▀  "
             ],
+            # West (Facing Left)
             "W": [
-                "  ________ ",
-                " |        |",
-                " |________|",
-                "   | O  O | "
+                "  █████▄▄   ",
+                " █▀▀▀▒▒██▟  ",
+                " (█)════(█) "
             ],
+            # North-West
             "NW": [
-                "   ________.",
-                "  |____  |",
-                "  | |    | |",
-                "   \\|____| |",
-                "    \\______/ "
+                " ▄████▄▄    ",
+                "█▀▀▒▒██▟   ",
+                "◢◤(█)══(█)   "
             ]
         }
         super().__init__(
@@ -65,6 +65,7 @@ class Truck(PlayerCar):
             acceleration=0.5,
             handling=0.08,
             braking_power=0.5,
+            # Attachment points for weapons
             attachment_points={
                 "hood_gun": {"level": "heavy", "offset_x": 0, "offset_y": -3},
                 "roof_rack": {"level": "heavy", "offset_x": 0, "offset_y": -1},
@@ -73,7 +74,8 @@ class Truck(PlayerCar):
                 "rear_bumper_gun": {"level": "medium", "offset_x": 0, "offset_y": 4}
             }
         )
+        self.max_attachments = 7
+        # Default loadout for this chassis
         self.default_weapons = {
             "hood_gun": "wep_hmg"
         }
-        self.max_attachments = 7

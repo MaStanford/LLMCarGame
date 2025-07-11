@@ -1,55 +1,68 @@
 from .player_car import PlayerCar
 
 class Hatchback(PlayerCar):
+    """
+    A nimble and customizable starter vehicle. It's been given a visual overhaul
+    for a more battle-ready appearance in the wasteland.
+    """
     def __init__(self, x, y):
+        # Redesigned 8-directional art set for a more detailed look
         art = {
+            # North (Facing Up)
             "N": [
-                "  ____  ",
-                " / __ \\ ",
-                "| |  | |",
-                " \\____/ "
+                "  ▟▀▀▙  ",
+                " █░░░░█ ",
+                "◢██▄██◣",
+                " (●) (●) "
             ],
+            # North-East
             "NE": [
-                "  __..  ",
-                " /  / | ",
-                "|__| /  ",
-                " `-./`   "
+                "  ▄▄▟` ",
+                " ▟░▒▒▙ ",
+                "◢███◤` ",
+                " (●)═(●) "
             ],
+            # East (Facing Right)
             "E": [
-                "  ____ ",
-                " / __`\\",
-                "| |__| |",
-                " \\____/"
+                " ▄▄▄▟` ",
+                " █░█▒▙ ",
+                "◢█████ ",
+                " (●)═(●)"
             ],
+            # South-East
             "SE": [
-                "  ..__  ",
-                " |  \\ `\\",
-                "  \\__| |",
-                "   `\\.-` "
+                " (●)═(●) ",
+                "◢███◣  ",
+                " █░▒▒▟ ",
+                "  ▀▀`  "
             ],
+            # South (Facing Down)
             "S": [
-                "  ____  ",
-                " /    \\ ",
-                "| |__| |",
-                " \\____/ "
+                " (●) (●) ",
+                "◥██▀██◤",
+                " █▒▒▒▒█ ",
+                "  ▜▄▄▛  "
             ],
+            # South-West
             "SW": [
-                "   __.. ",
-                "  |   \\ `\\",
-                "   \\__| |",
-                "    `.-`  "
+                " (●)═(●) ",
+                "  ◢███◤",
+                " ▙▒▒░█ ",
+                "  `▀▀  "
             ],
+            # West (Facing Left)
             "W": [
-                "   ____  ",
-                "  / `__\\ ",
-                " | |__| |",
-                "  \\____/ "
+                " `▙▄▄▄ ",
+                " ▟▒█░█ ",
+                " █████◣",
+                "  (●)═(●)"
             ],
+            # North-West
             "NW": [
-                " ..__   ",
-                "|   \\ `\\ ",
-                "|__|\\/   ",
-                " `-`    "
+                " `▙▄▄  ",
+                " ▟▒▒░▙ ",
+                " `◥███◣",
+                " (●)═(●) "
             ]
         }
         super().__init__(
@@ -59,6 +72,7 @@ class Hatchback(PlayerCar):
             acceleration=0.7,
             handling=0.12,
             braking_power=0.75,
+            # Attachment points for weapons
             attachment_points={
                 "hood_gun": {"level": "light", "offset_x": 0, "offset_y": -2},
                 "roof_rack": {"level": "light", "offset_x": 0, "offset_y": -1},
@@ -66,6 +80,7 @@ class Hatchback(PlayerCar):
             }
         )
         self.max_attachments = 4
+        # Default loadout for this chassis
         self.default_weapons = {
             "hatch_gun": "wep_shotgun"
         }
