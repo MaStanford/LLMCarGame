@@ -1,5 +1,7 @@
 import curses
 
+from .rendering_queue import rendering_queue
+
 def draw_sprite(stdscr, y, x, art, color_pair_num, attributes=0, transparent_bg=False):
     """Draws the specified ASCII art at the given screen coordinates with color and attributes."""
     h, w = stdscr.getmaxyx()
@@ -62,6 +64,10 @@ def draw_line(stdscr, y1, x1, y2, x2, char, color_pair_num):
             except: pass
 
 def draw_weapon_stats_modal(stdscr, weapon, y, x):
+    """Adds a modal with weapon stats to the rendering queue."""
+    rendering_queue.add(100, _draw_weapon_stats_modal_internal, weapon, y, x)
+
+def _draw_weapon_stats_modal_internal(stdscr, weapon, y, x):
     """Draws a modal with weapon stats."""
     h, w = stdscr.getmaxyx()
     

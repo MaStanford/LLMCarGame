@@ -6,7 +6,7 @@ from ..rendering.draw_utils import draw_sprite
 from ..data.difficulty import DIFFICULTY_LEVELS
 from ..common.utils import draw_box
 
-def draw_new_game_menu(stdscr, selected_car_index, selected_color_index, selected_difficulty_index, selected_weapon_index, car_color_names, COLOR_PAIR_MAP, preview_angle):
+def draw_new_game_menu(stdscr, selected_car_index, selected_color_index, selected_difficulty_index, selected_weapon_index, car_color_names, COLOR_PAIR_MAP, preview_angle, default_weapons):
     h, w = stdscr.getmaxyx()
     stdscr.clear()
 
@@ -79,19 +79,17 @@ def draw_new_game_menu(stdscr, selected_car_index, selected_color_index, selecte
     weapons_win_x = (w - weapons_win_w) // 2
 
     weapons_win = curses.newwin(weapons_win_h, weapons_win_w, weapons_win_y, weapons_win_x)
-    draw_box(weapons_win, "Starting Weapon")
+    draw_box(weapons_win, "Starting Weapons")
 
-    default_weapons = list(car_instance.default_weapons.values())
-    if selected_weapon_index >= len(default_weapons):
-        selected_weapon_index = len(default_weapons) -1
-    if selected_weapon_index < 0:
-        selected_weapon_index = 0
-    
     if default_weapons:
-        weapon_name = default_weapons[selected_weapon_index]
-        weapons_win.addstr(2, (weapons_win_w - len(weapon_name)) // 2, f"< {weapon_name.replace('_', ' ').title()} >")
+        for i, weapon in enumerate(default_weapons):
+            weapon_name = weapon.name.replace('_', ' ').title()
+            if i == selected_weapon_index:
+                weapons_win.addstr(i + 1, 2, f"> {weapon_name}", curses.A_BOLD)
+            else:
+                weapons_win.addstr(i + 1, 2, f"  {weapon_name}")
     else:
-        weapons_win.addstr(2, (weapons_win_w - len("None")) // 2, "None")
+        weapons_win.addstr(1, 2, "None")
 
     stdscr.refresh()
     car_win.refresh()
