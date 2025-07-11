@@ -100,7 +100,12 @@ def handle_menu(stdscr, game_state, color_pair_map):
         game_state.menu_open = False
         try:
             stdscr.addstr(h - 1, 0, "Error: Menu failed to draw!")
-            stdscr.refresh()
+            stdscr.noutrefresh()
+            curses.doupdate()
             time.sleep(1)
         except curses.error:
             pass
+    else:
+        stdscr.noutrefresh()
+        game_menu_win.noutrefresh()
+        curses.doupdate()

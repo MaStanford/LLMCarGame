@@ -3,15 +3,21 @@ from ..vehicle import Vehicle
 from ...logic.ai_behaviors import _execute_chase_behavior, _execute_strafe_behavior, _execute_ram_behavior
 
 class MuscleCar(Vehicle):
+    """
+    A classic, high-performance muscle car. It's fast, aggressive,
+    and built for high-speed combat.
+    """
     def __init__(self, x, y):
+        # Art inspired by the iconic Fast & Furious muscle car
         art = [
-            "   __   ",
-            "  /  \\  ",
-            " |----| ",
-            " |    | ",
-            "  \\__/  ",
+            "   ▄▄█▀▀█▄▄   ",
+            "  ▟██▆▆▆██▙  ",
+            " ███████████ ",
+            " (●)▀▀▀▀▀(●) "
         ]
-        super().__init__(x, y, art, durability=30, speed=1.25, acceleration=0.7, handling=0.7)
+        super().__init__(x, y, art, durability=85, speed=8.5, acceleration=0.9, handling=0.18)
+        
+        # Aggressive, multi-phase AI for a skilled driver
         self.phases = [
             {"name": "AggressiveChase", "duration": (4, 6), "behavior": "CHASE", "next_phases": {"StrafeAndShoot": 1.0}},
             {"name": "StrafeAndShoot", "duration": (4, 6), "behavior": "STRAFE", "next_phases": {"AggressiveChase": 0.7, "RammingRun": 0.3}},
@@ -20,10 +26,12 @@ class MuscleCar(Vehicle):
         self._initialize_ai()
 
     def _initialize_ai(self):
+        """Initializes the AI state."""
         self.current_phase = self.phases[0]
         self.phase_timer = random.uniform(self.current_phase["duration"][0], self.current_phase["duration"][1])
 
     def update(self, game_state, world):
+        """Updates the vehicle's state and AI logic each frame."""
         self.phase_timer -= 1 / 30.0 # Assuming 30 FPS
 
         if self.phase_timer <= 0:
@@ -46,5 +54,6 @@ class MuscleCar(Vehicle):
         self.y += self.vy
 
     def draw(self, stdscr, game_state, world_start_x, world_start_y, color_map):
+        """Draws the vehicle on the screen."""
         from ...rendering.draw_utils import draw_sprite
         draw_sprite(stdscr, self.y - world_start_y, self.x - world_start_x, self.art, color_map.get("ENEMY", 0), transparent_bg=True)

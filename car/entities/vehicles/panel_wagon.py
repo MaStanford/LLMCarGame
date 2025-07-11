@@ -1,61 +1,68 @@
 from .player_car import PlayerCar
 
 class PanelWagon(PlayerCar):
+    """
+    A slow but incredibly durable panel wagon. It serves as a mobile fortress,
+    boasting numerous attachment points for heavy-duty hardware.
+    """
     def __init__(self, x, y):
+        # Redesigned 8-directional art set for a panel wagon
         art = {
+            # North (Facing Up)
             "N": [
-                "  _________  ",
-                " /   ___   \\ ",
-                "|   /   \\   |",
-                "|   \\___/   |",
-                " \\_________/ "
+                " ▄██████▄ ",
+                "██▀───-▀██",
+                "█▛▀▀▀▀▀▀▀▜█",
+                " (●)   (●) "
             ],
+            # North-East
             "NE": [
-                "  _________. ",
-                " /   ____/ | ",
-                "|   /   |  | ",
-                "|   \\___| /  ",
-                " \\_______|/   "
+                "  ▄████▄▄ ",
+                " ████▒▒▒█ ",
+                "█▛▀▀▀██◤` ",
+                " (●)══(●) "
             ],
+            # East (Facing Right)
             "E": [
-                "  _________  ",
-                " |         | ",
-                " |_________| ",
-                " | O     O | "
+                "  ▄██████▄",
+                " ▐██▒▒▒▒▒█",
+                " █▀▀▀▀▀▀▀█",
+                " (●)═══(●)"
             ],
+            # South-East
             "SE": [
-                " ._________  ",
-                " | \\____   \\ ",
-                " |  |   \\   |",
-                "  \\ |___/   |",
-                "   \\|_______| "
+                " (●)══(●) ",
+                "█▄▄▄██◣  ",
+                " ▐██▒▒▒█ ",
+                "  ▀████▀  "
             ],
+            # South (Facing Down)
             "S": [
-                "  _________  ",
-                " |         | ",
-                " | |     | | ",
-                " | |_____| | ",
-                " |_________| "
+                " (●)   (●) ",
+                "█▄▄▄▄▄▄▄▄▄█",
+                "███▅█▅███",
+                " ▀█████▀ "
             ],
+            # South-West
             "SW": [
-                "   ._________ ",
-                "  | \\____   |",
-                "  |  |   \\  |",
-                "   \\ |___/  |",
-                "    \\|______|"
+                "  (●)══(●) ",
+                "  ◢██▄▄▄█",
+                " █▒▒▒██▌ ",
+                "  ▀████▀  "
             ],
+            # West (Facing Left)
             "W": [
-                "  _________  ",
-                " |         | ",
-                " |_________| ",
-                " | O     O | "
+                " ▄██████▄  ",
+                "█▒▒▒▒▒██▌ ",
+                "█▀▀▀▀▀▀▀█ ",
+                "(●)═══(●) "
             ],
+            # North-West
             "NW": [
-                "   _________.",
-                "  |____   / |",
-                "  |   /   | |",
-                "   \\ |___/  |",
-                "    \\|______|"
+                "  ▄▄████▄  ",
+                " █▒▒▒████ ",
+                " `◥██▀▀▀▛█ ",
+                "  (●)══(●) "
             ]
         }
         super().__init__(
@@ -65,6 +72,7 @@ class PanelWagon(PlayerCar):
             acceleration=0.55,
             handling=0.09,
             braking_power=0.55,
+            # Attachment points for weapons
             attachment_points={
                 "hood_gun": {"level": "medium", "offset_x": 0, "offset_y": -3},
                 "roof_rack": {"level": "heavy", "offset_x": 0, "offset_y": -1},
@@ -73,7 +81,8 @@ class PanelWagon(PlayerCar):
                 "right_panel_gun": {"level": "medium", "offset_x": 3, "offset_y": 0}
             }
         )
+        self.max_attachments = 6
+        # Default loadout for this chassis
         self.default_weapons = {
             "roof_rack": "wep_hmg"
         }
-        self.max_attachments = 6

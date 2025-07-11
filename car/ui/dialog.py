@@ -16,4 +16,5 @@ def draw_dialog_modal(stdscr, text_lines):
     for i, line in enumerate(text_lines):
         modal_win.addstr(i + 1, 2, line)
 
+    modal_win.addstr(modal_h - 1, 2, "(Press any key to continue)")
     modal_win.refresh()

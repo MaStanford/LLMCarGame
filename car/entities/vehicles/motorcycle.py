@@ -1,53 +1,62 @@
 from .player_car import PlayerCar
 
 class Motorcycle(PlayerCar):
+    """
+    A fast and nimble motorcycle, perfect for weaving through hazards.
+    It's fragile but boasts incredible speed and handling.
+    """
     def __init__(self, x, y):
+        # Redesigned 8-directional art set for a motorcycle
         art = {
+            # North (Facing Up)
             "N": [
-                "  o  ",
-                " / \\ ",
-                "| - |",
-                " \\_/"
+                " ◒ ",
+                "╭█╮",
+                " │ ",
+                " O "
             ],
+            # North-East
             "NE": [
-                "  o__ ",
-                " /  / ",
-                "|  /  ",
-                " \\/   "
+                "  ◒╗ ",
+                " ╱█│ ",
+                "O-╯  "
             ],
+            # East (Facing Right)
             "E": [
-                "  __ ",
-                " o--\\",
-                "  \\_/"
+                "  ◒═╗",
+                " O═█╣",
+                "  ╰═╝"
             ],
+            # South-East
             "SE": [
-                " __o  ",
-                " \\  \\ ",
-                "  \\  |",
-                "   \\/ "
+                "O-╮  ",
+                " ╲█│ ",
+                "  ◒╝ "
             ],
+            # South (Facing Down)
             "S": [
-                "  _  ",
-                " / \\ ",
-                "| - |",
-                "  o  "
+                " O ",
+                " │ ",
+                "╰█╯",
+                " ◒ "
             ],
+            # South-West
             "SW": [
-                "  o__ ",
-                " /  / ",
-                "|  /  ",
-                " \\/   "
+                "  ╭-O",
+                " │█╱ ",
+                " ╚◒  "
             ],
+            # West (Facing Left)
             "W": [
-                "   __ ",
-                " /--o ",
-                " \\_/  "
+                "╔═◒  ",
+                "╠█═O ",
+                "╚═╯  "
             ],
+            # North-West
             "NW": [
-                " __o  ",
-                " \\  \\ ",
-                "  \\  |",
-                "   \\/ "
+                " ╔◒  ",
+                " │█╲ ",
+                "  ╰-O"
             ]
         }
         super().__init__(
@@ -57,12 +66,14 @@ class Motorcycle(PlayerCar):
             acceleration=1.2,
             handling=0.3,
             braking_power=0.9,
+            # Attachment points for weapons
             attachment_points={
                 "handlebar_gun": {"level": "light", "offset_x": 0, "offset_y": -1},
                 "saddlebag_gun": {"level": "light", "offset_x": 0, "offset_y": 1}
             }
         )
+        self.max_attachments = 2
+        # Default loadout for this chassis
         self.default_weapons = {
             "handlebar_gun": "wep_pistol"
         }
-        self.max_attachments = 2

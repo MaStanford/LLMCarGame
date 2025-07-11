@@ -1,61 +1,69 @@
 from .player_car import PlayerCar
 
 class Van(PlayerCar):
+    """
+    A large, durable box van. It's slow and handles like a boat, but it's
+    tough as nails and can be outfitted with an arsenal of weapons, making
+    it a mobile fortress.
+    """
     def __init__(self, x, y):
+        # Redesigned 8-directional art set for a classic box van
         art = {
+            # North (Facing Up)
             "N": [
-                "  _______  ",
-                " |  ___  | ",
-                " | |   | | ",
-                " | |___| | ",
-                " |_______| "
+                "  ▄▄▄▄▄▄▄  ",
+                " ▗█░░░░░░█▖ ",
+                " █████████ ",
+                " (●)═══(●) "
             ],
+            # North-East
             "NE": [
-                "  _______. ",
-                " |  ____/| ",
-                " | |   | | ",
-                " | |___|/  ",
-                " |_____|   "
+                "   ▄▄▄▄▄▄▄▄",
+                "  ▟░▒▀▀▀▀██",
+                " █▒███████",
+                "(●)════(●) "
             ],
+            # East (Facing Right)
             "E": [
-                "  _______  ",
-                " |       | ",
-                " |_______| ",
-                " | O   O | "
+                "   ▄▄▄▄▄▄▄▄▄ ",
+                "  ▟░▒███████",
+                " █▒█████████",
+                "(●)══════(●)"
             ],
+            # South-East
             "SE": [
-                " ._______  ",
-                " |\\____  | ",
-                " | |   | | ",
-                "  \\|___| | ",
-                "   |_____| "
+                "(●)════(●) ",
+                " █████████",
+                "  ▀▀▀▀▀▀██",
+                "     ▀▀▀▀▀▀"
             ],
+            # South (Facing Down)
             "S": [
-                "  _______  ",
-                " |       | ",
-                " | |   | | ",
-                " | |___| | ",
-                " |_______| "
+                " (●)═══(●) ",
+                " █████████ ",
+                " █████▄▄██ ",
+                " ▀▀▀▀▀▀▀▀▀ "
             ],
+            # South-West
             "SW": [
-                "   ._______ ",
-                "  |\\____  |",
-                "  | |   | |",
-                "   \\|___| |",
-                "    |_____|"
+                " (●)════(●)",
+                "█████████ ",
+                "██▀▀▀▀▀▀  ",
+                "▀▀▀▀▀▀     "
             ],
+            # West (Facing Left)
             "W": [
-                "  _______  ",
-                " |       | ",
-                " |_______| ",
-                " | O   O | "
+                " ▄▄▄▄▄▄▄▄▄   ",
+                "███████▒░▟  ",
+                "█████████▒█  ",
+                "(●)══════(●) "
             ],
+            # North-West
             "NW": [
-                "   _______.",
-                "  |____  |",
-                "  | |   | |",
-                "   \\|___| |",
-                "    |_____|"
+                "▄▄▄▄▄▄▄▄   ",
+                "██▀▀▀▀▒░▟  ",
+                "████████▒█ ",
+                " (●)════(●)"
             ]
         }
         super().__init__(
@@ -65,6 +73,7 @@ class Van(PlayerCar):
             acceleration=0.4,
             handling=0.07,
             braking_power=0.4,
+            # Attachment points for weapons
             attachment_points={
                 "hood_gun": {"level": "heavy", "offset_x": 0, "offset_y": -3},
                 "roof_rack": {"level": "heavy", "offset_x": 0, "offset_y": -1},
@@ -73,8 +82,9 @@ class Van(PlayerCar):
                 "rear_gun": {"level": "light", "offset_x": 0, "offset_y": 3}
             }
         )
+        self.max_attachments = 6
+        # Default loadout for this chassis
         self.default_weapons = {
             "left_side_gun": "wep_shotgun",
             "right_side_gun": "wep_shotgun"
         }
-        self.max_attachments = 6

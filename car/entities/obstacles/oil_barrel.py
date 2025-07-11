@@ -4,9 +4,11 @@ from ...data.pickups import PICKUP_GAS
 class OilBarrel(Obstacle):
     def __init__(self, x, y):
         art = [
-            " ___ ",
-            "|   |",
-            "|___|",
+            " .-----. ",
+            "|=======|",
+            "|   ☣   |",
+            "|=======|",
+            " '-----' "
         ]
         super().__init__(
             x, y, art,

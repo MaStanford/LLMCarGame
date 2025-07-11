@@ -1,55 +1,68 @@
 from .player_car import PlayerCar
 
 class Hotrod(PlayerCar):
+    """
+    A classic wasteland hotrod, rebuilt for speed and style. Features a long
+    engine block, exposed side exhausts, and massive rear wheels.
+    """
     def __init__(self, x, y):
+        # Redesigned 8-directional art set for a classic hotrod look
         art = {
+            # North (Facing Up)
             "N": [
-                "    ____    ",
-                " __/ __ \\__ ",
-                "|  |  |  |  |",
-                "|__|__|__|__|"
+                "  ▄▄█▄▄  ",
+                " ▗██▆██▖ ",
+                "  ◥█░█◤  ",
+                " (█) (█) "
             ],
+            # North-East
             "NE": [
-                "      __..  ",
-                "   __/  /  | ",
-                "  |___|  /  ",
-                "   `-|_/`   "
+                "    ▄▄▟` ",
+                "   ▟▆▒▙  ",
+                " ═<◤██◤` ",
+                " (●)═(█) "
             ],
+            # East (Facing Right)
             "E": [
-                "   ____    ",
-                "  / __ \\__ ",
-                " | |__| |__)",
-                "  \\____/   "
+                "   ▄▄▄▄▄◣",
+                "  ▟▆██░█ ",
+                " ═<════█ ",
+                " (●)══(█)"
             ],
+            # South-East
             "SE": [
-                "  ..__      ",
-                " |  \\  \\__  ",
-                "  \\  |___|  ",
-                "   `\\_|-`   "
+                " (●)═(█) ",
+                " ═<◣██◣ ",
+                "   ▜▒▆▟ ",
+                "    ▀▀`  "
             ],
+            # South (Facing Down)
             "S": [
-                "    ____    ",
-                " __/    \\__ ",
-                "|  |____|  |",
-                "|__|____|__|"
+                " (█) (█) ",
+                " ▄██▀██▄ ",
+                " ▀█▒▒▒█▀ ",
+                "   ▀▀▀   "
             ],
+            # South-West
             "SW": [
-                "   ____..   ",
-                "  |   \\  \\__",
-                "   \\__|___| ",
-                "    `-|`    "
+                " (█)═(●) ",
+                "  ◢██◢<═ ",
+                "  ▙▆▒▟  ",
+                "  `▀▀    "
             ],
+            # West (Facing Left)
             "W": [
-                "    ____   ",
-                " __/ __ \\  ",
-                "(__| |__| | ",
-                "   \\____/  "
+                " ◢▄▄▄▄▄   ",
+                " █░██▆▙  ",
+                " █════<═ ",
+                " (█)══(●)"
             ],
+            # North-West
             "NW": [
-                " ..__     ",
-                "|   \\  \\__ ",
-                "|___|__/  ",
-                " `-|`     "
+                " `▙▄▄    ",
+                "  ▟▒▆▙   ",
+                " `◥██◥<═ ",
+                " (█)═(●) "
             ]
         }
         super().__init__(
@@ -59,13 +72,15 @@ class Hotrod(PlayerCar):
             acceleration=1.0,
             handling=0.2,
             braking_power=0.8,
+            # Attachment points for weapons
             attachment_points={
                 "engine_gun": {"level": "heavy", "offset_x": 0, "offset_y": -2},
                 "left_exhaust_gun": {"level": "light", "offset_x": -2, "offset_y": 0},
                 "right_exhaust_gun": {"level": "light", "offset_x": 2, "offset_y": 0}
             }
         )
+        self.max_attachments = 3
+        # Default loadout for this chassis
         self.default_weapons = {
             "engine_gun": "wep_flamethrower"
         }
-        self.max_attachments = 3
