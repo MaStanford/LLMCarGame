@@ -15,6 +15,7 @@ class Obstacle(Entity):
         pass
 
     def draw(self, stdscr, game_state, world_start_x, world_start_y, color_map):
+        logging.info(f"ENTITY_DRAW: Drawing obstacle {self.__class__.__name__} at ({self.x}, {self.y})")
         from ..rendering.draw_utils import draw_sprite
         
         screen_x = self.x - world_start_x

@@ -1,5 +1,3 @@
-from ..common import get_car_dimensions
-
 # --- Game Constants ---
 FLAME_CHAR = "~"
 SHOP_INTERACTION_SPEED_THRESHOLD = 5.0

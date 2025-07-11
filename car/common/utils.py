@@ -1,4 +1,6 @@
 import math
+import curses
+from ..rendering.rendering_queue import rendering_queue
 
 def get_directional_sprite(art_dict, angle):
     """
@@ -56,8 +58,20 @@ def normalize_angle(angle):
         angle -= 2 * math.pi
     return angle
 
-def draw_box(win, title=""):
-    """Draws a box around a curses window."""
-    win.box()
+def draw_box(stdscr, y, x, h, w, title="", z_index=10):
+    """Adds the drawing of a box to the rendering queue."""
+    # Draw top and bottom
+    for i in range(1, w - 1):
+        rendering_queue.add(z_index, stdscr.addch, y, x + i, curses.ACS_HLINE)
+        rendering_queue.add(z_index, stdscr.addch, y + h - 1, x + i, curses.ACS_HLINE)
+    # Draw sides
+    for i in range(1, h - 1):
+        rendering_queue.add(z_index, stdscr.addch, y + i, x, curses.ACS_VLINE)
+        rendering_queue.add(z_index, stdscr.addch, y + i, x + w - 1, curses.ACS_VLINE)
+    # Draw corners
+    rendering_queue.add(z_index, stdscr.addch, y, x, curses.ACS_ULCORNER)
+    rendering_queue.add(z_index, stdscr.addch, y, x + w - 1, curses.ACS_URCORNER)
+    rendering_queue.add(z_index, stdscr.addch, y + h - 1, x, curses.ACS_LLCORNER)
+    rendering_queue.add(z_index, stdscr.addch, y + h - 1, x + w - 1, curses.ACS_LRCORNER)
     if title:
-        win.addstr(0, 2, f" {title} ")
+        rendering_queue.add(z_index, stdscr.addstr, y, x + 2, f" {title} ")

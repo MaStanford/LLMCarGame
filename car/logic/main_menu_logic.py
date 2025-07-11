@@ -2,6 +2,7 @@ import curses
 from ..ui.main_menu import draw_main_menu
 from ..ui.load_game import draw_load_game_menu
 from .save_load import get_save_files, load_game
+from ..rendering.rendering_queue import rendering_queue
 
 def handle_main_menu(stdscr, audio_manager, color_map):
     """
@@ -12,11 +13,11 @@ def handle_main_menu(stdscr, audio_manager, color_map):
     """
     selected_option = 0
     audio_manager.play_music("car/sounds/main_menu.mid")
-
+    
     while True:
-        main_menu_win = draw_main_menu(stdscr, selected_option, color_map)
-        if main_menu_win is None:
-            return 'quit', None
+        stdscr.erase()
+        draw_main_menu(stdscr, selected_option, color_map)
+        rendering_queue.draw(stdscr)
 
         key = stdscr.getch()
         if key == curses.KEY_UP:
@@ -56,3 +57,5 @@ def handle_main_menu(stdscr, audio_manager, color_map):
                 pass
             elif selected_option == 3:  # Quit
                 return 'quit', None
+        elif key == 27: # ESC
+            return 'quit', None

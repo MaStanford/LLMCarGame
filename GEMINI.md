@@ -54,6 +54,17 @@ This project is a terminal-based, open-world, automotive RPG survival game. Play
 - **Renderer:** `curses` library for all screen drawing.
 - **Audio:** PyGame and fluidsynth for midi sounds, all souynds are done with midi, ch 10 for sound effects. 
 
+### Logging
+
+The game includes a logging system for debugging purposes. By default, logging is disabled.
+
+-   **Enabling Logging**: To enable logging, run the game with the `--log` command-line flag:
+    ```bash
+    ./run_game.sh --log
+    ```
+-   **Log File**: When enabled, all logging information is written to `game.log` in the root directory of the project. This file is overwritten each time the game is run with the `--log` flag.
+-   **Log Content**: The log contains information about the game's state, rendering, and any errors that occur. This is the first place you should look when debugging an issue.
+
 ## Architecture
 
 The game is built around a central game loop in `car/game.py`. This loop handles user input, updates the game state, and renders the world.
@@ -81,11 +92,34 @@ The game is built around a central game loop in `car/game.py`. This loop handles
     - **Experience & Leveling:** Players gain experience points (XP) for defeating enemies. Upon reaching a certain XP threshold, the player levels up, receiving minor positive modifiers to their stats.
     - **XP Curve:** The experience required to reach the next level doubles with each level gained.
     - **Difficulty Modifier:** The selected difficulty level applies a multiplier to enemy stats, such as damage and durability, making the game more or less challenging.
-- **Rendering Engine:**
-    - **Renderer:** Utilizes the `curses` library for all screen drawing.
-    - **Entities:** All game objects (cars, weapons, buildings, etc.) are represented as entities. Each entity type is defined in a configuration file in the `car/data` directory.
-    - **Visuals:** Each entity's file contains a method to retrieve its ASCII/Unicode representation. This method accepts a direction parameter (8 directions: N, NE, E, SE, S, SW, W, NW) to return the correct directional sprite.
-    - **Composition:** The rendering system dynamically composes entities with their attachments. For example, a car entity will be rendered with its attached weapon entities, positioned correctly based on the car's current direction. The weapons themselves have 8-directional art.
+- **Rendering Engine & The Rendering Queue:**
+    - **Core Principle**: To ensure proper layering and Z-indexing of all visual elements (UI, entities, terrain, etc.), **no component should ever draw directly to the screen**. Direct calls to `stdscr.addch()` or `stdscr.refresh()` from game logic or UI files are strictly forbidden.
+    - **The Rendering Queue (`car/rendering/rendering_queue.py`)**: This is a global, centralized queue that holds all drawing operations for a single frame.
+        -   **How it Works**: Other modules add drawing functions (like `stdscr.addch` or `draw_sprite`) to the queue, specifying a `z_index`.
+        -   **Z-Indexing**: The `z_index` is an integer that determines the drawing order. Lower numbers are drawn first (appearing in the background), and higher numbers are drawn last (appearing in the foreground).
+        -   **Usage**: To add an operation, use `rendering_queue.add(z_index, function, *args, **kwargs)`. For example: `rendering_queue.add(10, stdscr.addstr, y, x, "Player", text_color)`
+    -   **The Main Loop's Role**: The main game loop in `car/game.py` (and other UI-specific loops) orchestrates the rendering process for each frame:
+        1.  `stdscr.erase()`: Clears the screen.
+        2.  `render_game()` / `draw_menu()`: These functions are called to populate the `rendering_queue` with all necessary drawing commands for the current frame.
+        3.  `rendering_queue.draw(stdscr)`: This is the final and most important call. It sorts all queued operations by their `z_index` and executes them in order. It is also responsible for calling `stdscr.refresh()` to display the completed frame.
+
+#### Drawing Complex UI (e.g., Modals)
+
+To render stateful UI elements like menus or modals without violating the decoupled nature of the rendering queue, we follow this pattern:
+
+1.  **The UI Component's Role (The "Dumb" Component)**:
+    *   A UI class (e.g., `PauseMenu`) should have a `draw(self, stdscr)` method.
+    *   This method's **only responsibility** is to translate the component's internal state into primitive drawing commands, which it adds to the global `rendering_queue`.
+    *   It calculates the coordinates and Z-indices for its elements (boxes, text, etc.) and calls `rendering_queue.add(...)` for each one. It **never** draws directly to the screen.
+
+2.  **The Game Logic's Role (The "Smart" Controller)**:
+    *   The main game loop (or a dedicated UI controller) manages the UI component's state (e.g., `game_state.is_paused`).
+    *   When it's time to render the component, the logic simply calls the component's `draw(stdscr)` method. This single call is what populates the queue with all the necessary drawing instructions for that component.
+
+3.  **The Rendering Queue's Role (The "Blind" Executor)**:
+    -   The queue remains completely ignorant of what a "modal" or "menu" is. It only sees a flat list of primitive `curses` functions to execute.
+
+This ensures that UI components are self-contained but still respect the global Z-indexing and rendering pipeline, preventing architectural decay.
 - **World Generation:**
     - **World Class:** `car/world/world.py` - The `World` class manages the game world, including generating and storing the world map.
     - **Procedural Generation:** `car/world/generation.py` - Procedural generation for terrain, roads, and cities.

@@ -47,7 +47,7 @@ class GameState:
         # --- Car State ---
         self.car_world_x = 0.0
         self.car_world_y = 0.0
-        self.car_angle = 0.0
+        self.car_angle = -math.pi / 2
         self.car_velocity_x = 0.0
         self.car_velocity_y = 0.0
         self.car_speed = 0.0
@@ -107,6 +107,7 @@ class GameState:
         self.game_over = False
         self.game_over_message = ""
         self.menu_open = False
+        self.pause_menu_open = False
         self.play_again = False
         self.frame = 0
         self.menu_selected_section_idx = 0

@@ -39,7 +39,10 @@ def update_vehicle_movement(game_state, world, audio_manager):
     next_center_x = next_world_x + game_state.player_car.width / 2
     next_center_y = next_world_y + game_state.player_car.height / 2
     next_terrain = world.get_terrain_at(next_center_x, next_center_y)
-    if next_terrain.get("passable", True):
+    
+    is_shop = next_terrain.get("building", {}).get("shop_type") is not None
+    
+    if next_terrain.get("passable", True) or is_shop:
         game_state.car_world_x = next_world_x
         game_state.car_world_y = next_world_y
     else:
