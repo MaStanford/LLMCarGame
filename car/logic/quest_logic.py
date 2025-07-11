@@ -1,5 +1,5 @@
 import random
-from .quests import Quest, KillBossObjective, KillCountObjective, SurvivalObjective, QUESTS
+from .quests import Quest, KillBossObjective, KillCountObjective, SurvivalObjective, QUEST_TEMPLATES
 from ..logic.entity_loader import PLAYER_CARS
 from ..common.utils import get_car_dimensions
 from .boss import Boss

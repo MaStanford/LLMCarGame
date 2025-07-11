@@ -1,44 +1,40 @@
 import random
-from ..data.modifiers import WEAPON_MODIFIERS
+from ..data.modifiers import RARITY_TIERS, MODIFIER_POOLS
 
-def generate_weapon_modifiers(base_weapon_key, player_level, town_reputation, drop_chance_modifier=1.0):
+def generate_weapon_modifiers(player_level, luck_factor=1.0):
     """
-    Generates a dictionary of modifiers for a weapon based on various factors.
+    Generates a set of modifiers for a weapon based on player level and luck.
     """
-    modifiers = {}
+    # Determine rarity
+    rarity_weights = {rarity: data["weight"] for rarity, data in RARITY_TIERS.items()}
     
-    # Determine the number of modifiers to apply
-    num_modifiers = 0
-    if random.random() < 0.2 * drop_chance_modifier:
-        num_modifiers = 1
-    if random.random() < 0.05 * drop_chance_modifier:
-        num_modifiers = 2
-    if random.random() < 0.01 * drop_chance_modifier:
-        num_modifiers = 3
-        
-    if num_modifiers == 0:
-        return modifiers
-        
-    # Determine the rarity of the modifiers
-    rarity = "common"
-    if random.random() < 0.15 * drop_chance_modifier:
-        rarity = "rare"
-    if random.random() < 0.05 * drop_chance_modifier:
-        rarity = "legendary"
-        
-    # Apply the modifiers
+    # Adjust weights based on luck
+    for rarity in rarity_weights:
+        if rarity != "common":
+            rarity_weights[rarity] *= luck_factor
+
+    chosen_rarity = random.choices(list(rarity_weights.keys()), weights=list(rarity_weights.values()), k=1)[0]
+    
+    # Generate modifiers based on rarity
+    modifiers = {}
+    modifier_pool = MODIFIER_POOLS[chosen_rarity]
+    
+    num_modifiers = 1
+    if chosen_rarity == "uncommon":
+        num_modifiers = random.randint(1, 2)
+    elif chosen_rarity == "rare":
+        num_modifiers = random.randint(2, 3)
+    elif chosen_rarity == "epic":
+        num_modifiers = random.randint(3, 4)
+    elif chosen_rarity == "legendary":
+        num_modifiers = random.randint(4, 5)
+
     for _ in range(num_modifiers):
-        modifier_key = random.choice(list(WEAPON_MODIFIERS.keys()))
-        
-        if modifier_key in WEAPON_MODIFIERS and rarity in WEAPON_MODIFIERS[modifier_key]:
-            min_boost, max_boost = WEAPON_MODIFIERS[modifier_key][rarity]
-            
-            # Add a small boost based on player level and town reputation
-            level_boost = (player_level / 100) * (max_boost - min_boost)
-            rep_boost = (town_reputation / 200) * (max_boost - min_boost)
-            
-            boost = random.uniform(min_boost, max_boost) + level_boost + rep_boost
-            
-            modifiers[modifier_key] = boost
+        modifier_type = random.choice(list(modifier_pool.keys()))
+        if modifier_type == "special_effect":
+            modifiers[modifier_type] = random.choice(modifier_pool[modifier_type])
+        else:
+            min_val, max_val = modifier_pool[modifier_type]
+            modifiers[modifier_type] = round(random.uniform(min_val, max_val), 2)
             
     return modifiers

@@ -1,4 +1,5 @@
 import curses
+from ..common.utils import draw_box
 
 def draw_main_menu(stdscr, selected_option, color_map):
     """Draws the main menu."""
@@ -25,13 +26,8 @@ def draw_main_menu(stdscr, selected_option, color_map):
         menu_win.bkgd(' ', curses.color_pair(text_pair))
         menu_win.erase()
         
-        menu_win.attron(curses.color_pair(border_pair))
-        menu_win.box()
-        menu_win.attroff(curses.color_pair(border_pair))
+        draw_box(menu_win, "Car RPG")
         
-        title = "Car RPG"
-        menu_win.addstr(1, (menu_w - len(title)) // 2, title, curses.A_BOLD | curses.color_pair(text_pair))
-
         for i, option in enumerate(menu_options):
             y = i + 2
             x = (menu_w - len(option)) // 2
