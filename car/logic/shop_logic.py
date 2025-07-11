@@ -2,7 +2,7 @@ import curses
 from .shop import Shop
 from ..data.buildings import BUILDING_DATA
 from ..data.game_constants import CITY_SPACING
-from ..world.generation import get_buildings_in_city
+from ..world.generation import get_buildings_in_city, get_city_faction
 from .inventory_generation import generate_inventory
 
 def handle_shop_interaction(stdscr, game_state, world, color_pair_map):
@@ -18,7 +18,9 @@ def handle_shop_interaction(stdscr, game_state, world, color_pair_map):
                 
                 building_data = BUILDING_DATA.get(building["type"])
                 if building_data and "shop_type" in building_data:
-                    shop_inventory = generate_inventory(building_data["shop_type"], game_state.player_level, game_state.town_reputation.get(building["city_id"], 0))
+                    faction_id = get_city_faction(game_state.car_world_x, game_state.car_world_y)
+                    reputation = game_state.faction_reputation.get(faction_id, 0)
+                    shop_inventory = generate_inventory(building_data["shop_type"], game_state.player_level, reputation)
                     shop = Shop(building_data["name"], shop_inventory)
                     selected_item_index = 0
                     active_list = "shop"

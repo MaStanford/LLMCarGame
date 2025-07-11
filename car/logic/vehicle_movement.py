@@ -51,6 +51,7 @@ def update_vehicle_movement(game_state, world, audio_manager):
         game_state.current_durability -= max(1, int(prev_speed * 2))
         audio_manager.play_sfx("player_hit")
 
+
     distance_this_frame = game_state.car_speed
     game_state.distance_traveled += distance_this_frame
     gas_used_moving = distance_this_frame * game_state.gas_consumption_rate * game_state.gas_consumption_scaler
