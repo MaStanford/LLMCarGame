@@ -1,4 +1,5 @@
 from .base import Entity
+import logging
 
 class Character(Entity):
     def __init__(self, x, y, art, durability, speed):

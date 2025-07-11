@@ -1,6 +1,7 @@
 import random
 import string
 import math
+import logging
 from ..data.game_constants import (
     CITY_SPACING, CITY_SIZE, MIN_BUILDINGS_PER_CITY, MAX_BUILDINGS_PER_CITY,
     MIN_BUILDING_DIM, MAX_BUILDING_DIM, ROAD_WIDTH, BUILDING_SHOP_BUFFER
@@ -11,7 +12,6 @@ from ..data.shops import SHOP_DATA
 from ..data.terrain import TERRAIN_DATA
 from ..data.factions import FACTION_DATA
 
-# Cache for building layouts to avoid regenerating every frame
 building_cache = {}
 
 def get_city_faction(x, y):
@@ -44,17 +44,19 @@ def get_city_name(grid_x, grid_y):
 
 def generate_building_name(local_random, max_width_chars):
     """Generates a short random name for a generic building."""
-    name_len = local_random.randint(max(1, max_width_chars - 4), max_width_chars - 1) # Ensure it fits
+    name_len = local_random.randint(max(1, max_width_chars - 4), max_width_chars - 1)
     name = "".join(local_random.choice(BUILDING_NAME_CHARS) for _ in range(name_len))
     return name
 
-def get_buildings_in_city(grid_x, grid_y):
+def generate_city(grid_x, grid_y):
     """Deterministically generates building rectangles for a given city grid."""
     cache_key = (grid_x, grid_y)
     if cache_key in building_cache:
         return building_cache[cache_key]
 
+    logging.info(f"GENERATION: Generating buildings for city at ({grid_x}, {grid_y})")
     buildings = []
+    occupied_zones = []
     city_seed = f"{grid_x}-{grid_y}"
     local_random = random.Random(city_seed)
     
@@ -63,64 +65,68 @@ def get_buildings_in_city(grid_x, grid_y):
     city_start_x = grid_x * CITY_SPACING - CITY_SIZE // 2
     city_start_y = grid_y * CITY_SPACING - CITY_SIZE // 2
 
-    # --- Place Required Buildings ---
     for building_type in required_buildings:
-        building_info = BUILDING_DATA[building_type]; b_w = building_info["width"]; b_h = building_info["height"]
-        placed = False
-        for _ in range(20): # More attempts to ensure placement
+        building_info = BUILDING_DATA[building_type]
+        b_w, b_h = building_info["width"], building_info["height"]
+        
+        for _ in range(50): # More attempts for required buildings
             margin = ROAD_WIDTH // 2 + 2
-            min_bx = city_start_x + margin; max_bx = city_start_x + CITY_SIZE - b_w - margin
-            min_by = city_start_y + margin; max_by = city_start_y + CITY_SIZE - b_h - margin
-            if min_bx > max_bx or min_by > max_by: continue
-            b_x = local_random.randint(min_bx, max_bx); b_y = local_random.randint(min_by, max_by)
+            b_x = local_random.randint(city_start_x + margin, city_start_x + CITY_SIZE - b_w - margin)
+            b_y = local_random.randint(city_start_y + margin, city_start_y + CITY_SIZE - b_h - margin)
             
-            road_clearance = ROAD_WIDTH / 2 + max(b_w, b_h) / 2 + 2
-            on_horiz_road_center = abs(b_y + b_h/2 - (grid_y * CITY_SPACING)) < road_clearance
-            on_vert_road_center = abs(b_x + b_w/2 - (grid_x * CITY_SPACING)) < road_clearance
+            new_building = {"x": b_x, "y": b_y, "w": b_w, "h": b_h}
             
             overlaps = False
-            for existing_b in buildings:
-                buffer = BUILDING_SHOP_BUFFER
-                if (b_x < existing_b["x"] + existing_b["w"] + buffer and
-                    b_x + b_w + buffer > existing_b["x"] and
-                    b_y < existing_b["y"] + existing_b["h"] + buffer and
-                    b_y + b_h + buffer > existing_b["y"]):
-                    overlaps = True; break
+            for existing_b in occupied_zones:
+                if (new_building["x"] < existing_b["x"] + existing_b["w"] + BUILDING_SHOP_BUFFER and
+                    new_building["x"] + new_building["w"] + BUILDING_SHOP_BUFFER > existing_b["x"] and
+                    new_building["y"] < existing_b["y"] + existing_b["h"] + BUILDING_SHOP_BUFFER and
+                    new_building["y"] + new_building["h"] + BUILDING_SHOP_BUFFER > existing_b["y"]):
+                    overlaps = True
+                    break
             
-            if not (on_horiz_road_center or on_vert_road_center) and not overlaps:
-                buildings.append({"x": b_x, "y": b_y, "w": b_w, "h": b_h, "type": building_type, "city_id": cache_key})
-                placed = True; break
+            if not overlaps:
+                building_data = {**new_building, "type": building_type, "city_id": cache_key}
+                buildings.append(building_data)
+                occupied_zones.append(new_building)
+                logging.info(f"GENERATION: Placed required building: {building_data}")
+                break
 
-    # --- Place Generic Buildings ---
-    num_generic_buildings = local_random.randint(MIN_BUILDINGS_PER_CITY - len(required_buildings), MAX_BUILDINGS_PER_CITY - len(required_buildings))
+    num_generic_buildings = local_random.randint(MIN_BUILDINGS_PER_CITY, MAX_BUILDINGS_PER_CITY)
     for _ in range(num_generic_buildings):
         b_w = local_random.randint(MIN_BUILDING_DIM, MAX_BUILDING_DIM)
         b_h = local_random.randint(MIN_BUILDING_DIM, MAX_BUILDING_DIM)
-        placed = False
-        for _ in range(10): # Placement attempts
+        
+        for _ in range(20): # Placement attempts
             margin = ROAD_WIDTH // 2 + 2
-            min_bx = city_start_x + margin; max_bx = city_start_x + CITY_SIZE - b_w - margin
-            min_by = city_start_y + margin; max_by = city_start_y + CITY_SIZE - b_h - margin
-            if min_bx > max_bx or min_by > max_by: continue
-            b_x = local_random.randint(min_bx, max_bx); b_y = local_random.randint(min_by, max_by)
+            b_x = local_random.randint(city_start_x + margin, city_start_x + CITY_SIZE - b_w - margin)
+            b_y = local_random.randint(city_start_y + margin, city_start_y + CITY_SIZE - b_h - margin)
             
-            road_clearance = ROAD_WIDTH / 2 + max(b_w, b_h) / 2 + 2
-            on_horiz_road_center = abs(b_y + b_h/2 - (grid_y * CITY_SPACING)) < road_clearance
-            on_vert_road_center = abs(b_x + b_w/2 - (grid_x * CITY_SPACING)) < road_clearance
+            new_building = {"x": b_x, "y": b_y, "w": b_w, "h": b_h}
             
             overlaps = False
-            for existing_b in buildings:
-                buffer = BUILDING_SHOP_BUFFER if existing_b.get("type") in SHOP_DATA else 2
-                if (b_x < existing_b["x"] + existing_b["w"] + buffer and
-                    b_x + b_w + buffer > existing_b["x"] and
-                    b_y < existing_b["y"] + existing_b["h"] + buffer and
-                    b_y + b_h + buffer > existing_b["y"]):
-                    overlaps = True; break
+            for existing_b in occupied_zones:
+                if (new_building["x"] < existing_b["x"] + existing_b["w"] + 2 and
+                    new_building["x"] + new_building["w"] + 2 > existing_b["x"] and
+                    new_building["y"] < existing_b["y"] + existing_b["h"] + 2 and
+                    new_building["y"] + new_building["h"] + 2 > existing_b["y"]):
+                    overlaps = True
+                    break
             
-            if not (on_horiz_road_center or on_vert_road_center) and not overlaps:
+            if not overlaps:
                 building_name = generate_building_name(local_random, b_w)
-                buildings.append({"x": b_x, "y": b_y, "w": b_w, "h": b_h, "type": "GENERIC", "name": building_name, "city_id": cache_key})
-                placed = True; break
+                building_data = {**new_building, "type": "GENERIC", "name": building_name, "city_id": cache_key}
+                buildings.append(building_data)
+                occupied_zones.append(new_building)
+                logging.info(f"GENERATION: Placed generic building: {building_data}")
+                break
 
     building_cache[cache_key] = buildings
     return buildings
+
+def get_buildings_in_city(grid_x, grid_y):
+    """Gets the buildings for a city, generating them if not cached."""
+    cache_key = (grid_x, grid_y)
+    if cache_key not in building_cache:
+        building_cache[cache_key] = generate_city(grid_x, grid_y)
+    return building_cache[cache_key]

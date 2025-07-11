@@ -10,15 +10,15 @@ case $OS in
     # On Linux, we need to preload the system's C++ library to ensure
     # compatibility with the audio libraries.
     export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6
-    python3 -m car
+    python3 -m car "$@"
     ;;
   'Darwin') 
     # macOS
-    python3 -m car
+    python3 -m car "$@"
     ;;
   'Windows_NT')
     # Windows
-    python -m car
+    python -m car %*
     ;;
   *)
     echo "Unsupported operating system: $OS"

@@ -25,6 +25,11 @@ def draw_inventory_menu(stdscr, car_data, car_stats, location_desc, frame_count,
     particle_color_pair = color_map.get("PARTICLE", 0)
     highlight_color_pair = color_map.get("MENU_HIGHLIGHT", 0)
 
+    # Draw the background
+    for y in range(menu_y, menu_y + menu_h):
+        for x in range(menu_x, menu_x + menu_w):
+            rendering_queue.add(49, stdscr.addch, y, x, ' ', color_map.get("MENU_BACKGROUND", 0))
+
     # Draw the main box
     draw_box(stdscr, menu_y, menu_x, menu_h, menu_w, f"{car_data['name']} Status", z_index=50)
 
@@ -86,13 +91,13 @@ def draw_inventory_menu(stdscr, car_data, car_stats, location_desc, frame_count,
         rendering_queue.add(51, stdscr.addstr, current_inv_y, inv_inner_x, "(Empty)", curses.A_DIM)
     else:
         for idx, item in enumerate(inventory_items):
-            is_selected = (menu_selection[0] == "inventory" and menu_selection[1] == idx)
+            is_selected = (menu_selection[0] == 1 and menu_selection[1] == idx)
             item_name = item.name
             item_str = f"- {item_name}"[:inventory_col_width-2]
             line_attr = highlight_color_pair | curses.A_BOLD if is_selected else text_color_pair
             rendering_queue.add(51, stdscr.addstr, current_inv_y, inv_inner_x, item_str.ljust(inventory_col_width - 2), line_attr)
             if is_selected:
-                draw_weapon_stats_modal(stdscr, item, current_inv_y, inventory_x + inventory_col_width + 2)
+                draw_weapon_stats_modal(stdscr, current_inv_y, inventory_x + inventory_col_width + 2, 10, 40, item, text_color_pair, z_index=60)
             current_inv_y += 1
 
     # --- Draw Factions ---
@@ -119,7 +124,7 @@ def draw_inventory_menu(stdscr, car_data, car_stats, location_desc, frame_count,
     art_y = menu_y + 4
     
     from ..rendering.draw_utils import draw_sprite
-    draw_sprite(stdscr, art_y, art_x, large_art, car_data.get("color_pair", text_color_pair), transparent_bg=True, z_index=51)
+    draw_sprite(stdscr, art_y, art_x, large_art, car_data.get("color_pair", text_color_pair), transparent_bg=True, z_index=50)
 
     mount_y = art_y + art_h + 2
     header = f"{'#':<3}{'Location':<15}{'Size':<6}{'Weapon':<12}{'Slots':<6}"
@@ -127,11 +132,11 @@ def draw_inventory_menu(stdscr, car_data, car_stats, location_desc, frame_count,
     mount_y += 1
 
     mount_index = 0
-    flash_on = (frame_count // 15) % 2 == 0
+    flash_on = (frame_count // 2) % 2 == 0
     weapon_items = list(car_data['attachment_points'].items())
 
     for point_name, point_info in weapon_items:
-        is_selected = (menu_selection[0] == "weapons" and menu_selection[1] == mount_index)
+        is_selected = (menu_selection[0] == 0 and menu_selection[1] == mount_index)
         weapon = car_stats['mounted_weapons'].get(point_name)
         point_size = point_info.get('size', '?')
         wep_name = "Empty"
@@ -142,7 +147,7 @@ def draw_inventory_menu(stdscr, car_data, car_stats, location_desc, frame_count,
         line_attr = highlight_color_pair | curses.A_BOLD if is_selected else text_color_pair
         rendering_queue.add(51, stdscr.addstr, mount_y, art_x, mount_line.ljust(available_art_width - art_x), line_attr)
         if is_selected and weapon:
-            draw_weapon_stats_modal(stdscr, weapon, mount_y, art_x + len(mount_line) + 2)
+            draw_weapon_stats_modal(stdscr, mount_y, art_x + len(mount_line) + 2, 10, 40, weapon, text_color_pair, z_index=60)
         if is_selected:
             rel_x = point_info.get("offset_x", 0)
             rel_y = point_info.get("offset_y", 0)
@@ -152,8 +157,8 @@ def draw_inventory_menu(stdscr, car_data, car_stats, location_desc, frame_count,
             elif rel_x < -art_w * 0.3: indicator_x -= 1
             if rel_y > art_h * 0.3: indicator_y += 1
             elif rel_y < -art_h * 0.3: indicator_y -= 1
-            indicator_char = str(mount_index+1) if not flash_on else "●"
-            indicator_attr = curses.A_BOLD | particle_color_pair
+            indicator_char = "●" if flash_on else str(mount_index+1)
+            indicator_attr = curses.A_BOLD | color_map.get("INDICATOR_YELLOW", 0)
             rendering_queue.add(52, stdscr.addch, indicator_y, indicator_x, indicator_char, indicator_attr)
         mount_y += 1
         mount_index += 1

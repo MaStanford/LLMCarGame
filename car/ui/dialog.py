@@ -1,28 +1,20 @@
 import curses
+from ..rendering.rendering_queue import rendering_queue
+from ..common.utils import draw_box
 
-from ..rendering.renderer import rendering_queue
-
-def draw_dialog_modal(stdscr, text_lines):
+def draw_dialog_modal(stdscr, text_lines, color_map):
     """
     Adds a non-blocking dialog modal to the rendering queue.
     """
-    rendering_queue.add(100, _draw_dialog_modal_internal, text_lines)
-
-def _draw_dialog_modal_internal(stdscr, text_lines):
-    """
-    Draws a non-blocking dialog modal in the bottom-left corner of the screen.
-    """
     h, w = stdscr.getmaxyx()
     modal_h = len(text_lines) + 4
-    modal_w = max(len(line) for line in text_lines) + 4
+    modal_w = max(len(line) for line in text_lines) + 6
     modal_y = h - modal_h - 1
     modal_x = 1
 
-    modal_win = curses.newwin(modal_h, modal_w, modal_y, modal_x)
-    modal_win.box()
+    draw_box(stdscr, modal_y, modal_x, modal_h, modal_w, "Dialog", z_index=100)
 
     for i, line in enumerate(text_lines):
-        modal_win.addstr(i + 1, 2, line)
+        rendering_queue.add(101, stdscr.addstr, modal_y + i + 1, modal_x + 2, line, color_map.get("MENU_TEXT", 0))
 
-    modal_win.addstr(modal_h - 2, 2, "(Press any key to continue)")
-    modal_win.refresh()
+    rendering_queue.add(101, stdscr.addstr, modal_y + modal_h - 2, modal_x + 2, "(Press any key to continue)", color_map.get("MENU_TEXT", 0))

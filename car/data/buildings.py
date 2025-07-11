@@ -63,10 +63,11 @@ BUILDING_DATA = {
             " ╠═════╤═════╣ ",
             " ║   ┌─┴─┐   ║ ",
             " ║   │ ■ │   ║ ",
+            " ║   │   │   ║ ",
             " ║   └─┬─┘   ║ ",
             " ╚═════╧═════╝ "
         ],
-        "width": 15, "height": 14,
+        "width": 15, "height": 15,
         "color_pair_name": "BUILDING_OUTLINE_COLOR"
     }
 }
