@@ -8,21 +8,20 @@ from ..data.weapons import WEAPONS_DATA
 from ..data.obstacles import OBSTACLE_DATA
 from ..logic.quests import KillBossObjective
 from ..data.buildings import BUILDING_DATA
-
-
 from .rendering_queue import rendering_queue
+import logging
 
 def render_game(stdscr, game_state, world, color_pair_map):
     """Renders the entire game screen."""
+    logging.info("RENDERER: Starting game render.")
     h, w = stdscr.getmaxyx()
     stdscr.erase()
 
+    # Render world terrain
     world_start_x = game_state.car_world_x - w / 2
     world_start_y = game_state.car_world_y - h / 2
-
-    # Render world terrain
-    for sy_draw_terrain in range(h):
-        for sx_draw_terrain in range(w):
+    for sy_draw_terrain in range(h - 1):
+        for sx_draw_terrain in range(w - 1):
             cwx = world_start_x + sx_draw_terrain
             cwy = world_start_y + sy_draw_terrain
             terrain = world.get_terrain_at(cwx, cwy)
@@ -30,8 +29,7 @@ def render_game(stdscr, game_state, world, color_pair_map):
             tcnum = color_pair_map.get(terrain["color_pair_name"], 0)
             pair_num = tcnum if 0 <= tcnum < curses.COLOR_PAIRS else 0
             try:
-                if sy_draw_terrain < h - 1 or sx_draw_terrain < w - 1:
-                    stdscr.addch(sy_draw_terrain, sx_draw_terrain, tchar, curses.color_pair(pair_num))
+                stdscr.addch(sy_draw_terrain, sx_draw_terrain, tchar, curses.color_pair(pair_num))
             except curses.error:
                 pass
 
@@ -57,17 +55,17 @@ def render_game(stdscr, game_state, world, color_pair_map):
                         draw_building_outline(stdscr, b_screen_x, b_screen_y, b["w"], b["h"], b.get("name", ""), color_pair_map)
 
     # Render entities
-    for entity in game_state.all_entities:
-        entity.draw(stdscr, game_state, world_start_x, world_start_y, color_pair_map)
-
-    for enemy in game_state.active_enemies:
-        enemy.draw(stdscr, game_state, world_start_x, world_start_y, color_pair_map)
-
     for fauna in game_state.active_fauna:
         fauna.draw(stdscr, game_state, world_start_x, world_start_y, color_pair_map)
 
     for obstacle in game_state.active_obstacles:
         obstacle.draw(stdscr, game_state, world_start_x, world_start_y, color_pair_map)
+
+    for enemy in game_state.active_enemies:
+        enemy.draw(stdscr, game_state, world_start_x, world_start_y, color_pair_map)
+
+    for entity in game_state.all_entities:
+        entity.draw(stdscr, game_state, world_start_x, world_start_y, color_pair_map)
 
     for pid, pstate in game_state.active_pickups.items():
         px, py, _, part, pcname = pstate
@@ -121,10 +119,11 @@ def render_game(stdscr, game_state, world, color_pair_map):
     # Render UI
     render_ui(stdscr, game_state, color_pair_map)
 
-    rendering_queue.draw(stdscr)
-    stdscr.refresh()
-
 def draw_building_outline(stdscr, bsx, bsy, bw, bh, name, color_pair_map):
+    """Adds a building outline to the rendering queue."""
+    rendering_queue.add(1, _draw_building_outline_internal, stdscr, bsx, bsy, bw, bh, name, color_pair_map)
+
+def _draw_building_outline_internal(stdscr, bsx, bsy, bw, bh, name, color_pair_map):
     h, w = stdscr.getmaxyx()
     outline_pair_num = color_pair_map.get("BUILDING_OUTLINE_COLOR", 0)
     bsx, bsy = int(round(bsx)), int(round(bsy))
@@ -188,7 +187,7 @@ def render_ui(stdscr, game_state, color_pair_map):
             stdscr.addstr(0, loc_sc, loc_line, curses.color_pair(loc_pair))
         except curses.error:
             pass
-
+        
         if game_state.current_quest and any(isinstance(o, KillBossObjective) for o in game_state.current_quest.objectives):
             for quest_key, boss in game_state.active_bosses.items():
                 angle_to_boss = math.atan2(boss.y - game_state.car_world_y, boss.x - game_state.car_world_x)

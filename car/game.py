@@ -24,8 +24,12 @@ from .logic.physics import update_physics_and_collisions
 from .audio.audio import AudioManager
 from .logic.main_menu_logic import handle_main_menu
 from .logic.new_game_logic import handle_new_game_setup
+from .rendering.rendering_queue import rendering_queue
+from .data.game_constants import CITY_SPACING
+from .world.generation import get_city_name
+from .ui.inventory import draw_inventory_menu
 
-def main_game(stdscr):
+def main_game(stdscr, logger):
     """Main function to run the game using curses."""
     # --- Initial Setup ---
     curses.curs_set(0)
@@ -36,7 +40,7 @@ def main_game(stdscr):
         curses.cbreak()
         stdscr.keypad(True)
     except Exception as e:
-        print(f"Warning: Could not set cbreak/keypad: {e}", file=sys.stderr)
+        logger.error(f"Warning: Could not set cbreak/keypad: {e}")
 
     # --- Audio Setup ---
     audio_manager = AudioManager()
@@ -161,9 +165,8 @@ def main_game(stdscr):
 
             if game_state.menu_open:
                 handle_menu(stdscr, game_state, COLOR_PAIR_MAP)
-                continue
-
-            handle_pause_menu(stdscr, game_state, COLOR_PAIR_MAP)
+            elif game_state.pause_menu_open:
+                handle_pause_menu(stdscr, game_state, COLOR_PAIR_MAP)
             
             update_physics_and_collisions(game_state, world, audio_manager, stdscr, COLOR_PAIR_MAP)
 
@@ -186,11 +189,50 @@ def main_game(stdscr):
                 game_state.obstacle_spawn_timer = random.randint(150, 400)
 
             stdscr.erase()
+            
+            if game_state.menu_open:
+                handle_menu(stdscr, game_state, COLOR_PAIR_MAP)
+            elif game_state.pause_menu_open:
+                handle_pause_menu(stdscr, game_state, COLOR_PAIR_MAP)
+            
             render_game(stdscr, game_state, world, COLOR_PAIR_MAP)
+            
+            if game_state.menu_open:
+                car_stats_for_menu = {
+                    "cash": game_state.player_cash,
+                    "durability": int(game_state.current_durability),
+                    "max_durability": int(game_state.max_durability),
+                    "current_gas": game_state.current_gas,
+                    "gas_capacity": int(game_state.gas_capacity),
+                    "ammo_counts": game_state.ammo_counts,
+                    "speed": game_state.car_speed,
+                    "world_x": game_state.car_world_x,
+                    "world_y": game_state.car_world_y,
+                    "inventory": game_state.player_inventory,
+                    "player_level": game_state.player_level,
+                    "current_xp": game_state.current_xp,
+                    "xp_to_next_level": game_state.xp_to_next_level,
+                    "mounted_weapons": game_state.mounted_weapons,
+                    "quests": [game_state.current_quest.name] if game_state.current_quest else [],
+                    "faction_reputation": game_state.faction_reputation
+                }
+                current_selection = (game_state.menu_selected_section_idx, game_state.menu_selected_item_idx)
+                car_data_for_menu = {
+                    "name": game_state.player_car.__class__.__name__.replace('_', ' ').title(),
+                    "attachment_points": game_state.attachment_points,
+                    "menu_art": game_state.player_car.art,
+                }
+                grid_x = round(game_state.car_world_x / CITY_SPACING)
+                grid_y = round(game_state.car_world_y / CITY_SPACING)
+                loc_desc_ui = get_city_name(grid_x, grid_y)
+                draw_inventory_menu(stdscr, car_data_for_menu, car_stats_for_menu, loc_desc_ui, game_state.frame, current_selection, COLOR_PAIR_MAP, game_state.menu_preview_angle)
+            elif game_state.pause_menu_open:
+                draw_pause_menu(stdscr, game_state.selected_pause_option, COLOR_PAIR_MAP)
             
             update_and_draw_entity_modal(stdscr, game_state, COLOR_PAIR_MAP)
             draw_notifications(stdscr, game_state.notifications, COLOR_PAIR_MAP)
-            stdscr.refresh()
+            
+            rendering_queue.draw(stdscr)
 
             handle_city_hall_interaction(stdscr, game_state, world, COLOR_PAIR_MAP)
             handle_shop_interaction(stdscr, game_state, world, COLOR_PAIR_MAP)

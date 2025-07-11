@@ -1,112 +1,66 @@
 import curses
-
+import logging
 from .rendering_queue import rendering_queue
 
-def draw_sprite(stdscr, y, x, art, color_pair_num, attributes=0, transparent_bg=False):
-    """Draws the specified ASCII art at the given screen coordinates with color and attributes."""
-    h, w = stdscr.getmaxyx()
-    
+def draw_sprite(stdscr, y, x, art, color_pair_num, transparent_bg=False, z_index=1):
+    """Adds a multi-line ASCII art sprite to the rendering queue."""
+    logging.info(f"DRAW_SPRITE: y={y}, x={x}, z={z_index}, art_lines={len(art)}")
     for i, line in enumerate(art):
-        draw_y = int(y + i)
-        if not (0 <= draw_y < h):
-            continue
-            
         for j, char in enumerate(line):
-            if transparent_bg and char == ' ':
-                continue
-                
-            draw_x = int(x + j)
-            if not (0 <= draw_x < w):
-                continue
+            if char != ' ' or not transparent_bg:
+                rendering_queue.add(z_index, stdscr.addch, int(y + i), int(x + j), char, curses.color_pair(color_pair_num))
 
-            try:
-                # Get the existing character and its attributes at the target location
-                bg_char_and_attr = stdscr.inch(draw_y, draw_x)
-                
-                # The final attribute is a combination of the new color and any other attributes
-                final_attr = curses.color_pair(color_pair_num) | attributes
-                
-                stdscr.addch(draw_y, draw_x, char, final_attr)
-            except curses.error:
-                pass
-
-def draw_line(stdscr, y1, x1, y2, x2, char, color_pair_num):
-    """Draws a line of characters between two points (Bresenham's algorithm)."""
-    h, w = stdscr.getmaxyx()
-    x1, y1, x2, y2 = int(round(x1)), int(round(y1)), int(round(x2)), int(round(y2))
-
-    dx = abs(x2 - x1); dy = abs(y2 - y1)
-    sx = 1 if x1 < x2 else -1; sy = 1 if y1 < y2 else -1
-    err = dx - dy
-    x, y = x1, y1
-    color_attr = 0
-    pair_num = color_pair_num if 0 <= color_pair_num < curses.COLOR_PAIRS else 0
-    if curses.has_colors():
-        try: color_attr = curses.color_pair(pair_num)
-        except: pass
-
-    try:
-        if color_attr != 0: stdscr.attron(color_attr)
-        count = 0; max_count = w + h
-        while count < max_count:
-            if 0 <= y < h and 0 <= x < w:
-                try:
-                    if y < h - 1 or x < w - 1: stdscr.addch(y, x, char)
-                except curses.error: pass
-            if x == x2 and y == y2: break
-            e2 = 2 * err
-            if e2 > -dy: err -= dy; x += sx
-            if e2 < dx: err += dx; y += sy
-            count += 1
-    finally:
-        if color_attr != 0:
-            try: stdscr.attroff(color_attr)
-            except: pass
-
-def draw_weapon_stats_modal(stdscr, weapon, y, x):
-    """Adds a modal with weapon stats to the rendering queue."""
-    rendering_queue.add(100, _draw_weapon_stats_modal_internal, weapon, y, x)
-
-def _draw_weapon_stats_modal_internal(stdscr, weapon, y, x):
-    """Draws a modal with weapon stats."""
-    h, w = stdscr.getmaxyx()
+def draw_line(stdscr, y1, x1, y2, x2, char, color_pair_num, z_index=1):
+    """Adds a line of characters to the rendering queue using Bresenham's algorithm."""
+    logging.info(f"DRAW_LINE: from=({x1},{y1}) to=({x2},{y2}), z={z_index}")
+    y1, x1, y2, x2 = int(y1), int(x1), int(y2), int(x2)
+    dx = abs(x2 - x1)
+    dy = -abs(y2 - y1)
+    sx = 1 if x1 < x2 else -1
+    sy = 1 if y1 < y2 else -1
+    err = dx + dy
     
-    stats = [
-        f"Damage: {weapon.damage:.1f}",
-        f"Fire Rate: {weapon.fire_rate:.1f}",
-        f"Range: {weapon.range:.1f}",
-    ]
-    if weapon.pellet_count > 1:
-        stats.append(f"Pellets: {weapon.pellet_count}")
-        
-    if weapon.modifiers:
-        stats.append("")
-        stats.append("Modifiers:")
-        for key, value in weapon.modifiers.items():
-            stats.append(f"  {key.replace('_', ' ').title()}: {value:.2f}")
-            
-    win_h = len(stats) + 2
-    win_w = max(len(s) for s in stats) + 4
-    
-    win_y = y - win_h
-    win_x = x
-    
-    if win_y < 0: win_y = y + 1
-    if win_x + win_w > w: win_x = w - win_w
-    
-    win = curses.newwin(win_h, win_w, win_y, win_x)
-    win.box()
-    
-    for i, stat in enumerate(stats):
-        win.addstr(i + 1, 2, stat)
-        
-    win.refresh()
+    while True:
+        rendering_queue.add(z_index, stdscr.addch, y1, x1, char, curses.color_pair(color_pair_num))
+        if x1 == x2 and y1 == y2:
+            break
+        e2 = 2 * err
+        if e2 >= dy:
+            err += dy
+            x1 += sx
+        if e2 <= dx:
+            err += dx
+            y1 += sy
 
-def add_stat_line(win, y, x, text, max_w):
-    """Safely draws a line of text into a curses window."""
-    max_y, max_x = win.getmaxyx()
-    if y < max_y -1 and x < max_x -1 :
-        try:
-            win.addstr(y, x, text[:max_w])
-        except curses.error:
-            pass
+def add_stat_line(stdscr, y, x, label, value, color_pair, z_index=1):
+    """Adds a stat line to the rendering queue."""
+    logging.info(f"ADD_STAT_LINE: y={y}, x={x}, z={z_index}, label='{label}'")
+    rendering_queue.add(z_index, stdscr.addstr, y, x, f"{label}: {value}", color_pair)
+
+def draw_weapon_stats_modal(stdscr, y, x, h, w, weapon, color_pair, z_index=1):
+    """Adds a weapon stats modal to the rendering queue."""
+    logging.info(f"DRAW_WEAPON_MODAL: y={y}, x={x}, z={z_index}, weapon='{weapon.name}'")
+    from ..common.utils import draw_box
+    draw_box(stdscr, y, x, h, w, weapon.name, z_index)
+    add_stat_line(stdscr, y + 1, x + 2, "Damage", weapon.damage, color_pair, z_index + 1)
+    add_stat_line(stdscr, y + 2, x + 2, "Range", weapon.range, color_pair, z_index + 1)
+    add_stat_line(stdscr, y + 3, x + 2, "Cooldown", weapon.cooldown, color_pair, z_index + 1)
+
+def draw_box(stdscr, y, x, h, w, title="", z_index=10):
+    """Adds the drawing of a box to the rendering queue."""
+    logging.info(f"DRAW_BOX: y={y}, x={x}, h={h}, w={w}, z={z_index}, title='{title}'")
+    # Draw top and bottom
+    for i in range(1, w - 1):
+        rendering_queue.add(z_index, stdscr.addch, y, x + i, curses.ACS_HLINE)
+        rendering_queue.add(z_index, stdscr.addch, y + h - 1, x + i, curses.ACS_HLINE)
+    # Draw sides
+    for i in range(1, h - 1):
+        rendering_queue.add(z_index, stdscr.addch, y + i, x, curses.ACS_VLINE)
+        rendering_queue.add(z_index, stdscr.addch, y + i, x + w - 1, curses.ACS_VLINE)
+    # Draw corners
+    rendering_queue.add(z_index, stdscr.addch, y, x, curses.ACS_ULCORNER)
+    rendering_queue.add(z_index, stdscr.addch, y, x + w - 1, curses.ACS_URCORNER)
+    rendering_queue.add(z_index, stdscr.addch, y + h - 1, x, curses.ACS_LLCORNER)
+    rendering_queue.add(z_index, stdscr.addch, y + h - 1, x + w - 1, curses.ACS_LRCORNER)
+    if title:
+        rendering_queue.add(z_index, stdscr.addstr, y, x + 2, f" {title} ")

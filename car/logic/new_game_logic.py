@@ -5,6 +5,7 @@ from ..logic.entity_loader import PLAYER_CARS
 from ..data.difficulty import DIFFICULTY_LEVELS, DIFFICULTY_MODIFIERS
 from ..data.colors import COLOR_PAIRS_DEFS
 from ..entities.weapon import Weapon
+from ..rendering.rendering_queue import rendering_queue
 
 def handle_new_game_setup(stdscr, color_map):
     """
@@ -23,11 +24,14 @@ def handle_new_game_setup(stdscr, color_map):
         car_instance = car_class(0, 0)
         default_weapons = [Weapon(w) for w in car_instance.default_weapons.values()]
 
+        stdscr.erase()
         draw_new_game_menu(
             stdscr, selected_car_index, selected_color_index, 
             selected_difficulty_index, selected_weapon_index, 
             car_color_names, color_map, preview_angle, default_weapons
         )
+        rendering_queue.draw(stdscr)
+        
         key = stdscr.getch()
 
         if key == curses.KEY_LEFT:
@@ -66,3 +70,5 @@ def handle_new_game_setup(stdscr, color_map):
                 "car_color_names": car_color_names,
                 "car_color_pair_num": car_color_pair_num,
             }
+        elif key == 27:  # Escape key
+            return None

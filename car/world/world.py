@@ -3,6 +3,7 @@ import math
 from .generation import get_buildings_in_city
 from ..data.game_constants import CITY_SPACING, ROAD_WIDTH, CITY_SIZE
 from ..data.terrain import TERRAIN_DATA
+from ..data.buildings import BUILDING_DATA
 
 class World:
     def __init__(self, seed):
@@ -27,7 +28,8 @@ class World:
             for building in city_buildings:
                 if building['x'] <= x < building['x'] + building['w'] and \
                    building['y'] <= y < building['y'] + building['h']:
-                    return TERRAIN_DATA["BUILDING_WALL"]
+                    building_data = BUILDING_DATA.get(building["type"], {})
+                    return {**TERRAIN_DATA["BUILDING_WALL"], "building": building_data}
             return TERRAIN_DATA["ROAD"] # Asphalt for city ground
 
         # Default to wilderness
