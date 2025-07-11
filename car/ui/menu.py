@@ -3,7 +3,7 @@ import traceback
 import sys
 
 from ..data import WEAPONS_DATA
-from ..rendering.draw_utils import draw_sprite
+from ..rendering.draw_utils import draw_sprite, add_stat_line
 
 def draw_menu(stdscr, car_data, car_stats, location_desc, frame_count, menu_selection, color_map):
     """Draws the status menu modal. Returns the menu window object or None.
@@ -69,31 +69,30 @@ def draw_menu(stdscr, car_data, car_stats, location_desc, frame_count, menu_sele
             stats_inner_y = stats_y + 1
             stats_inner_x = stats_x + 1
             current_stat_y = stats_inner_y
-            def add_stat_line(y, x, text, max_w):
-                nonlocal current_stat_y
-                max_y, max_x = menu_win.getmaxyx()
-                if y < max_y -1 and x < max_x -1 :
-                    try: menu_win.addstr(y, x, text[:max_w])
-                    except curses.error: pass
-                current_stat_y += 1
 
-            add_stat_line(current_stat_y, stats_inner_x, f"Location: {location_desc}", stats_col_width-2)
+            add_stat_line(menu_win, current_stat_y, stats_inner_x, f"Location: {location_desc}", stats_col_width-2)
+            current_stat_y += 2
+            add_stat_line(menu_win, current_stat_y, stats_inner_x, f"Cash: ${car_stats['cash']}", stats_col_width-2)
             current_stat_y += 1
-            add_stat_line(current_stat_y, stats_inner_x, f"Cash: ${car_stats['cash']}", stats_col_width-2)
-            add_stat_line(current_stat_y, stats_inner_x, f"Durability: {car_stats['durability']}/{car_stats['max_durability']}", stats_col_width-2)
-            add_stat_line(current_stat_y, stats_inner_x, f"Gas: {car_stats['current_gas']:.0f}/{car_stats['gas_capacity']}", stats_col_width-2)
+            add_stat_line(menu_win, current_stat_y, stats_inner_x, f"Durability: {car_stats['durability']}/{car_stats['max_durability']}", stats_col_width-2)
+            current_stat_y += 1
+            add_stat_line(menu_win, current_stat_y, stats_inner_x, f"Gas: {car_stats['current_gas']:.0f}/{car_stats['gas_capacity']}", stats_col_width-2)
+            current_stat_y += 1
             
             # XP and Level for Menu
-            add_stat_line(current_stat_y, stats_inner_x, f"Level: {car_stats['player_level']}", stats_col_width-2)
+            add_stat_line(menu_win, current_stat_y, stats_inner_x, f"Level: {car_stats['player_level']}", stats_col_width-2)
+            current_stat_y += 1
             xp_p = (car_stats['current_xp'] / car_stats['xp_to_next_level']) * 100 if car_stats['xp_to_next_level'] > 0 else 100
             xp_bl = 10; xp_f = int(xp_bl * xp_p / 100);
             xp_bar_str = f"[{'█'*xp_f}{'░'*(xp_bl-xp_f)}]"
-            add_stat_line(current_stat_y, stats_inner_x, f"XP: {xp_bar_str} {car_stats['current_xp']}/{car_stats['xp_to_next_level']}", stats_col_width-2)
+            add_stat_line(menu_win, current_stat_y, stats_inner_x, f"XP: {xp_bar_str} {car_stats['current_xp']}/{car_stats['xp_to_next_level']}", stats_col_width-2)
+            current_stat_y += 2
 
+            add_stat_line(menu_win, current_stat_y, stats_inner_x, "Ammo:", stats_col_width-2)
             current_stat_y += 1
-            add_stat_line(current_stat_y, stats_inner_x, "Ammo:", stats_col_width-2)
             for ammo_type, count in car_stats['ammo_counts'].items():
-                add_stat_line(current_stat_y, stats_inner_x + 2, f"- {ammo_type}: {count}", stats_col_width-4)
+                add_stat_line(menu_win, current_stat_y, stats_inner_x + 2, f"- {ammo_type}: {count}", stats_col_width-4)
+                current_stat_y += 1
             # Removed inventory from here
 
         # --- Draw Inventory (Rightmost Side) ---

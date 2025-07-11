@@ -95,3 +95,12 @@ def draw_weapon_stats_modal(stdscr, weapon, y, x):
         win.addstr(i + 1, 2, stat)
         
     win.refresh()
+
+def add_stat_line(win, y, x, text, max_w):
+    """Safely draws a line of text into a curses window."""
+    max_y, max_x = win.getmaxyx()
+    if y < max_y -1 and x < max_x -1 :
+        try:
+            win.addstr(y, x, text[:max_w])
+        except curses.error:
+            pass

@@ -1,28 +1,40 @@
-# This file defines the possible modifiers that can be applied to weapons.
-# The structure is:
-# "modifier_key": {
-#     "rarity": (min_boost, max_boost)
-# }
+# --- Weapon Modifier Definitions ---
 
-WEAPON_MODIFIERS = {
-    "damage_boost": {
-        "common": (1.05, 1.1),
-        "rare": (1.15, 1.25),
-        "legendary": (1.3, 1.5)
+RARITY_TIERS = {
+    "common": {"color": "white", "weight": 85},
+    "uncommon": {"color": "green", "weight": 10},
+    "rare": {"color": "blue", "weight": 4.85},
+    "epic": {"color": "purple", "weight": 0.10},
+    "legendary": {"color": "orange", "weight": 0.05}
+}
+
+MODIFIER_POOLS = {
+    "common": {
+        "damage_boost": (1.01, 1.05),
+        "fire_rate_boost": (1.01, 1.05),
     },
-    "fire_rate_boost": {
-        "common": (0.9, 0.95), # Lower is better for fire rate
-        "rare": (0.8, 0.85),
-        "legendary": (0.7, 0.75)
+    "uncommon": {
+        "damage_boost": (1.06, 1.10),
+        "fire_rate_boost": (1.06, 1.10),
+        "range_boost": (1.01, 1.05),
     },
-    "range_boost": {
-        "common": (1.1, 1.2),
-        "rare": (1.25, 1.4),
-        "legendary": (1.5, 1.75)
+    "rare": {
+        "damage_boost": (1.11, 1.15),
+        "fire_rate_boost": (1.11, 1.15),
+        "range_boost": (1.06, 1.10),
+        "pellet_count_boost": (1, 2),
     },
-    "pellet_count_boost": {
-        "common": (1, 2),
-        "rare": (2, 3),
-        "legendary": (3, 5)
+    "epic": {
+        "damage_boost": (1.16, 1.20),
+        "fire_rate_boost": (1.16, 1.20),
+        "range_boost": (1.11, 1.15),
+        "pellet_count_boost": (2, 3),
+    },
+    "legendary": {
+        "damage_boost": (1.21, 1.25),
+        "fire_rate_boost": (1.21, 1.25),
+        "range_boost": (1.16, 1.20),
+        "pellet_count_boost": (3, 4),
+        "special_effect": ["explosive_rounds", "vampire_rounds"]
     }
 }

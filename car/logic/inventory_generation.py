@@ -1,6 +1,8 @@
 import random
 from ..data.weapons import WEAPONS_DATA
 from ..data.game_constants import FUEL_PRICE, REPAIR_PRICE
+from .modifier_logic import generate_weapon_modifiers
+from ..entities.weapon import Weapon
 
 def generate_inventory(shop_type, player_level, town_reputation):
     """
@@ -21,28 +23,34 @@ def generate_inventory(shop_type, player_level, town_reputation):
         inventory.append({"name": "Upgrade Attachment Point Size", "type": "upgrade_attachment", "price": 1000})
 
     elif shop_type == "weapon":
-        # Add ammo for different weapon types, potentially filtering by player's weapons
-        for weapon_id, weapon in WEAPONS_DATA.items():
-            if player_level >= weapon.get("min_level", 1):
-                ammo_type = weapon["ammo_type"]
-                price = int(weapon["price"] * price_modifier) # Changed from ammo_price
+        # Add ammo for different weapon types
+        for weapon_id, weapon_data in WEAPONS_DATA.items():
+            if player_level >= weapon_data.get("min_level", 1):
+                ammo_type = weapon_data["ammo_type"]
+                price = int(weapon_data["price"] * price_modifier)
                 inventory.append({
                     "name": f"{ammo_type.replace('_', ' ').title()} Ammo",
                     "type": "ammo",
                     "ammo_type": ammo_type,
-                    "amount": weapon.get("ammo_per_clip", 10),
+                    "amount": weapon_data.get("ammo_per_clip", 10),
                     "price": price
                 })
-        # Add some weapons to the ammo shop
-        for weapon_id, weapon in WEAPONS_DATA.items():
-            if player_level >= weapon.get("min_level", 1):
-                price = int(weapon["price"] * price_modifier)
+        
+        # Add weapons with potential modifiers
+        for weapon_id, weapon_data in WEAPONS_DATA.items():
+            if player_level >= weapon_data.get("min_level", 1):
+                luck_factor = 1.0 + (town_reputation / 100.0) # Reputation increases luck
+                modifiers = generate_weapon_modifiers(player_level, luck_factor)
+                weapon = Weapon(weapon_id, modifiers)
+                
+                price = int(weapon_data["price"] * price_modifier * (1 + len(modifiers) * 0.5)) # Modifiers increase price
+                
                 inventory.append({
-                    "name": weapon["name"],
+                    "name": weapon.name,
                     "type": "weapon",
                     "weapon_id": weapon_id,
                     "price": price,
-                    "item": weapon # The actual weapon data
+                    "item": weapon
                 })
 
     return inventory

@@ -4,6 +4,7 @@ import importlib
 from ..logic.entity_loader import PLAYER_CARS
 from ..rendering.draw_utils import draw_sprite
 from ..data.difficulty import DIFFICULTY_LEVELS
+from ..common.utils import draw_box
 
 def draw_new_game_menu(stdscr, selected_car_index, selected_color_index, selected_difficulty_index, selected_weapon_index, car_color_names, COLOR_PAIR_MAP, preview_angle):
     h, w = stdscr.getmaxyx()
@@ -33,7 +34,7 @@ def draw_new_game_menu(stdscr, selected_car_index, selected_color_index, selecte
     car_win_x = (w - car_win_w) // 2
 
     car_win = curses.newwin(car_win_h, car_win_w, car_win_y, car_win_x)
-    car_win.box()
+    draw_box(car_win)
     
     # Draw car art
     color_name = car_color_names[selected_color_index]
@@ -51,7 +52,7 @@ def draw_new_game_menu(stdscr, selected_car_index, selected_color_index, selecte
     stats_win_x = (w - stats_win_w) // 2
 
     stats_win = curses.newwin(stats_win_h, stats_win_w, stats_win_y, stats_win_x)
-    stats_win.box()
+    draw_box(stats_win, "Stats")
     stats_win.addstr(1, 2, f"Durability: {car_instance.durability}")
     stats_win.addstr(2, 2, f"Speed: {car_instance.speed}")
     stats_win.addstr(3, 2, f"Handling: {car_instance.handling}")
@@ -66,8 +67,7 @@ def draw_new_game_menu(stdscr, selected_car_index, selected_color_index, selecte
     difficulty_win_x = (w - difficulty_win_w) // 2
     
     difficulty_win = curses.newwin(difficulty_win_h, difficulty_win_w, difficulty_win_y, difficulty_win_x)
-    difficulty_win.box()
-    difficulty_win.addstr(1, (difficulty_win_w - len("Difficulty")) // 2, "Difficulty")
+    draw_box(difficulty_win, "Difficulty")
     
     difficulty_text = f"< {DIFFICULTY_LEVELS[selected_difficulty_index]} >"
     difficulty_win.addstr(2, (difficulty_win_w - len(difficulty_text)) // 2, difficulty_text)
@@ -79,8 +79,7 @@ def draw_new_game_menu(stdscr, selected_car_index, selected_color_index, selecte
     weapons_win_x = (w - weapons_win_w) // 2
 
     weapons_win = curses.newwin(weapons_win_h, weapons_win_w, weapons_win_y, weapons_win_x)
-    weapons_win.box()
-    weapons_win.addstr(1, (weapons_win_w - len("Starting Weapon")) // 2, "Starting Weapon")
+    draw_box(weapons_win, "Starting Weapon")
 
     default_weapons = list(car_instance.default_weapons.values())
     if selected_weapon_index >= len(default_weapons):
