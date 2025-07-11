@@ -1,30 +1,45 @@
 import curses
 
-def draw_city_hall_menu(stdscr, menu_options, selected_option, color_map):
-    """Draws the main menu for the City Hall."""
+def draw_city_hall_menu(stdscr, menu_options, selected_option, game_state, color_map):
+    """Draws the main menu for the City Hall, using a shop-like layout."""
     h, w = stdscr.getmaxyx()
-    menu_h = len(menu_options) + 4
-    menu_w = 40
-    menu_y = (h - menu_h) // 2
-    menu_x = (w - menu_w) // 2
     
-    menu_win = curses.newwin(menu_h, menu_w, menu_y, menu_x)
-    menu_win.keypad(True)
-    menu_win.bkgd(' ', color_map.get("MENU_TEXT", 0))
-    menu_win.box()
+    # Main window
+    win = curses.newwin(h, w, 0, 0)
+    win.bkgd(' ', color_map.get("DEFAULT", 0))
+    win.erase()
 
-    title = "City Hall"
-    menu_win.addstr(1, (menu_w - len(title)) // 2, title, curses.A_BOLD)
+    # Left column (options)
+    left_w = w // 2
+    left_win = win.derwin(h - 2, left_w - 1, 1, 1)
+    left_win.box()
+    left_win.addstr(1, (left_w - 11) // 2, "City Hall", curses.A_BOLD | curses.A_UNDERLINE)
 
     for i, option in enumerate(menu_options):
-        y = i + 2
-        x = (menu_w - len(option)) // 2
+        y = i + 3
+        x = (left_w - len(option)) // 2
         if i == selected_option:
-            menu_win.addstr(y, x, option, color_map.get("MENU_HIGHLIGHT", 0) | curses.A_BOLD)
+            left_win.addstr(y, x, option, color_map.get("MENU_HIGHLIGHT", 0) | curses.A_BOLD)
         else:
-            menu_win.addstr(y, x, option, color_map.get("MENU_TEXT", 0))
+            left_win.addstr(y, x, option, color_map.get("MENU_TEXT", 0))
+
+    # Right column (player stats)
+    right_w = w - left_w
+    right_win = win.derwin(h - 2, right_w - 1, 1, left_w)
+    right_win.box()
+    right_win.addstr(1, (right_w - 11) // 2, "Your Stats", curses.A_BOLD | curses.A_UNDERLINE)
     
-    menu_win.refresh()
+    from ..rendering.draw_utils import add_stat_line
+    current_stat_y = 3
+    add_stat_line(right_win, current_stat_y, 2, f"Cash: ${game_state.player_cash}", right_w - 4)
+    current_stat_y += 1
+    add_stat_line(right_win, current_stat_y, 2, f"Durability: {int(game_state.current_durability)}/{int(game_state.max_durability)}", right_w - 4)
+    current_stat_y += 1
+    add_stat_line(right_win, current_stat_y, 2, f"Fuel: {int(game_state.current_gas)}/{int(game_state.gas_capacity)}", right_w - 4)
+    
+    win.refresh()
+    left_win.refresh()
+    right_win.refresh()
 
 def draw_town_info_dialog(stdscr, info_text, color_map):
     """Draws a dialog box with information about the town."""
@@ -61,6 +76,9 @@ def draw_town_info_dialog(stdscr, info_text, color_map):
 def draw_quest_briefing(stdscr, quest, color_map):
     """Draws the quest briefing screen and returns True if the quest is accepted."""
     h, w = stdscr.getmaxyx()
+    stdscr.clear()
+    stdscr.refresh()
+    
     briefing_h = 20
     briefing_w = 60
     briefing_y = (h - briefing_h) // 2

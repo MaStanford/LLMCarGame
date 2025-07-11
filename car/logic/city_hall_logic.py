@@ -1,5 +1,6 @@
 import curses
-from ..ui.city_hall import draw_city_hall_menu, draw_town_info_dialog, draw_quest_briefing
+from ..ui.city_hall import draw_city_hall_menu, draw_quest_briefing
+from ..ui.dialog import draw_dialog_modal
 from ..data.city_info import CITY_INFO
 from .quests import QUEST_TEMPLATES
 from ..data.factions import FACTION_DATA
@@ -12,9 +13,11 @@ def handle_city_hall_interaction(stdscr, game_state, color_map):
     """
     selected_option = 0
     menu_options = ["View Contracts", "Ask about this town", "Leave"]
+    
+    draw_dialog_modal(stdscr, ["Welcome to the City Hall."])
 
     while True:
-        draw_city_hall_menu(stdscr, menu_options, selected_option, color_map)
+        draw_city_hall_menu(stdscr, menu_options, selected_option, game_state, color_map)
         key = stdscr.getch()
 
         if key == curses.KEY_UP:
@@ -28,7 +31,7 @@ def handle_city_hall_interaction(stdscr, game_state, color_map):
                 quest_giver_faction = FACTION_DATA[quest_giver_faction_id]
                 hostile_factions = [fid for fid, rel in quest_giver_faction["relationships"].items() if rel == "Hostile"]
                 if not hostile_factions:
-                    draw_town_info_dialog(stdscr, "No available contracts at this time.", color_map)
+                    draw_dialog_modal(stdscr, ["No available contracts at this time."])
                     stdscr.getch()
                     continue
                 
@@ -54,12 +57,14 @@ def handle_city_hall_interaction(stdscr, game_state, color_map):
                 accepted = draw_quest_briefing(stdscr, quest, color_map)
                 if accepted:
                     game_state.current_quest = quest
+                    game_state.city_hall_cooldown = 100
                     return # Exit the interaction
             elif selected_option == 1: # Ask about this town
                 # Get town info
                 faction_id = get_city_faction(game_state.car_world_x, game_state.car_world_y)
                 info = CITY_INFO.get(f"{faction_id}_hub", CITY_INFO["generic_procedural"])
-                draw_town_info_dialog(stdscr, info["description"], color_map)
+                draw_dialog_modal(stdscr, [info["description"]])
                 stdscr.getch()
             elif selected_option == 2: # Leave
+                game_state.city_hall_cooldown = 100
                 return
