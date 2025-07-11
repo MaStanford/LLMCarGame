@@ -39,7 +39,11 @@ def update_weapon_systems(game_state, audio_manager):
                         
                         p_angle = game_state.car_angle + angle_offset
 
-                        if weapon.weapon_type_id == "wep_flamethrower":
+                        if "special_effect" in weapon.modifiers and weapon.modifiers["special_effect"] == "explosive_rounds":
+                            # Create an explosion at the point of impact
+                            # This is a simplified implementation. A more robust solution would use a separate explosion entity.
+                            game_state.active_particles.append([p_x, p_y, p_angle, weapon.speed, projectile_power, weapon.range, "*"])
+                        elif weapon.weapon_type_id == "wep_flamethrower":
                             end_x = p_x + weapon.range * math.cos(p_angle)
                             end_y = p_y + weapon.range * math.sin(p_angle)
                             game_state.active_flames.append([p_x, p_y, end_x, end_y, projectile_power])

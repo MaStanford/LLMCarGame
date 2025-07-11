@@ -8,6 +8,7 @@ This project is a collaboration between two super-developers with a shared passi
 1.  **Discuss the Goal:** We'll first agree on what we're trying to achieve.
 2.  **Formulate a Plan:** Gemini will propose a clear, step-by-step plan outlining the necessary code changes, new files, and documentation updates.
 3.  **Approve and Execute:** Once the plan is approved, Gemini will execute it. This ensures we're always in sync and building with a shared vision.
+4.  **Update documentation and task list:** Context must be updated, tasks updated, architecture, and game overview. 
 4.  **Commit Changes:** After the changes are made, Gemini will keep track of the modified files and prompt to either commit the changes or wait for more changes.
 
 ## Summary
@@ -145,13 +146,13 @@ The game is built around a central game loop in `car/game.py`. This loop handles
 
 ### General Tasks
 - [ ] **Refine weapons:**
-    - [ ] Add Car stat for max attachments
+    - [x] Add Car stat for max attachments
     - [ ] Add car stat that is list of attachment points
     - [ ] Initial state is defined that shows a list of attachment points, and the level of attachment at that point
     - [ ] Allow attachments to be modified for a price at repair stores. 
 - [ ] **Implement Weapon Scaling and Modifier System:**
-    - [ ] Shops will carry weapons with modifiers based on player level and town reputation.
-    - [ ] Enemies and bosses will have a chance to drop weapons with randomly generated modifiers.
+    - [x] Shops will carry weapons with modifiers based on player level and town reputation.
+    - [x] Enemies and bosses will have a chance to drop weapons with randomly generated modifiers.
 - [ ] **Show game over dialog with qoute when you die and prompt for new game, load, or quit**
 - [ ] **Combat system** 
     - [ ] For minor enemies open world combat. Running away just means getting out of aggro range. 
@@ -169,6 +170,14 @@ The game is built around a central game loop in `car/game.py`. This loop handles
 - [ ] Add shop keeper dialog, they will say something when we get in the shop. This is shop and faction specific and dynamically generated. 
     - [ ] When buying or selling high modifier equipment the shop keeper will make a comment, different comments based on the modifier. 
     - [ ] When you try to buy something without enough money, shop keeper makes a wise crack
+
+### Stage 4: Immersive Faction & Quest UX (Completed)
+- [x] **Create Data Structures:** Create `car/data/city_info.py` to store descriptive text for towns and hubs, preparing for future API integration.
+- [x] **Implement Faction Status UI:** Add a "Factions" tab to the inventory menu to display player reputation with all known factions.
+- [x] **Create City Hall Interaction Logic:** Develop a new, dedicated module (`car/logic/city_hall_logic.py`) to manage the multi-step interaction flow within City Halls.
+- [x] **Create City Hall UI:** Develop a new UI module (`car/ui/city_hall.py`) with functions to draw the main dialog, the town info box, and the detailed quest briefing screen.
+- [x] **Integrate Quest Briefing:** Connect the dynamic quest generation to the new briefing screen, allowing players to see rewards and consequences before accepting a contract.
+- [x] **Update Main Game Loop:** Replace the old quest interaction call with the new, more comprehensive City Hall interaction system.
 
 ## Completed Tasks
 

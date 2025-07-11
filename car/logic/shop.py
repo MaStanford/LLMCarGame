@@ -1,5 +1,5 @@
 from ..entities.weapon import Weapon
-from ..ui.mechanic_shop import draw_attachment_management_menu
+from .mechanic_shop_logic import handle_attachment_purchase, handle_attachment_upgrade
 
 class Shop:
     def __init__(self, name, inventory):
@@ -47,10 +47,10 @@ class Shop:
                 game_state.player_inventory.append(Weapon(weapon_id))
             return True
         elif item_type == "purchase_attachment":
-            draw_attachment_management_menu(stdscr, game_state, color_map, "purchase")
+            handle_attachment_purchase(stdscr, game_state, color_map)
             return True
         elif item_type == "upgrade_attachment":
-            draw_attachment_management_menu(stdscr, game_state, color_map, "upgrade")
+            handle_attachment_upgrade(stdscr, game_state, color_map)
             return True
         
         return False

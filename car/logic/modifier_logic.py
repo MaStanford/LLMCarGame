@@ -13,6 +13,11 @@ def generate_weapon_modifiers(player_level, luck_factor=1.0):
         if rarity != "common":
             rarity_weights[rarity] *= luck_factor
 
+    # Adjust weights for player level
+    for rarity in rarity_weights:
+        if rarity != "common":
+            rarity_weights[rarity] *= (1 + player_level / 100)
+
     chosen_rarity = random.choices(list(rarity_weights.keys()), weights=list(rarity_weights.values()), k=1)[0]
     
     # Generate modifiers based on rarity
