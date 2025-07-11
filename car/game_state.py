@@ -47,7 +47,7 @@ class GameState:
         # --- Car State ---
         self.car_world_x = 0.0
         self.car_world_y = 0.0
-        self.car_angle = -math.pi / 2
+        self.car_angle = 0.0
         self.car_velocity_x = 0.0
         self.car_velocity_y = 0.0
         self.car_speed = 0.0

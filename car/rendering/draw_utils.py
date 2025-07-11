@@ -8,6 +8,7 @@ def draw_sprite(stdscr, y, x, art, color_pair_num, transparent_bg=False, z_index
     for i, line in enumerate(art):
         for j, char in enumerate(line):
             if char != ' ' or not transparent_bg:
+                logging.info(f"DRAW_SPRITE_CHAR: y={int(y+i)}, x={int(x+j)}, char='{char}'")
                 rendering_queue.add(z_index, stdscr.addch, int(y + i), int(x + j), char, curses.color_pair(color_pair_num))
 
 def draw_line(stdscr, y1, x1, y2, x2, char, color_pair_num, z_index=1):

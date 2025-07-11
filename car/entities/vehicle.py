@@ -10,6 +10,12 @@ class Vehicle(Entity):
         self.fuel = 100
         self.max_fuel = 100
         self.attachment_points = {}
+        
+        if isinstance(art, dict):
+            self.height, self.width = Entity.get_car_dimensions(list(art.values()))
+        elif isinstance(art, list):
+            self.width = max(len(line) for line in art) if art else 0
+            self.height = len(art) if art else 0
 
     def update(self, game_state, world):
         # To be implemented by subclasses

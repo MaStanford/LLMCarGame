@@ -32,8 +32,10 @@ def update_vehicle_movement(game_state, world, audio_manager):
     effective_max_speed = game_state.max_speed * terrain_speed_mod
     game_state.car_speed = max(0, min(game_state.car_speed, effective_max_speed if effective_max_speed > 0 else 0))
 
-    game_state.car_velocity_x = game_state.car_speed * math.cos(game_state.car_angle)
-    game_state.car_velocity_y = game_state.car_speed * math.sin(game_state.car_angle)
+    # Adjust angle for world coordinates (0 is North, but math functions treat 0 as East)
+    adjusted_angle = game_state.car_angle - (math.pi / 2)
+    game_state.car_velocity_x = game_state.car_speed * math.cos(adjusted_angle)
+    game_state.car_velocity_y = game_state.car_speed * math.sin(adjusted_angle)
     next_world_x = game_state.car_world_x + game_state.car_velocity_x
     next_world_y = game_state.car_world_y + game_state.car_velocity_y
     next_center_x = next_world_x + game_state.player_car.width / 2

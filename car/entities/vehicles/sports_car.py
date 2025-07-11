@@ -13,7 +13,7 @@ class SportsCar(PlayerCar):
             "N": [
                 "  ▄▄██▄▄  ",
                 " ▟██░░██▙ ",
-                "  (●) (●)  "
+                "  (●) (●) "
             ],
             # North-East
             "NE": [
@@ -29,7 +29,7 @@ class SportsCar(PlayerCar):
             ],
             # South-East
             "SE": [
-                "  (●) (●) ",
+                " (●) (●)",
                 "◢██████▙",
                 "◥██████◤"
             ],
@@ -41,7 +41,7 @@ class SportsCar(PlayerCar):
             ],
             # South-West
             "SW": [
-                " (●) (●)  ",
+                " (●) (●)",
                 "▟██████◣",
                 "◥██████◤ "
             ],
@@ -55,7 +55,7 @@ class SportsCar(PlayerCar):
             "NW": [
                 " ▄▄██▄▄   ",
                 "▟██░░██▙  ",
-                "(●)(●) `◥◣ "
+                "(●)(●) `◥◣"
             ]
         }
         super().__init__(
@@ -67,10 +67,10 @@ class SportsCar(PlayerCar):
             braking_power=0.6,
             # Attachment points for weapons
             attachment_points={
-                "hood_gun": {"level": "light", "offset_x": 0, "offset_y": -2},
-                "roof_rack": {"level": "not_installed", "offset_x": 0, "offset_y": -1},
-                "left_fender": {"level": "not_installed", "offset_x": -2, "offset_y": 0},
-                "right_fender": {"level": "not_installed", "offset_x": 2, "offset_y": 0}
+                "hood_gun": {"level": "light", "offset_x": 0, "offset_y": -3.0},
+                "roof_rack": {"level": "not_installed", "offset_x": 0, "offset_y": 0},
+                "left_fender": {"level": "not_installed", "offset_x": 3.5, "offset_y": 1.5},
+                "right_fender": {"level": "not_installed", "offset_x": 7.5, "offset_y": 1.5}
             }
         )
         self.max_attachments = 4

@@ -5,6 +5,7 @@ import time
 import argparse
 import logging
 import os
+from logging.handlers import RotatingFileHandler
 from .game import main_game
 from .data.game_constants import MIN_TERMINAL_WIDTH, MIN_TERMINAL_HEIGHT
 
@@ -33,23 +34,18 @@ def main():
     parser.add_argument("--log", action="store_true", help="Enable logging to game.log")
     args = parser.parse_args()
 
-    # Get the root logger
     logger = logging.getLogger()
 
     if args.log:
-        # Clear any existing handlers
+        logger.setLevel(logging.INFO)
         if logger.hasHandlers():
             logger.handlers.clear()
         
-        # Set the level for the root logger
-        logger.setLevel(logging.INFO)
-        
-        # Create a file handler that overwrites the file and add it
-        handler = logging.FileHandler('game.log', mode='w')
+        # Use a rotating file handler
+        handler = RotatingFileHandler('game.log', maxBytes=5*1024*1024, backupCount=1, mode='w')
         handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
         logger.addHandler(handler)
     else:
-        # Disable all logging below CRITICAL level if --log is not set
         logging.disable(logging.CRITICAL)
 
     if not check_terminal_size():
