@@ -145,12 +145,12 @@ The game is built around a central game loop in `car/game.py`. This loop handles
 
 
 ### General Tasks
-- [ ] **Refine weapons:**
+- [x] **Refine weapons:**
     - [x] Add Car stat for max attachments
-    - [ ] Add car stat that is list of attachment points
-    - [ ] Initial state is defined that shows a list of attachment points, and the level of attachment at that point
-    - [ ] Allow attachments to be modified for a price at repair stores. 
-- [ ] **Implement Weapon Scaling and Modifier System:**
+    - [x] Add car stat that is list of attachment points
+    - [x] Initial state is defined that shows a list of attachment points, and the level of attachment at that point
+    - [x] Allow attachments to be modified for a price at repair stores. 
+- [x] **Implement Weapon Scaling and Modifier System:**
     - [x] Shops will carry weapons with modifiers based on player level and town reputation.
     - [x] Enemies and bosses will have a chance to drop weapons with randomly generated modifiers.
 - [ ] **Show game over dialog with qoute when you die and prompt for new game, load, or quit**

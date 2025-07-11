@@ -103,6 +103,7 @@ class GameState:
 
         # --- UI and Game Flow State ---
         self.shop_cooldown = 0
+        self.city_hall_cooldown = 100 # Start with a cooldown to prevent immediate interaction
         self.menu_toggle_cooldown = 0
         self.game_over = False
         self.game_over_message = ""
