@@ -41,38 +41,6 @@ def draw_city_hall_menu(stdscr, menu_options, selected_option, game_state, color
     left_win.refresh()
     right_win.refresh()
 
-def draw_town_info_dialog(stdscr, info_text, color_map):
-    """Draws a dialog box with information about the town."""
-    h, w = stdscr.getmaxyx()
-    dialog_h = 10
-    dialog_w = 60
-    dialog_y = (h - dialog_h) // 2
-    dialog_x = (w - dialog_w) // 2
-
-    dialog_win = curses.newwin(dialog_h, dialog_w, dialog_y, dialog_x)
-    dialog_win.bkgd(' ', color_map.get("MENU_TEXT", 0))
-    dialog_win.box()
-
-    title = "Town Information"
-    dialog_win.addstr(1, (dialog_w - len(title)) // 2, title, curses.A_BOLD)
-    
-    # Wrap text
-    words = info_text.split(' ')
-    lines = []
-    current_line = ""
-    for word in words:
-        if len(current_line) + len(word) + 1 > dialog_w - 4:
-            lines.append(current_line)
-            current_line = word
-        else:
-            current_line += " " + word
-    lines.append(current_line)
-
-    for i, line in enumerate(lines):
-        dialog_win.addstr(3 + i, 2, line.strip())
-
-    dialog_win.refresh()
-
 def draw_quest_briefing(stdscr, quest, color_map):
     """Draws the quest briefing screen and returns True if the quest is accepted."""
     h, w = stdscr.getmaxyx()
