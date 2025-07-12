@@ -1,9 +1,3 @@
-import pygame
-import fluidsynth
-import mido
-import threading
-import time
-import sys
 
 class AudioManager:
     def __init__(self):
