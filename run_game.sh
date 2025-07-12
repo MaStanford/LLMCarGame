@@ -3,6 +3,11 @@
 # This script provides a convenient way to run the Car RPG.
 # It handles platform-specific details, such as the LD_PRELOAD issue on Linux.
 
+if [ ! -f ".installed" ]; then
+    echo "Dependencies not installed. Please run install.sh first."
+    exit 1
+fi
+
 # Check the operating system
 OS="`uname`"
 case $OS in
