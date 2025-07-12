@@ -2,7 +2,7 @@ import random
 from ..vehicle import Vehicle
 from ...logic.ai_behaviors import _execute_ram_behavior
 
-class Rustbucket(Vehicle):
+class RustBucket(Vehicle):
     """
     A volatile, ram-focused vehicle of the Rust Prophets.
     Its only goal is to collide with the player. Explodes on death.

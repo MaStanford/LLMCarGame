@@ -175,19 +175,21 @@ This ensures that UI components are self-contained but still respect the global 
     - **Territory Control:** If a player's actions cause a faction's reputation to drop to zero, the faction with the highest player reputation will take over the defeated faction's Hub City, altering the game world.
     - **Win/Loss Conditions:** The game has clear win/loss states based on the faction system. A player can win by helping their chosen faction achieve total domination or lose by becoming an enemy to all factions.
 
+- **Coordinate System and Entity Physics:** To ensure consistent and predictable behavior for all in-game objects, the following conventions are strictly followed:
+    - **Game World Orientation:** The game operates on a "North-is-Up" principle. An angle of `0` radians corresponds to North. This is in contrast to the standard mathematical convention where `0` radians is East. All physics and rendering calculations must account for this by subtracting `math.pi / 2` from the game angle before using it in standard trigonometric functions (`cos`, `sin`).
+    - **Entity Bounding Box:** An entity's `width` and `height` are crucial for physics, rendering, and interaction. For entities with multiple directional sprites (like the player's car), the dimensions must be calculated to create a bounding box large enough to contain the widest and tallest sprites. This is handled by the `Entity.get_car_dimensions()` static method, which should be called in the entity's `__init__` method. For single-sprite entities, the dimensions are calculated directly from their art.
+    - **Attachment Points and Particle Origins:** The visual location of a weapon on the car and the origin point of the particles it fires must be perfectly synchronized. Both are calculated using the same core logic:
+        1.  Start with the entity's central world coordinates (`entity.x`, `entity.y`).
+        2.  Define the attachment point as an `(x, y)` offset from this center.
+        3.  Apply the entity's rotation to this offset using a standard 2D rotation matrix.
+        4.  Add the rotated offset to the entity's central world coordinates.
+    -   This ensures that the rendered position of the weapon and the logical origin of its projectiles are always identical, preventing visual disconnects. The `car/rendering/renderer.py` module is the source of truth for this calculation.
+
 
 ## Tasks
 
 
 ### General Tasks
-- [x] **Refine weapons:**
-    - [x] Add Car stat for max attachments
-    - [x] Add car stat that is list of attachment points
-    - [x] Initial state is defined that shows a list of attachment points, and the level of attachment at that point
-    - [x] Allow attachments to be modified for a price at repair stores. 
-- [x] **Implement Weapon Scaling and Modifier System:**
-    - [x] Shops will carry weapons with modifiers based on player level and town reputation.
-    - [x] Enemies and bosses will have a chance to drop weapons with randomly generated modifiers.
 - [ ] **Finish unfinished AI behaviors:**
     - [ ] _execute_patrol_behavior
     - [ ] _execute_deploy_mine_behavior
@@ -200,22 +202,42 @@ This ensures that UI components are self-contained but still respect the global 
         - [ ] Enemy tactic and weapon changes in phases
         - [ ] Phases based off enemy health, or player health, or time or other factors
         - [ ] You can try to run, failing quest if in a quest, but otherwise surviving. 
-- [ ] Faction boss
+- [ ] **Faction boss**
     - [ ] You can fight the faction leader for massive faction score for winning or losing. This is an epic boss and is actually needed to take over a faction once it's at 0 rep. Each faction has a different faction boss with immense stats. 
     - [ ] If you challenge them before their rep is 0, it's stats will be even more increased. But it will have a massive rep gain or loss, and if it brings it to 0 you still need to fight him he will just have less stats for the final fight like normal.  
-- [ ] Neutral city
+- [ ] **Neutral city**
     - [ ] 0,0 is a neutral hub city. Quests help no faction. Shops don't have faction bonuses. This city will always be neutral and always have 0 spawn chance. 
-- [ ] Add shop keeper dialog, they will say something when we get in the shop. This is shop and faction specific and dynamically generated. 
+- [ ] **Add shop keeper dialog:**, they will say something when we get in the shop. This is shop and faction specific and dynamically generated. 
     - [ ] When buying or selling high modifier equipment the shop keeper will make a comment, different comments based on the modifier. 
     - [ ] When you try to buy something without enough money, shop keeper makes a wise crack
+- [ ] **Weapon swivel:**
+    - [ ] Allow weapons to swivel with key presses like car turns
+    - [ ] Swivel speed will be related to level
+- [ ] **Add quest type:** 
+    - [ ] Deliver package: Deliver a package to a towns city hall
+- [ ] **Hub city static defense:**
+    - [ ] Hub cities will have static defenses
+    - [ ] We need to define 2 or 3 static defenses such as machine gun tower, flame thrower tower, impassable barbed wire and so on
+    - [ ] How much static defenses is related to reputation.
+- [ ] **Buildings are destructible in stages:**
+    - [ ] Buildings are high health entities now
+    - [ ] We need 4-5 art for buildings at various stages of destruction
+    - [ ] At 0 HP, the building explodes and the faction loses reputation.
+    - [ ] Attacking buildings will trigger enemy vehicles periodically.
+- [ ] **Add offroad stat to cars:**
+    - [ ] Cars will have an offroad stat
+    - [ ] This is a modifier that allows better speed modifier in the wilderness
+    - [ ] This is a modifier that gives bad speed modifier for street and city
+    - [ ] This is a modifier that gives bad modifier for fuel consumption
+- [ ] **Add more terrain types:**
+    - [ ] Grass
+    - [ ] Desert
+    - [ ] Mud
+    - [ ] Sand
+    - [ ] Swamp
+    - [ ] Factions will determine the terrain type. It is immersive so the deserts rats always have a lot fo desert and sand
+    - [ ] Add Faction property that is terrain and percent chance
 
-### Stage 4: Immersive Faction & Quest UX (Completed)
-- [x] **Create Data Structures:** Create `car/data/city_info.py` to store descriptive text for towns and hubs, preparing for future API integration.
-- [x] **Implement Faction Status UI:** Add a "Factions" tab to the inventory menu to display player reputation with all known factions.
-- [x] **Create City Hall Interaction Logic:** Develop a new, dedicated module (`car/logic/city_hall_logic.py`) to manage the multi-step interaction flow within City Halls.
-- [x] **Create City Hall UI:** Develop a new UI module (`car/ui/city_hall.py`) with functions to draw the main dialog, the town info box, and the detailed quest briefing screen.
-- [x] **Integrate Quest Briefing:** Connect the dynamic quest generation to the new briefing screen, allowing players to see rewards and consequences before accepting a contract.
-- [x] **Update Main Game Loop:** Replace the old quest interaction call with the new, more comprehensive City Hall interaction system.
 
 ## Completed Tasks
 
@@ -253,6 +275,14 @@ This ensures that UI components are self-contained but still respect the global 
     - [x] Ensure the boss encounter cutscene is a non-blocking overlay in the bottom-right.
     - [x] Implement a dynamic entity display modal that shows the name and hit points of the nearest entity within a "cutscene radius".
     - [x] Prioritize bosses in the cutscene modal, showing them even if other entities are closer.
+- [x] **Refine weapons:**
+    - [x] Add Car stat for max attachments
+    - [x] Add car stat that is list of attachment points
+    - [x] Initial state is defined that shows a list of attachment points, and the level of attachment at that point
+    - [x] Allow attachments to be modified for a price at repair stores. 
+- [x] **Implement Weapon Scaling and Modifier System:**
+    - [x] Shops will carry weapons with modifiers based on player level and town reputation.
+    - [x] Enemies and bosses will have a chance to drop weapons with randomly generated modifiers.
 
 ### Stage 1: Faction and Reputation Foundation (Completed)
 - [x] **Create `FACTION_DATA`:** Create a new file, `car/data/factions.py`, to define factions, their Hub City coordinates, and their relationships.
@@ -270,6 +300,14 @@ This ensures that UI components are self-contained but still respect the global 
 - [x] **Implement Faction-Based Spawning:** Refactor the `spawn_enemy` logic to change spawn rates and enemy types based on the player's location and faction alignment.
 - [x] **Implement Territory Takeover:** Create the logic for a faction to take over a rival's Hub City when their reputation with the player drops to zero.
 - [x] **Implement Win/Lose Conditions:** Define the final win state (chosen faction dominates) and lose state (player is hostile with all factions).
+
+### Stage 4: Immersive Faction & Quest UX (Completed)
+- [x] **Create Data Structures:** Create `car/data/city_info.py` to store descriptive text for towns and hubs, preparing for future API integration.
+- [x] **Implement Faction Status UI:** Add a "Factions" tab to the inventory menu to display player reputation with all known factions.
+- [x] **Create City Hall Interaction Logic:** Develop a new, dedicated module (`car/logic/city_hall_logic.py`) to manage the multi-step interaction flow within City Halls.
+- [x] **Create City Hall UI:** Develop a new UI module (`car/ui/city_hall.py`) with functions to draw the main dialog, the town info box, and the detailed quest briefing screen.
+- [x] **Integrate Quest Briefing:** Connect the dynamic quest generation to the new briefing screen, allowing players to see rewards and consequences before accepting a contract.
+- [x] **Update Main Game Loop:** Replace the old quest interaction call with the new, more comprehensive City Hall interaction system.
 
 ## Roadmap
 

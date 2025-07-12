@@ -1,7 +1,7 @@
 import curses
 import math
 from ..logic.entity_loader import PLAYER_CARS
-from ..rendering.draw_utils import draw_sprite
+from ..rendering.draw_utils import draw_sprite, draw_weapon_stats_modal
 from ..data.difficulty import DIFFICULTY_LEVELS
 from ..common.utils import draw_box
 from ..rendering.rendering_queue import rendering_queue
@@ -81,6 +81,14 @@ def draw_new_game_menu(stdscr, selected_car_index, selected_color_index, selecte
                 rendering_queue.add(11, stdscr.addstr, weapons_win_y + i + 1, weapons_win_x + 2, f"> {weapon_name}", curses.A_BOLD)
             else:
                 rendering_queue.add(11, stdscr.addstr, weapons_win_y + i + 1, weapons_win_x + 2, f"  {weapon_name}")
+        
+        # Draw weapon stats modal
+        selected_weapon = default_weapons[selected_weapon_index]
+        modal_h = 5
+        modal_w = 30
+        modal_y = weapons_win_y
+        modal_x = weapons_win_x + weapons_win_w + 1
+        draw_weapon_stats_modal(stdscr, modal_y, modal_x, modal_h, modal_w, selected_weapon, COLOR_PAIR_MAP.get("DEFAULT", 0), z_index=20)
     else:
         rendering_queue.add(11, stdscr.addstr, weapons_win_y + 1, weapons_win_x + 2, "None")
 

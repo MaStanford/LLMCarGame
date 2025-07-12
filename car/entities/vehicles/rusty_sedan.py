@@ -12,6 +12,10 @@ class RustySedan(Vehicle):
             "  \\____/  ",
         ]
         super().__init__(x, y, art, durability=20, speed=0.75, acceleration=0.5, handling=0.5)
+        self.xp_value = 5
+        self.cash_value = 10
+        self.drop_item = "ammo_bullet"
+        self.drop_rate = 0.05
         self.phases = [
             {"name": "Pursuit", "duration": (4, 6), "behavior": "CHASE", "next_phases": {"DriveBy": 1.0}},
             {"name": "DriveBy", "duration": (3, 5), "behavior": "STRAFE", "next_phases": {"Pursuit": 0.7, "Reposition": 0.3}},

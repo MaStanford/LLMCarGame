@@ -25,7 +25,7 @@ def handle_input(stdscr, game_state):
         "quit": False,
     }
 
-    if game_state.menu_open:
+    if game_state.menu_open or game_state.pause_menu_open:
         if curses.KEY_UP in keys:
             actions["menu_up"] = True
         if curses.KEY_DOWN in keys:
@@ -61,7 +61,9 @@ def handle_input(stdscr, game_state):
         if game_state.menu_open:
             actions["toggle_menu"] = True
         else:
-            actions["toggle_pause"] = True
+            if game_state.menu_toggle_cooldown == 0:
+                actions["toggle_pause"] = True
+                game_state.menu_toggle_cooldown = 5
 
 
     return actions

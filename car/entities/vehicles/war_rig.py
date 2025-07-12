@@ -15,6 +15,10 @@ class WarRig(Vehicle):
             "(●)═(●)═════(●)═(●)"
         ]
         super().__init__(x, y, art, durability=500, speed=0.3, acceleration=0.1, handling=0.1)
+        self.xp_value = 200
+        self.cash_value = 300
+        self.drop_item = "repair_kit"
+        self.drop_rate = 1.0 # Always drops a repair kit
         self.phases = [
             {"name": "Advance", "duration": (8, 10), "behavior": "CHASE", "next_phases": {"DeployMines": 0.7, "Evade": 0.3}},
             {"name": "DeployMines", "duration": (2, 3), "behavior": "DEPLOY_MINE", "next_phases": {"Advance": 1.0}},

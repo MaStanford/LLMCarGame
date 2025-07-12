@@ -88,6 +88,7 @@ class GameState:
         self.obstacle_spawn_timer = 0
         self.active_particles = []
         self.active_flames = []
+        self.active_explosions = []
         self.active_pickups = {}
         self.next_pickup_id = 0
         self.active_fauna = []
@@ -104,10 +105,12 @@ class GameState:
         self.shop_cooldown = 0
         self.city_hall_cooldown = 100 # Start with a cooldown to prevent immediate interaction
         self.menu_toggle_cooldown = 0
+        self.menu_nav_cooldown = 0
         self.game_over = False
         self.game_over_message = ""
         self.menu_open = False
         self.pause_menu_open = False
+        self.selected_pause_option = 0
         self.play_again = False
         self.frame = 0
         self.menu_selected_section_idx = 0

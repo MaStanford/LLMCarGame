@@ -14,6 +14,10 @@ class RaiderBuggy(Vehicle):
             "(●)---(●)"
         ]
         super().__init__(x, y, art, durability=40, speed=0.9, acceleration=0.7, handling=0.8)
+        self.xp_value = 15
+        self.cash_value = 20
+        self.drop_item = "ammo_bullet"
+        self.drop_rate = 0.15
         self.phases = [
             {"name": "Harass", "duration": (3, 5), "behavior": "STRAFE", "next_phases": {"Ram": 0.6, "Harass": 0.4}},
             {"name": "Ram", "duration": (2, 3), "behavior": "RAM", "next_phases": {"Harass": 1.0}}

@@ -5,4 +5,4 @@ from .load_game import draw_load_game_menu
 from .inventory import draw_inventory_menu
 from .cutscene import play_death_cutscene
 from .shop import draw_shop_menu
-from .entity_modal import update_and_draw_entity_modal, play_explosion_in_modal
+from .entity_modal import update_and_draw_entity_modal

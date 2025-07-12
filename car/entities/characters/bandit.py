@@ -11,7 +11,10 @@ class Bandit(Character):
             " \\_/ ",
         ]
         super().__init__(x, y, art, durability=10, speed=0.25)
+        self.xp_value = 5
         self.cash_value = 10
+        self.drop_item = "ammo_bullet"
+        self.drop_rate = 0.05
         self.phases = [
             {"name": "Charge", "duration": (3, 5), "behavior": "CHASE", "next_phases": {"Charge": 0.8, "Hesitate": 0.2}},
             {"name": "Hesitate", "duration": (1, 2), "behavior": "STATIONARY", "next_phases": {"Charge": 1.0}}
