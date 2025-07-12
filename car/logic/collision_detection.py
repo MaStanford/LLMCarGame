@@ -1,7 +1,6 @@
 import random
 import math
 from .loot_generation import handle_enemy_loot_drop
-from ..ui.entity_modal import play_explosion_in_modal
 from ..ui.notifications import add_notification
 from ..world.generation import get_buildings_in_city
 
@@ -77,7 +76,10 @@ def handle_collisions(game_state, world, audio_manager, stdscr, color_pair_map):
     for boss, damage in bosses_hit_by_projectiles.items():
         boss.hp -= damage
         if boss.hp <= 0:
-            play_explosion_in_modal(stdscr, boss.art, color_pair_map)
+            game_state.active_explosions.append({
+                "x": boss.x, "y": boss.y, "art": boss.art, 
+                "start_time": game_state.frame, "duration": 30 # 30 frames
+            })
             for key, b in list(game_state.active_bosses.items()):
                 if b == boss:
                     del game_state.active_bosses[key]
@@ -86,6 +88,10 @@ def handle_collisions(game_state, world, audio_manager, stdscr, color_pair_map):
     for enemy, damage in enemies_hit_by_projectiles.items():
         enemy.durability -= damage
         if enemy.durability <= 0:
+            game_state.active_explosions.append({
+                "x": enemy.x, "y": enemy.y, "art": enemy.art, 
+                "start_time": game_state.frame, "duration": 20 # 20 frames
+            })
             enemy_ids_to_remove.append(enemy)
 
     for enemy in enemy_ids_to_remove:

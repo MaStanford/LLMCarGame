@@ -26,7 +26,16 @@ def _populate_entities():
         _load_entity(VEHICLE_PATH, name, PLAYER_CARS)
 
     # Enemy Vehicles
-    enemy_vehicle_names = ["rusty_sedan", "muscle_car", "armored_truck"]
+    enemy_vehicle_names = [
+        "armored_truck", 
+        "guard_truck", 
+        "muscle_car", 
+        "peacekeeper", 
+        "raider_buggy", 
+        "rust_bucket", 
+        "rusty_sedan", 
+        "technical", 
+        "war_rig"]
     for name in enemy_vehicle_names:
         _load_entity(VEHICLE_PATH, name, ENEMY_VEHICLES)
 
@@ -41,7 +50,7 @@ def _populate_entities():
         _load_entity(CHARACTER_PATH, name, FAUNA)
 
     # Obstacles
-    obstacle_names = ["rock", "oil_barrel"]
+    obstacle_names = ["rock", "oil_barrel", "tire_pile", "scrap_barricade", "wrecked_husk"]
     for name in obstacle_names:
         _load_entity(OBSTACLE_PATH, name, OBSTACLES)
 

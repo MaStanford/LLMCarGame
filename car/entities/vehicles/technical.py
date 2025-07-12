@@ -14,6 +14,10 @@ class Technical(Vehicle):
             " (●)═(●) "
         ]
         super().__init__(x, y, art, durability=70, speed=0.7, acceleration=0.5, handling=0.6)
+        self.xp_value = 25
+        self.cash_value = 40
+        self.drop_item = "ammo_bullet"
+        self.drop_rate = 0.25
         self.phases = [
             {"name": "Approach", "duration": (5, 8), "behavior": "CHASE", "next_phases": {"SuppressiveFire": 1.0}},
             {"name": "SuppressiveFire", "duration": (4, 6), "behavior": "STRAFE", "next_phases": {"Approach": 1.0}}

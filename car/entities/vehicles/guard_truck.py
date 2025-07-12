@@ -15,6 +15,10 @@ class GuardTruck(Vehicle):
             " (●)═(●) "
         ]
         super().__init__(x, y, art, durability=150, speed=0.4, acceleration=0.2, handling=0.2)
+        self.xp_value = 30
+        self.cash_value = 50
+        self.drop_item = "ammo_bullet"
+        self.drop_rate = 0.2
         self.phases = [
             {"name": "Guard", "duration": (1, 2), "behavior": "STATIONARY", "next_phases": {"Chase": 1.0}},
             {"name": "Chase", "duration": (10, 15), "behavior": "CHASE", "next_phases": {"Guard": 1.0}}

@@ -11,7 +11,10 @@ class Marauder(Character):
             " \\__/ ",
         ]
         super().__init__(x, y, art, durability=40, speed=0.35)
+        self.xp_value = 20
         self.cash_value = 25
+        self.drop_item = "ammo_bullet"
+        self.drop_rate = 0.2
         self.phases = [
             {"name": "Chase", "duration": (2, 4), "behavior": "CHASE", "next_phases": {"Strafe": 1.0}},
             {"name": "Strafe", "duration": (3, 5), "behavior": "STRAFE", "next_phases": {"Chase": 1.0}}

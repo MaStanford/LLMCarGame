@@ -5,7 +5,6 @@ from ..data.game_constants import CITY_SPACING, CITY_SIZE
 from ..world.generation import get_buildings_in_city, get_city_name
 from ..data.cosmetics import BUILDING_OUTLINE
 from ..data.weapons import WEAPONS_DATA
-from ..data.obstacles import OBSTACLE_DATA
 from ..logic.quests import KillBossObjective
 from ..data.buildings import BUILDING_DATA
 from .rendering_queue import rendering_queue
@@ -179,12 +178,9 @@ def render_ui(stdscr, game_state, color_pair_map):
         ctrl1 = "WASD/Arrows: Steer & Accel/Brake"
         ctrl2 = "SPACE: Fire"
         ctrl3 = "ESC: Quit | TAB: Menu"
-        try:
-            stdscr.addstr(0, 1, ctrl1)
-            stdscr.addstr(1, 1, ctrl2)
-            stdscr.addstr(2, 1, ctrl3)
-        except curses.error:
-            pass
+        rendering_queue.add(20, stdscr.addstr, 0, 1, ctrl1)
+        rendering_queue.add(20, stdscr.addstr, 1, 1, ctrl2)
+        rendering_queue.add(20, stdscr.addstr, 2, 1, ctrl3)
 
         grid_x = round(game_state.car_world_x / CITY_SPACING)
         grid_y = round(game_state.car_world_y / CITY_SPACING)
@@ -193,10 +189,7 @@ def render_ui(stdscr, game_state, color_pair_map):
         loc_sc = max(1, (w - len(loc_line)) // 2)
         loc_color_pair = color_pair_map.get("UI_LOCATION", 0)
         loc_pair = loc_color_pair if 0 <= loc_color_pair < curses.COLOR_PAIRS else 0
-        try:
-            stdscr.addstr(0, loc_sc, loc_line, curses.color_pair(loc_pair))
-        except curses.error:
-            pass
+        rendering_queue.add(20, stdscr.addstr, 0, loc_sc, loc_line, curses.color_pair(loc_pair))
         
         if game_state.current_quest and any(isinstance(o, KillBossObjective) for o in game_state.current_quest.objectives):
             for quest_key, boss in game_state.active_bosses.items():
@@ -242,13 +235,13 @@ def render_ui(stdscr, game_state, color_pair_map):
                     compass = "↖"  # NNW
                 else:
                     compass = "?" # Fallback, should not be reached
-                stdscr.addstr(1, w - 20, f"Boss: {compass}")
+                rendering_queue.add(20, stdscr.addstr, 1, w - 20, f"Boss: {compass}")
 
                 boss_hp_p = (boss.hp / (boss.car["durability"] * boss.hp_multiplier)) * 100
                 boss_hp_bl = 20
                 boss_hp_f = int(boss_hp_bl * boss_hp_p / 100)
                 boss_hp_bar = f"[{'█'*boss_hp_f}{'░'*(boss_hp_bl-boss_hp_f)}]"
-                stdscr.addstr(0, w - 40, f"Boss HP: {boss_hp_bar}")
+                rendering_queue.add(20, stdscr.addstr, 0, w - 40, f"Boss HP: {boss_hp_bar}")
 
         cname = f"Car: {game_state.player_car.__class__.__name__.replace('_', ' ').title()}"
         dur_p = (game_state.current_durability / game_state.max_durability) * 100 if game_state.max_durability > 0 else 0
@@ -287,9 +280,6 @@ def render_ui(stdscr, game_state, color_pair_map):
         all_stats = [cname, stat1, stat2, stat3, stat4, ammo_disp, diff_disp, level_disp, xp_disp, quest_disp]
         max_len = max(len(s) for s in all_stats) if all_stats else 0
         sc_stats = max(1, w - max_len - 1)
-        try:
-            for i, stat_line in enumerate(all_stats):
-                if i < h:
-                    stdscr.addstr(i, sc_stats, stat_line)
-        except curses.error:
-            pass
+        for i, stat_line in enumerate(all_stats):
+            if i < h:
+                rendering_queue.add(20, stdscr.addstr, i, sc_stats, stat_line)

@@ -14,6 +14,10 @@ class Peacekeeper(Vehicle):
             " (●)═(●) "
         ]
         super().__init__(x, y, art, durability=80, speed=0.6, acceleration=0.5, handling=0.7)
+        self.xp_value = 10
+        self.cash_value = 15
+        self.drop_item = "ammo_bullet"
+        self.drop_rate = 0.1
         self.phases = [
             {"name": "Patrol", "duration": (5, 8), "behavior": "PATROL", "next_phases": {"Patrol": 1.0}},
             {"name": "Engage", "duration": (10, 10), "behavior": "CHASE", "next_phases": {"Patrol": 1.0}}

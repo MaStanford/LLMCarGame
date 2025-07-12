@@ -12,10 +12,11 @@ from .logic.menu_logic import handle_menu
 from .logic.shop_logic import handle_shop_interaction
 from .logic.city_hall_logic import handle_city_hall_interaction
 from .logic.quest_logic import update_quests
-from .ui.entity_modal import update_and_draw_entity_modal
+from .ui.entity_modal import update_and_draw_entity_modal, draw_explosions
 from .ui.notifications import draw_notifications
 from .ui.cutscene import play_death_cutscene
 from .ui.game_over import draw_game_over_menu
+from .ui.pause_menu import draw_pause_menu
 from .rendering import render_game
 from .world import World
 from .game_state import GameState
@@ -156,46 +157,49 @@ def main_game(stdscr, logger):
                 game_state.city_hall_cooldown -= 1
             if game_state.menu_toggle_cooldown > 0:
                 game_state.menu_toggle_cooldown -= 1
+            if game_state.menu_nav_cooldown > 0:
+                game_state.menu_nav_cooldown -= 1
 
             actions = handle_input(stdscr, game_state)
             game_state.actions = actions
 
             if actions["toggle_menu"]:
                 game_state.menu_open = not game_state.menu_open
-
-            if game_state.menu_open:
-                handle_menu(stdscr, game_state, COLOR_PAIR_MAP)
-            elif game_state.pause_menu_open:
-                handle_pause_menu(stdscr, game_state, COLOR_PAIR_MAP)
             
-            update_physics_and_collisions(game_state, world, audio_manager, stdscr, COLOR_PAIR_MAP)
+            if actions["toggle_pause"]:
+                game_state.pause_menu_open = not game_state.pause_menu_open
 
-            for entity in game_state.all_entities:
-                entity.update(game_state, world)
+            if not game_state.menu_open and not game_state.pause_menu_open:
+                # --- Only update game logic if not in a menu ---
+                update_physics_and_collisions(game_state, world, audio_manager, stdscr, COLOR_PAIR_MAP)
 
+                for entity in game_state.all_entities:
+                    entity.update(game_state, world)
+
+            # --- Spawning should happen regardless of menus ---
             game_state.enemy_spawn_timer -= 1
             if game_state.enemy_spawn_timer <= 0:
                 spawn_enemy(game_state, world)
-                game_state.enemy_spawn_timer = random.randint(150, 400)
+                game_state.enemy_spawn_timer = random.randint(50, 100)
 
             game_state.fauna_spawn_timer -= 1
             if game_state.fauna_spawn_timer <= 0:
                 spawn_fauna(game_state, world)
-                game_state.fauna_spawn_timer = random.randint(150, 400)
+                game_state.fauna_spawn_timer = random.randint(50, 100)
 
             game_state.obstacle_spawn_timer -= 1
             if game_state.obstacle_spawn_timer <= 0:
                 spawn_obstacle(game_state, world)
-                game_state.obstacle_spawn_timer = random.randint(150, 400)
+                game_state.obstacle_spawn_timer = random.randint(50, 100)
 
             stdscr.erase()
+            
+            render_game(stdscr, game_state, world, COLOR_PAIR_MAP)
             
             if game_state.menu_open:
                 handle_menu(stdscr, game_state, COLOR_PAIR_MAP)
             elif game_state.pause_menu_open:
                 handle_pause_menu(stdscr, game_state, COLOR_PAIR_MAP)
-            
-            render_game(stdscr, game_state, world, COLOR_PAIR_MAP)
             
             if game_state.menu_open:
                 car_stats_for_menu = {
@@ -231,6 +235,7 @@ def main_game(stdscr, logger):
                 draw_pause_menu(stdscr, game_state.selected_pause_option, COLOR_PAIR_MAP)
             
             update_and_draw_entity_modal(stdscr, game_state, COLOR_PAIR_MAP)
+            draw_explosions(stdscr, game_state, COLOR_PAIR_MAP)
             draw_notifications(stdscr, game_state.notifications, COLOR_PAIR_MAP)
             
             rendering_queue.draw(stdscr)

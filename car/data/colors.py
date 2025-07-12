@@ -26,6 +26,11 @@ COLOR_PAIRS_DEFS = {
     "MENU_BORDER": {"id": 21, "fg": curses.COLOR_YELLOW, "bg": curses.COLOR_BLACK},
     "MENU_TEXT": {"id": 22, "fg": curses.COLOR_WHITE, "bg": curses.COLOR_BLACK},
     "MENU_HIGHLIGHT": {"id": 23, "fg": curses.COLOR_BLACK, "bg": curses.COLOR_YELLOW},
+    "MENU_BACKGROUND": {"id": 24, "fg": curses.COLOR_WHITE, "bg": curses.COLOR_BLACK},
+
+    # --- UI Elements ---
+    "UI_TEXT": {"id": 25, "fg": curses.COLOR_WHITE, "bg": curses.COLOR_BLACK},
+    "UI_HIGHLIGHT": {"id": 26, "fg": curses.COLOR_YELLOW, "bg": curses.COLOR_BLACK},
     "PICKUP_CASH": {"id": 24, "fg": curses.COLOR_GREEN, "bg": -1},
     "FLAME": {"id": 25, "fg": curses.COLOR_RED, "bg": curses.COLOR_YELLOW},
     "TERRAIN_TREE": {"id": 26, "fg": curses.COLOR_BLACK, "bg": curses.COLOR_GREEN},
