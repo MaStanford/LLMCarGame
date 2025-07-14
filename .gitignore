@@ -138,3 +138,4 @@ cython_debug/
 # Save files
 saves/
 *.sav
+.installed

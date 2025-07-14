@@ -5,7 +5,6 @@ from ..logic.entity_loader import PLAYER_CARS
 from ..data.difficulty import DIFFICULTY_LEVELS, DIFFICULTY_MODIFIERS
 from ..data.colors import COLOR_PAIRS_DEFS
 from ..entities.weapon import Weapon
-from ..rendering.rendering_queue import rendering_queue
 
 def handle_new_game_setup(stdscr, color_map):
     """

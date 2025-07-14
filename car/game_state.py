@@ -14,6 +14,12 @@ class GameState:
         self.car_color_names = car_color_names
         self.car_color_pair_num = car_color_pair_num
         
+        # --- Player Actions ---
+        self.actions = {
+            "accelerate": False, "brake": False, "turn_left": False, 
+            "turn_right": False, "fire": False
+        }
+        
         # --- Player State ---
         self.player_cash = self.difficulty_mods.get("starting_cash", 300)
         
@@ -88,7 +94,8 @@ class GameState:
         self.obstacle_spawn_timer = 0
         self.active_particles = []
         self.active_flames = []
-        self.active_explosions = []
+        self.active_explosions = [] # This will be removed
+        self.destroyed_this_frame = []
         self.active_pickups = {}
         self.next_pickup_id = 0
         self.active_fauna = []

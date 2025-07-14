@@ -36,8 +36,4 @@ class Entity(ABC):
     @abstractmethod
     def update(self, game_state, world):
         pass
-
-    @abstractmethod
-    def draw(self, stdscr, game_state, world_start_x, world_start_y, color_map):
-        pass
 import logging

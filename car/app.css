@@ -1,0 +1,267 @@
+DefaultScreen {
+    layers: base hud controls location entity_modal;
+}
+
+GameView {
+    layer: base;
+    width: 100%;
+    height: 100%;
+}
+
+HUD {
+    layer: hud;
+    dock: top;
+    width: 100%;
+    height: 1;
+    background: $panel;
+    color: $text;
+    content-align: right middle;
+}
+
+Controls {
+    layer: controls;
+    dock: top;
+    width: auto;
+    height: 1;
+    content-align: left middle;
+    background: $panel;
+    color: $text;
+}
+
+
+.control-item {
+    margin-right: 1;
+}
+
+Location {
+    layer: location;
+    dock: top;
+    width: 100%;
+    height: 1;
+    content-align: center middle;
+    background: $panel;
+    color: $text;
+}
+
+EntityModal {
+    layer: entity_modal;
+    dock: bottom;
+    width: 42;
+    height: 12;
+    background: $panel;
+    border: heavy white;
+    display: none; /* Hidden by default */
+    offset-x: -43;
+    offset-y: -1;
+}
+
+MainMenuScreen {
+    align: center middle;
+}
+
+#main-menu-buttons {
+    align: center middle;
+    width: 40;
+}
+
+MainMenuScreen Button {
+    width: 100%;
+    margin: 1;
+}
+
+
+PauseScreen {
+    align: center middle;
+}
+
+PauseScreen Button {
+    width: 40;
+    margin: 1;
+}
+
+InventoryScreen {
+    layout: grid;
+    grid-size: 2 2;
+    grid-gutter: 1;
+}
+
+ShopScreen, CityHallScreen {
+    layout: grid;
+    grid-size: 2 1;
+    grid-gutter: 1;
+}
+
+#item_list, #quest_list {
+    column-span: 1;
+    row-span: 1;
+}
+
+#item_info, #quest_info {
+    column-span: 1;
+    row-span: 1;
+}
+
+#dialog_box {
+    column-span: 2;
+    height: 3;
+}
+NewGameScreen {
+    align: center top;
+}
+
+#new-game-scroll-container {
+    overflow: auto;
+    align: center top;
+}
+
+#new-game-container {
+    width: 80;
+    height: auto;
+    align: center top;
+}
+
+#car-preview-container {
+    height: 15;
+    border: heavy white;
+    margin-bottom: 1;
+    align: center middle;
+}
+
+#car-preview {
+    text-align: center;
+}
+
+/* Container of 3 widgets in app. */
+.cycle-widgets-container {
+    align: center middle;
+    height: 15;
+}
+
+#weapon-list-container.focused {
+    border: heavy yellow;
+}
+
+Button:focus {
+    border: heavy yellow;
+}
+
+
+.panel-title {
+    text-align: center;
+    text-style: bold;
+    margin-bottom: 1;
+}
+
+#weapon-list-container {
+    height: 10;
+    border: heavy white;
+    padding: 1;
+}
+
+#weapon_info {
+    margin-top: 1;
+    height: 10;
+}
+
+#start_game {
+    width: 100%;
+    margin-top: 1;
+}
+
+GameOverScreen {
+    align: center middle;
+}
+
+#game-over-dialog {
+    width: 50;
+    height: 10;
+    border: heavy white;
+    background: $panel;
+    align: center middle;
+}
+
+#game-over-title {
+    text-style: bold;
+    color: red;
+}
+
+MechanicShopScreen {
+    align: center middle;
+}
+
+#mechanic-shop-dialog {
+    width: 60;
+    height: 15;
+    border: heavy white;
+    background: $panel;
+    align: center middle;
+}
+
+#mechanic-shop-title {
+    text-style: bold;
+}
+
+Notifications {
+    dock: bottom;
+    height: 5;
+    align: center middle;
+    background: $panel;
+    color: $text;
+}
+
+Dialog {
+    dock: bottom;
+    height: 10;
+    background: $panel;
+    border: heavy white;
+    padding: 1;
+}
+
+#dialog-prompt {
+    color: yellow;
+}
+
+CutsceneScreen {
+    align: center middle;
+}
+
+#cutscene-content {
+    width: 80;
+    height: 20;
+    border: heavy white;
+    background: $panel;
+    align: center middle;
+}
+
+CityHallScreen {
+    align: center middle;
+}
+
+#city-hall-dialog {
+    width: 60;
+    height: 15;
+    border: heavy white;
+    background: $panel;
+    align: center middle;
+}
+
+#city-hall-title {
+    text-style: bold;
+}
+
+QuestBriefingScreen {
+    align: center middle;
+}
+
+#quest-briefing-dialog {
+    width: 70;
+    height: 22;
+    border: heavy white;
+    background: $panel;
+    padding: 1;
+}
+
+#quest-briefing-title {
+    text-style: bold;
+    text-align: center;
+}

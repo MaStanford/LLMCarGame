@@ -50,8 +50,7 @@ This project is a terminal-based, open-world, automotive RPG survival game. Play
 ## Stack
 
 - **Language:** Python
-- **Engine:** Custom-built terminal game engine using the `curses` library.
-- **Renderer:** `curses` library for all screen drawing.
+- **Engine:** Textual TUI Framework
 - **Audio:** PyGame and fluidsynth for midi sounds, all souynds are done with midi, ch 10 for sound effects. 
 
 ### Logging
@@ -65,69 +64,51 @@ The game includes a logging system for debugging purposes. By default, logging i
 -   **Log File**: When enabled, all logging information is written to `game.log` in the root directory of the project. This file is overwritten each time the game is run with the `--log` flag.
 -   **Log Content**: The log contains information about the game's state, rendering, and any errors that occur. This is the first place you should look when debugging an issue.
 
+### Developer Mode
+
+To use the Textual Devtools, you must first install the `textual-dev` package:
+```bash
+pip install textual-dev
+```
+Then, run the game with the `--dev` flag:
+```bash
+./run_game.sh --dev
+```
+This will enable the Textual inspector, which can be accessed by pressing `Ctrl+B`.
+
 ## Architecture
 
-The game is built around a central game loop in `car/game.py`. This loop handles user input, updates the game state, and renders the world.
+The game is built around the **Textual TUI framework**, which provides an event-driven, widget-based architecture. This replaces the previous manual `curses`-based rendering system.
 
-- **Game Loop & UI:**
-    -   **Main Game Loop:** The core loop in `main_game` function within `car/game.py` renders the world, including the environment, roads, buildings, and all entities. It also handles user input and updates the game state.
-    -   **UI Menus:** The game features several UI menus, each in its own file in the `car/ui` directory.
-        -   **Main Menu:** `car/ui/main_menu.py` - The initial screen with "New Game," "Load Game," and "Quit" options.
-        -   **New Game Menu:** `car/ui/new_game.py` - Allows the player to select their car, color, difficulty, and initial weapon.
-        -   **Load Game Menu:** `car/ui/load_game.py` - Displays a list of saved games to load.
-        -   **Inventory Menu (Tab):** `car/ui/inventory.py` - Pressing `Tab` opens a full-screen modal with a border.
-            -   **Car Preview:** Displays the player's car, rotating through 8 directions.
-            -   **Attachments:** A container lists attachment points, their type, and the equipped item. Arrow keys are used to navigate and select different weapons/items from inventory.
-            -   **Inventory:** A container for stored items. Selecting an item opens a pop-up with actions (e.g., "Drop").
-            -   **Stats:** A container shows current fuel, ammo, money, etc.
-            -   Pressing `Tab` again closes the menu.
-        -   **Pause Menu (Esc):** `car/ui/pause_menu.py` - Pressing `Esc` opens a smaller modal with options: "Resume", "Save Game", "Main Menu", and "Quit".
-        -   **Shop Menu:** `car/ui/shop.py` - Opens when the player is in a shop, allowing them to buy and sell items.
+- **Main Application (`car/app.py`):**
+    -   The core of the application is the `CarApp(App)` class. It is responsible for managing screens, global state, and the main game loop.
+    -   **Game Loop:** A timer created with `set_interval` calls an `update_game` method at a fixed rate (e.g., 30 FPS). This method is responsible for running all game logic (physics, AI, spawning) and then triggering a refresh of the UI.
+
+- **UI and Rendering (Widgets & Screens):**
+    -   **Widget-Based System:** All UI elements are **Textual Widgets**. This includes the main game view, HUD, menus, and modals. This approach eliminates flicker and provides a robust, cross-platform rendering solution.
+    -   **Styling:** The appearance and layout of all widgets are defined in a central CSS file (`car/app.css`), allowing for easy and consistent styling.
+    -   **Main Game Screen (`car/screens/default.py`):** This is the primary screen for gameplay. It uses a `Grid` layout to compose the following widgets:
+        -   `GameView`: The base layer that renders the game world, player, and all other entities.
+        -   `HUD`: An overlay displaying player stats.
+        -   `Controls`: An overlay showing game controls.
+        -   `EntityModal`: A reactive overlay in the bottom-right that displays information about the nearest enemy.
+        -   `Explosion`: A temporary widget that is mounted to play an explosion animation when an entity is destroyed.
+    -   **Modal Screens:** All menus (Main Menu, Pause, Inventory, Shop, City Hall) are implemented as Textual `Screen` or `ModalScreen` classes. They are composed of standard and custom widgets (like `Button`, `Select`, and our reusable `WeaponInfo` widget) and handle user interaction through Textual's event system (`on_button_pressed`).
+    -   **Custom Focus Management in `NewGameScreen`**:
+        -   **Problem**: Textual's standard focus system didn't suit the specific navigational needs of the `NewGameScreen`.
+        -   **Solution**: A manual focus-handling system was implemented directly within `car/screens/new_game.py`.
+        -   **Mechanism**:
+            1.  An explicit list, `focusable_widgets`, defines the navigation order.
+            2.  A `current_focus_index` tracks the active widget.
+            3.  `action_focus_next` and `action_focus_previous` methods modify this index.
+            4.  A helper method, `update_focus`, applies a `.focused` CSS class to the currently indexed widget.
+            5.  Styling is then handled in `car/app.css` using descendant selectors (e.g., `CycleWidget.focused .cycle-value`).
+        -   **Benefit**: This gives us precise control over navigation flow and visual feedback, independent of Textual's built-in focus state.
+
 - **Game State Management:**
-    - **Main Menu:** The game starts with a menu offering "New Game," "Load Game," and "Settings."
-    - **New Game Flow:** After selecting "New Game," the player chooses a car and difficulty, then enters the main game loop.
-    - **Load Game Flow:** After selecting "Load Game," the player chooses a save file from a list, which loads the state and enters the main game loop.
-    - **Save/Load System:** `car/logic/save_load.py` - A system for serializing and deserializing the entire game state (player, car, world seed, inventory, quests) to a file using `pickle`.
-- **Progression System:**
-    - **Experience & Leveling:** Players gain experience points (XP) for defeating enemies. Upon reaching a certain XP threshold, the player levels up, receiving minor positive modifiers to their stats.
-    - **XP Curve:** The experience required to reach the next level doubles with each level gained.
-    - **Difficulty Modifier:** The selected difficulty level applies a multiplier to enemy stats, such as damage and durability, making the game more or less challenging.
-- **Rendering Engine & The Rendering Queue:**
-    - **Core Principle**: To ensure proper layering and Z-indexing of all visual elements (UI, entities, terrain, etc.), **no component should ever draw directly to the screen**. Direct calls to `stdscr.addch()` or `stdscr.refresh()` from game logic or UI files are strictly forbidden.
-    - **The Rendering Queue (`car/rendering/rendering_queue.py`)**: This is a global, centralized queue that holds all drawing operations for a single frame.
-        -   **How it Works**: Other modules add drawing functions (like `stdscr.addch` or `draw_sprite`) to the queue, specifying a `z_index`.
-        -   **Z-Indexing**: The `z_index` is an integer that determines the drawing order. Lower numbers are drawn first (appearing in the background), and higher numbers are drawn last (appearing in the foreground).
-        -   **Usage**: To add an operation, use `rendering_queue.add(z_index, function, *args, **kwargs)`. For example: `rendering_queue.add(10, stdscr.addstr, y, x, "Player", text_color)`
-    -   **The Main Loop's Role**: The main game loop in `car/game.py` (and other UI-specific loops) orchestrates the rendering process for each frame:
-        1.  `stdscr.erase()`: Clears the screen.
-        2.  `render_game()` / `draw_menu()`: These functions are called to populate the `rendering_queue` with all necessary drawing commands for the current frame.
-        3.  `rendering_queue.draw(stdscr)`: This is the final and most important call. It sorts all queued operations by their `z_index` and executes them in order. It is also responsible for calling `stdscr.refresh()` to display the completed frame.
+    - **`GameState` Class:** The central `car/game_state.py` class continues to hold the entire state of the game. Widgets and logic functions read from and write to this single source of truth.
+    - **Screen Stack:** Textual's app-level screen stack (`push_screen`, `pop_screen`) is used to navigate between the main game and various menu screens.
 
-#### Drawing Complex UI (e.g., Modals)
-
-To render stateful UI elements like menus or modals without violating the decoupled nature of the rendering queue, we follow this pattern:
-
-1.  **The UI Component's Role (The "Dumb" Component)**:
-    *   A UI class (e.g., `PauseMenu`) should have a `draw(self, stdscr)` method.
-    *   This method's **only responsibility** is to translate the component's internal state into primitive drawing commands, which it adds to the global `rendering_queue`.
-    *   It calculates the coordinates and Z-indices for its elements (boxes, text, etc.) and calls `rendering_queue.add(...)` for each one. It **never** draws directly to the screen.
-
-2.  **The Game Logic's Role (The "Smart" Controller)**:
-    *   The main game loop (or a dedicated UI controller) manages the UI component's state (e.g., `game_state.is_paused`).
-    *   When it's time to render the component, the logic simply calls the component's `draw(stdscr)` method. This single call is what populates the queue with all the necessary drawing instructions for that component.
-
-3.  **The Rendering Queue's Role (The "Blind" Executor)**:
-    -   The queue remains completely ignorant of what a "modal" or "menu" is. It only sees a flat list of primitive `curses` functions to execute.
-
-This ensures that UI components are self-contained but still respect the global Z-indexing and rendering pipeline, preventing architectural decay.
-- **World Generation:**
-    - **World Class:** `car/world/world.py` - The `World` class manages the game world, including generating and storing the world map.
-    - **Procedural Generation:** `car/world/generation.py` - Procedural generation for terrain, roads, and cities.
-- **Car Simulation:**
-    - **Physics:** The game loop in `car/game.py` handles the physics and state management for vehicle mechanics.
-- **Inventory/Attachments:**
-    - **Inventory:** The player's inventory is managed in the game loop.
-    - **Attachments:** The `car/ui/inventory.py` menu allows the player to manage car modifications.
 - **Entity Component System (ECS-like):** The game is built on a class-based entity architecture. All game objects (vehicles, enemies, NPCs, etc.) are instances of classes that inherit from a base `Entity` class. This provides a clean, object-oriented, and highly extensible framework for adding new content.
         - **`car/entities/base.py`:** Defines the abstract `Entity` class with common properties (`position`, `health`) and methods (`update`, `draw`).
         - **`car/entities/`:** This directory contains subdirectories for each major entity type (`vehicles`, `characters`, `projectiles`).
@@ -188,6 +169,94 @@ This ensures that UI components are self-contained but still respect the global 
 
 ## Tasks
 
+### **Project: Migration to Textual TUI Framework**
+
+**Goal:** To perform a complete architectural migration from `curses` to the Textual framework. All UI elements, including menus, modals, and HUDs, will be rebuilt as interactive Textual widgets with a consistent, mouse-aware design. The result will be a stable, cross-platform, and modern application.
+
+---
+
+**Phase 1: Core Application & Game World**
+
+- [ ] **Task 1: Foundational Setup**
+    - [ ] Add `textual` to `requirements.txt`.
+    - [ ] Create `car/app.py` to define the main `CarApp(App)` class. This will be our new entry point.
+    - [ ] Modify `car/__main__.py` to launch `CarApp`.
+
+- [x] **Task 2: The `GameView` Widget**
+    - [x] Create `car/widgets/game_view.py` and define a `GameView(Widget)`.
+    - [x] This widget's sole responsibility is to render the game world (terrain, entities, particles) based on the `GameState`. It will replace the old `render_game` function.
+
+- [x] **Task 3: Game Loop Integration**
+    - [x] In `CarApp`, use `set_interval` to call a new `update_game` method at a fixed rate (e.g., 30 FPS).
+    - [x] This `update_game` method will contain all our existing game logic calls: `update_physics_and_collisions`, `spawn_enemy`, `update_quests`, etc. After updating the state, it will trigger a refresh of all visible widgets.
+
+- [x] **Task 4: Initial Layout & Styling**
+    - [x] Create `car/app.css` to define the application's visual style.
+    - [x] Create a `DefaultScreen(Screen)` that uses a `Grid` layout to hold the main game interface.
+    - [x] Compose the `GameView` as the base layer of this grid.
+
+**Phase 2: HUD, Modals, and Overlays**
+
+- [x] **Task 5: The `HUD` Widget**
+    - [x] Create `car/widgets/hud.py` and define a `HUD(Widget)`.
+    - [x] This widget will display all the player's stats (Durability, Gas, Speed, Cash, Ammo, etc.). It will be a reactive widget that automatically updates when the corresponding values in `GameState` change.
+
+- [x] **Task 6: The `Controls` Widget**
+    - [x] Create `car/widgets/controls.py` and define a `Controls(Widget)`.
+    - [x] This will display the game controls ("WASD: Steer", "SPACE: Fire") in the top-left corner. Each control will be a styled, non-functional `Button` to provide a clear, interactive look.
+
+- [x] **Task 7: The `EntityModal` Widget**
+    - [x] Create `car/widgets/entity_modal.py` and define an `EntityModal(Widget)`.
+    - [x] This widget will replace the old `draw_entity_modal` logic. It will be positioned in the bottom-right and will reactively display the name, art, and health bar of the closest enemy or boss.
+
+- [x] **Task 8: The `Explosion` Widget**
+    - [x] Create `car/widgets/explosion.py` and define an `Explosion(Widget)`.
+    - [x] When an enemy is destroyed, the game will now mount a new `Explosion` widget at the entity's last position.
+    - [x] The widget's `on_mount` event will use a series of `set_timer` calls to animate the explosion frames and then remove itself (`self.remove()`) when the animation is complete. This replaces the old `play_explosion_in_modal` logic.
+
+- [x] **Task 9: Update `DefaultScreen` Layout**
+    - [x] Add the `HUD`, `Controls`, and `EntityModal` widgets to the `DefaultScreen`'s grid layout, ensuring they are correctly positioned as overlays on top of the `GameView`.
+
+**Phase 3: Menus and Interactive Screens**
+
+- [x] **Task 10: The `WeaponInfo` Widget**
+    - [x] Create `car/widgets/weapon_info.py` and define a `WeaponInfo(Widget)`.
+    - [x] This will be a reusable component that displays the stats of a given weapon. It will be used in the Inventory, Shop, and New Game screens.
+
+- [x] **Task 11: The Main Menu Screen**
+    - [x] Create `car/screens/main_menu.py` and define a `MainMenuScreen(Screen)`.
+    - [x] Re-implement the "New Game," "Load Game," and "Quit" options as large, centered, mouse-clickable `Button`s.
+    - [x] The `on_button_pressed` event handlers will trigger the appropriate app-level actions (e.g., `self.app.push_screen(NewGameScreen())`).
+
+- [x] **Task 12: The New Game & Load Game Screens**
+    - [x] Create `car/screens/new_game.py` and `car/screens/load_game.py`.
+    - [x] Rebuild these interfaces using Textual widgets (`Select`, `Button`, etc.) and integrate the `WeaponInfo` widget into the new game screen.
+
+- [x] **Task 13: The Pause Menu Screen**
+    - [x] Create `car/screens/pause_menu.py` and define a `PauseScreen(ModalScreen)`.
+    - [x] Rebuild the pause options as `Button`s. The `on_button_pressed` handlers will resume the game (`self.app.pop_screen()`), save, or quit.
+
+- [x] **Task 14: The Inventory Screen**
+    - [x] Create `car/screens/inventory.py` and define an `InventoryScreen(ModalScreen)`.
+    - [x] This will be a complex, multi-pane layout using Textual's grid system to display the car preview, attachment list, inventory, and stats. The `WeaponInfo` widget will be used here.
+
+- [x] **Task 15: The Shop & City Hall Screens**
+    - [x] Create `car/screens/shop.py` and `car/screens/city_hall.py`.
+    - [x] Rebuild these interfaces with a consistent two-panel layout: one for the list of items/quests, and one for the detailed view (using the `WeaponInfo` widget for the shop). Both will feature a dialog box at the bottom for NPC text.
+
+**Phase 4: Finalization & Cleanup**
+
+- [x] **Task 16: Input & Event Binding**
+    - [x] Replace all remaining logic from `car/logic/input.py` with Textual's event bindings (`on_key`, `on_button_pressed`).
+    - [x] Delete `car/logic/input.py`.
+
+- [x] **Task 17: Code Removal & Refactoring**
+    - [x] Systematically delete the entire `car/rendering` directory.
+    - [x] Delete all files in `car/ui` as they are replaced by their `widget` or `screen` counterparts.
+    - [x] Remove `curses` and `windows-curses` from all `requirements` files.
+
+- [x] **Task 18: Documentation Update**
+    - [x] Thoroughly update `GEMINI.md` to reflect the new Textual-based architecture, including the widget hierarchy, event flow, and CSS styling approach.
 
 ### General Tasks
 - [ ] **Finish unfinished AI behaviors:**

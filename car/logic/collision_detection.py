@@ -1,7 +1,6 @@
 import random
 import math
 from .loot_generation import handle_enemy_loot_drop
-from ..ui.notifications import add_notification
 from ..world.generation import get_buildings_in_city
 
 def find_safe_exit_spot(world, building):
@@ -33,10 +32,12 @@ def find_safe_exit_spot(world, building):
         
     return building['x'], building['y'] # Fallback
 
-def handle_collisions(game_state, world, audio_manager, stdscr, color_pair_map):
+def handle_collisions(game_state, world, audio_manager):
     """
     Handles all collision detection and resolution.
+    Returns a list of notification messages.
     """
+    notifications = []
     # --- Projectile Collisions ---
     particles_to_remove = []
     enemies_hit_by_projectiles = {}
@@ -76,10 +77,7 @@ def handle_collisions(game_state, world, audio_manager, stdscr, color_pair_map):
     for boss, damage in bosses_hit_by_projectiles.items():
         boss.hp -= damage
         if boss.hp <= 0:
-            game_state.active_explosions.append({
-                "x": boss.x, "y": boss.y, "art": boss.art, 
-                "start_time": game_state.frame, "duration": 30 # 30 frames
-            })
+            game_state.destroyed_this_frame.append(boss)
             for key, b in list(game_state.active_bosses.items()):
                 if b == boss:
                     del game_state.active_bosses[key]
@@ -88,15 +86,12 @@ def handle_collisions(game_state, world, audio_manager, stdscr, color_pair_map):
     for enemy, damage in enemies_hit_by_projectiles.items():
         enemy.durability -= damage
         if enemy.durability <= 0:
-            game_state.active_explosions.append({
-                "x": enemy.x, "y": enemy.y, "art": enemy.art, 
-                "start_time": game_state.frame, "duration": 20 # 20 frames
-            })
+            game_state.destroyed_this_frame.append(enemy)
             enemy_ids_to_remove.append(enemy)
 
     for enemy in enemy_ids_to_remove:
         handle_enemy_loot_drop(game_state, enemy)
-        add_notification(game_state, f"Destroyed {enemy.__class__.__name__}!", "success")
+        notifications.append(f"Destroyed {enemy.__class__.__name__}!")
         game_state.active_enemies.remove(enemy)
 
     unique_indices = sorted(list(set(particles_to_remove)), reverse=True)
@@ -130,12 +125,14 @@ def handle_collisions(game_state, world, audio_manager, stdscr, color_pair_map):
             
             if pickup["type"] == "cash":
                 game_state.player_cash += pickup["value"]
-                add_notification(game_state, f"Picked up {pickup['value']} cash!", "success")
+                notifications.append(f"Picked up {pickup['value']} cash!")
             elif pickup["type"] == "weapon":
                 game_state.player_inventory.append(pickup["weapon"])
-                add_notification(game_state, f"Picked up {pickup['weapon'].name}!", "success")
+                notifications.append(f"Picked up {pickup['weapon'].name}!")
             
             pickups_to_remove.append(pickup_id)
 
     for pickup_id in pickups_to_remove:
         del game_state.active_pickups[pickup_id]
+
+    return notifications

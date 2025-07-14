@@ -4,10 +4,11 @@ from .collision_detection import handle_collisions
 import logging
 import math
 
-def update_physics_and_collisions(game_state, world, audio_manager, stdscr, color_pair_map):
+def update_physics_and_collisions(game_state, world, audio_manager):
     """
     Handles all physics updates, weapon systems, and collision detection
     by coordinating calls to specialized modules.
+    Returns a list of notification messages.
     """
     # 1. Update player vehicle movement and position
     update_vehicle_movement(game_state, world, audio_manager)
@@ -16,7 +17,7 @@ def update_physics_and_collisions(game_state, world, audio_manager, stdscr, colo
     update_weapon_systems(game_state, audio_manager)
 
     # 3. Process all collisions and their effects
-    handle_collisions(game_state, world, audio_manager, stdscr, color_pair_map)
+    notifications = handle_collisions(game_state, world, audio_manager)
 
     # 4. Update enemy AI and movement
     for enemy in game_state.active_enemies:
@@ -45,3 +46,5 @@ def update_physics_and_collisions(game_state, world, audio_manager, stdscr, colo
 
     for i in sorted(particles_to_remove, reverse=True):
         del game_state.active_particles[i]
+
+    return notifications

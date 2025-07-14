@@ -8,6 +8,12 @@ if [ ! -f ".installed" ]; then
     exit 1
 fi
 
+# Check for --dev flag and set the environment variable
+if [ "$1" == "--dev" ]; then
+    export TEXTUAL="dev"
+    shift # Remove --dev from the arguments
+fi
+
 # Check the operating system
 OS="`uname`"
 case $OS in

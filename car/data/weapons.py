@@ -1,4 +1,4 @@
-from .pickups import AMMO_BULLET, AMMO_HEAVY_BULLET, AMMO_FUEL, AMMO_MINES
+from .pickups import AMMO_BULLET, AMMO_HEAVY_BULLET, AMMO_FUEL, AMMO_MINES, AMMO_SHOTGUN
 from .game_constants import FLAME_CHAR
 
 # --- Weapon Definitions ---
@@ -122,7 +122,7 @@ WEAPONS_DATA = {
         "power": 5,
         "range": 20,
         "speed": 1.8,
-        "ammo_type": AMMO_BULLET,
+        "ammo_type": AMMO_SHOTGUN,
         "particle": "•",
         "price": 750,
         "pellet_count": 5,

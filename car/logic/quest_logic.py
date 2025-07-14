@@ -3,22 +3,16 @@ from .quests import Quest, KillBossObjective, KillCountObjective, SurvivalObject
 from ..logic.entity_loader import PLAYER_CARS
 from ..common.utils import get_car_dimensions
 from .boss import Boss
-from ..ui.notifications import add_notification
-from ..data.game_constants import CITY_SPACING
-from ..world.generation import get_buildings_in_city, get_city_faction
-
-import random
-from .quests import Quest, KillBossObjective, KillCountObjective, SurvivalObjective, QUEST_TEMPLATES
-from ..logic.entity_loader import PLAYER_CARS
-from ..common.utils import get_car_dimensions
-from .boss import Boss
-from ..ui.notifications import add_notification
 from ..data.game_constants import CITY_SPACING
 from ..world.generation import get_buildings_in_city, get_city_faction
 from ..data.factions import FACTION_DATA
 
 def handle_quest_interaction(game_state, world, audio_manager):
-    """Handles the player's interaction with quest givers (City Hall)."""
+    """
+    Handles the player's interaction with quest givers (City Hall).
+    Returns a list of notification messages.
+    """
+    notifications = []
     if not game_state.current_quest:
         grid_x = round(game_state.car_world_x / CITY_SPACING)
         grid_y = round(game_state.car_world_y / CITY_SPACING)
@@ -33,8 +27,8 @@ def handle_quest_interaction(game_state, world, audio_manager):
                     
                     hostile_factions = [fid for fid, rel in quest_giver_faction["relationships"].items() if rel == "Hostile"]
                     if not hostile_factions:
-                        add_notification("No available quests at this time.", "warning")
-                        return False
+                        notifications.append("No available quests at this time.")
+                        return notifications
 
                     target_faction_id = random.choice(hostile_factions)
                     target_faction = FACTION_DATA[target_faction_id]
@@ -63,7 +57,7 @@ def handle_quest_interaction(game_state, world, audio_manager):
                         target_faction=target_faction_id,
                         time_limit=quest_template.get("time_limit")
                     )
-                    add_notification(f"New Quest: {game_state.current_quest.name}", "success")
+                    notifications.append(f"New Quest: {game_state.current_quest.name}")
 
                     if "boss" in quest_template:
                         boss_data = quest_template["boss"]
@@ -80,13 +74,17 @@ def handle_quest_interaction(game_state, world, audio_manager):
                             game_state.active_bosses[quest_template_key] = boss
                             audio_manager.stop_music()
                             audio_manager.play_music("car/sounds/boss.mid")
-                    return True
+                    return notifications
     else:
-        add_notification("You already have an active quest.", "warning")
-    return False
+        notifications.append("You already have an active quest.")
+    return notifications
 
 def update_quests(game_state, audio_manager):
-    """Updates the state of the current quest."""
+    """
+    Updates the state of the current quest.
+    Returns a list of notification messages.
+    """
+    notifications = []
     if game_state.current_quest:
         game_state.current_quest.update(game_state)
 
@@ -101,7 +99,7 @@ def update_quests(game_state, audio_manager):
                 if giver_faction_id not in game_state.faction_reputation:
                     game_state.faction_reputation[giver_faction_id] = 0
                 game_state.faction_reputation[giver_faction_id] += 10
-                add_notification(f"Reputation with {FACTION_DATA[giver_faction_id]['name']} increased!", "success")
+                notifications.append(f"Reputation with {FACTION_DATA[giver_faction_id]['name']} increased!")
 
             # Decrease reputation with target
             target_faction_id = game_state.current_quest.target_faction
@@ -109,13 +107,13 @@ def update_quests(game_state, audio_manager):
                 if target_faction_id not in game_state.faction_reputation:
                     game_state.faction_reputation[target_faction_id] = 0
                 game_state.faction_reputation[target_faction_id] -= 15
-                add_notification(f"Reputation with {FACTION_DATA[target_faction_id]['name']} decreased!", "warning")
+                notifications.append(f"Reputation with {FACTION_DATA[target_faction_id]['name']} decreased!")
 
-            add_notification(f"Quest Complete: {game_state.current_quest.name}", "success")
+            notifications.append(f"Quest Complete: {game_state.current_quest.name}")
             game_state.current_quest = None
             audio_manager.stop_music()
             audio_manager.play_music("car/sounds/world.mid")
-            check_for_faction_takeover(game_state)
+            notifications.extend(check_for_faction_takeover(game_state))
 
         elif game_state.current_quest.failed:
             giver_faction_id = game_state.current_quest.quest_giver_faction
@@ -123,15 +121,20 @@ def update_quests(game_state, audio_manager):
                 if giver_faction_id not in game_state.faction_reputation:
                     game_state.faction_reputation[giver_faction_id] = 0
                 game_state.faction_reputation[giver_faction_id] -= 5
-                add_notification(f"Reputation with {FACTION_DATA[giver_faction_id]['name']} decreased.", "warning")
+                notifications.append(f"Reputation with {FACTION_DATA[giver_faction_id]['name']} decreased.")
             
-            add_notification(f"Quest Failed: {game_state.current_quest.name}", "error")
+            notifications.append(f"Quest Failed: {game_state.current_quest.name}")
             game_state.current_quest = None
             audio_manager.stop_music()
             audio_manager.play_music("car/sounds/world.mid")
+    return notifications
 
 def check_for_faction_takeover(game_state):
-    """Checks if a faction's reputation has dropped low enough to be taken over."""
+    """
+    Checks if a faction's reputation has dropped low enough to be taken over.
+    Returns a list of notification messages.
+    """
+    notifications = []
     for faction_id, rep in list(game_state.faction_reputation.items()):
         if rep <= -100: # Takeover threshold
             # Find the faction with the highest reputation
@@ -145,7 +148,7 @@ def check_for_faction_takeover(game_state):
             defeated_faction_name = FACTION_DATA[faction_id]["name"]
             victor_faction_name = FACTION_DATA[strongest_ally]["name"]
             
-            add_notification(f"{defeated_faction_name} has been defeated! Their territory is now controlled by {victor_faction_name}!", "success")
+            notifications.append(f"{defeated_faction_name} has been defeated! Their territory is now controlled by {victor_faction_name}!")
             
             # Transfer control of the hub city
             FACTION_DATA[faction_id]["name"] = f"{victor_faction_name} (Occupied)"
@@ -157,4 +160,5 @@ def check_for_faction_takeover(game_state):
                     FACTION_DATA[f_id]["relationships"][faction_id] = "Defeated"
             
             del game_state.faction_reputation[faction_id]
+    return notifications
 

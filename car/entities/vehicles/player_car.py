@@ -12,6 +12,29 @@ class PlayerCar(Vehicle):
         # Player car update logic is handled in the main game loop
         pass
 
+    def get_art_for_angle(self, angle):
+        """Gets the correct vehicle art for a given angle."""
+        if isinstance(self.art, dict):
+            angle = angle % 360
+            if 337.5 <= angle or angle < 22.5:
+                direction = "N"
+            elif 22.5 <= angle < 67.5:
+                direction = "NE"
+            elif 67.5 <= angle < 112.5:
+                direction = "E"
+            elif 112.5 <= angle < 157.5:
+                direction = "SE"
+            elif 157.5 <= angle < 202.5:
+                direction = "S"
+            elif 202.5 <= angle < 247.5:
+                direction = "SW"
+            elif 247.5 <= angle < 292.5:
+                direction = "W"
+            else:
+                direction = "NW"
+            return self.art.get(direction, [""])
+        return self.art
+
     def draw(self, stdscr, game_state, world_start_x, world_start_y, color_map):
         from ...rendering.draw_utils import draw_sprite
         # The player car is drawn in the main render loop, so this can be empty
