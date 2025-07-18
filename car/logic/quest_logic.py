@@ -1,7 +1,7 @@
 import random
 from .quests import Quest, KillBossObjective, KillCountObjective, SurvivalObjective, QUEST_TEMPLATES
 from ..logic.entity_loader import PLAYER_CARS
-from ..common.utils import get_car_dimensions
+from ..entities.base import Entity
 from .boss import Boss
 from ..data.game_constants import CITY_SPACING
 from ..world.generation import get_buildings_in_city, get_city_faction
@@ -70,8 +70,8 @@ def handle_quest_interaction(game_state, world, audio_manager):
                             boss.y = game_state.car_world_y + random.uniform(-200, 200)
                             boss.hp = boss_car_instance.durability * boss.hp_multiplier
                             boss.art = boss_car_instance.art
-                            boss.width, boss.height = get_car_dimensions(boss.art)
-                            game_state.active_bosses[quest_template_key] = boss
+                            boss.width, boss.height = Entity.get_car_dimensions(boss.art)
+                            game_state.active_bosses.append(boss)
                             audio_manager.stop_music()
                             audio_manager.play_music("car/sounds/boss.mid")
                     return notifications

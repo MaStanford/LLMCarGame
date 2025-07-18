@@ -1,20 +1,23 @@
-from .pickups import PICKUP_REPAIR, PICKUP_GAS
+from rich.style import Style
 
-# --- Terrain Types ---
-# Road char is '▓' (DARK SHADE)
-# Tree char is 'T', Rubble char is '~'
-TERRAIN_DATA = {
-    "OFF_ROAD_DIRT": {"char": "░", "color_pair_name": "TERRAIN_OFFROAD_DIRT", "speed_modifier": 0.7, "passable": True},
-    "OFF_ROAD_SAND": {"char": "░", "color_pair_name": "TERRAIN_OFFROAD_SAND", "speed_modifier": 0.65, "passable": True},
-    "ROAD": {"char": "▓", "color_pair_name": "TERRAIN_ROAD", "speed_modifier": 1.0, "passable": True}, # Dark Shade character
-    "BUILDING_WALL": {"char": "█", "color_pair_name": "TERRAIN_BUILDING", "speed_modifier": 0.0, "passable": False},
-    "RUBBLE": {"char": "~", "color_pair_name": "TERRAIN_RUBBLE", "speed_modifier": 0.5, "passable": True}, # Tilde for rubble
-    "GRASS": {"char": "⁘", "color_pair_name": "TERRAIN_GRASS", "speed_modifier": 0.8, "passable": True}, # FOUR DOT PUNCTUATION
-    "GRASS_TALL": {"char": "∴", "color_pair_name": "TERRAIN_GRASS_TALL", "speed_modifier": 0.75, "passable": True}, # THEREFORE symbol
-    "TREE": {"char": "T", "color_pair_name": "TERRAIN_TREE", "speed_modifier": 0.0, "passable": False}, # Simple 'T' for Tree
-    "ROCK": {"char": "▲", "color_pair_name": "TERRAIN_ROCK", "speed_modifier": 0.0, "passable": False}, # Impassable Rock
-    # Shops use building wall char for base, drawing handled specially
-    "SHOP_REPAIR": {"char": "█", "color_pair_name": "SHOP_REPAIR", "speed_modifier": 0.0, "passable": False, "type": PICKUP_REPAIR, "is_shop": True},
-    "SHOP_GAS": {"char": "█", "color_pair_name": "SHOP_GAS", "speed_modifier": 0.0, "passable": False, "type": PICKUP_GAS, "is_shop": True},
-    "SHOP_AMMO": {"char": "█", "color_pair_name": "SHOP_AMMO", "speed_modifier": 0.0, "passable": False, "type": "AMMO", "is_shop": True},
+TERRAIN_DATA_RAW = {
+    "OFF_ROAD_DIRT": {"char": "░", "style": "rgb(139,69,19)", "speed_modifier": 0.7, "passable": True},
+    "OFF_ROAD_SAND": {"char": "░", "style": "rgb(244,164,96)", "speed_modifier": 0.65, "passable": True},
+    "ROAD": {"char": "▓", "style": "white on rgb(40,40,40)", "speed_modifier": 1.0, "passable": True},
+    "BUILDING_WALL": {"char": "█", "style": "white on black", "speed_modifier": 0.0, "passable": False},
+    "RUBBLE": {"char": "~", "style": "rgb(139,139,131) on black", "speed_modifier": 0.5, "passable": True},
+    "GRASS": {"char": "⁘", "style": "green on rgb(0,50,0)", "speed_modifier": 0.8, "passable": True},
+    "GRASS_TALL": {"char": "∴", "style": "green on rgb(0,40,0)", "speed_modifier": 0.75, "passable": True},
+    "TREE": {"char": "T", "style": "green", "speed_modifier": 0.0, "passable": False},
+    "ROCK": {"char": "▲", "style": "bright_black", "speed_modifier": 0.0, "passable": False},
+    "SHOP_REPAIR": {"char": "█", "style": "white on blue", "speed_modifier": 0.0, "passable": False, "type": "REPAIR", "is_shop": True},
+    "SHOP_GAS": {"char": "█", "style": "white on red", "speed_modifier": 0.0, "passable": False, "type": "GAS", "is_shop": True},
+    "SHOP_AMMO": {"char": "█", "style": "white on cyan", "speed_modifier": 0.0, "passable": False, "type": "AMMO", "is_shop": True},
 }
+
+# Pre-parse the styles for performance
+TERRAIN_DATA = {
+    key: {**value, "style": Style.parse(value["style"])}
+    for key, value in TERRAIN_DATA_RAW.items()
+}
+

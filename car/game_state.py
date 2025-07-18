@@ -6,13 +6,12 @@ from .logic.entity_loader import PLAYER_CARS
 from .data import *
 
 class GameState:
-    def __init__(self, selected_car_index, difficulty, difficulty_mods, car_color_names, car_color_pair_num):
+    def __init__(self, selected_car_index, difficulty, difficulty_mods, car_color_names):
         # --- Game Configuration ---
         self.selected_car_index = selected_car_index
         self.difficulty = difficulty
         self.difficulty_mods = difficulty_mods
         self.car_color_names = car_color_names
-        self.car_color_pair_num = car_color_pair_num
         
         # --- Player Actions ---
         self.actions = {
@@ -26,18 +25,18 @@ class GameState:
         # --- Player Car ---
         car_class = PLAYER_CARS[self.selected_car_index]
         self.player_car = car_class(0, 0)
-        self.all_entities = [self.player_car]
 
         # --- Base Stats for Leveling ---
         self.base_max_durability = self.player_car.durability
         self.base_gas_capacity = self.player_car.fuel
-        # These need to be added to the car classes
-        self.base_horsepower = self.player_car.speed * 10
+        self.base_max_speed = self.player_car.speed
+        self.base_acceleration_factor = self.player_car.acceleration
         self.base_turn_rate = self.player_car.handling
         self.base_braking_power = self.player_car.braking_power
 
         # --- Effective Stats (modified by level) ---
-        self.horsepower = 0
+        self.max_speed = 0.0
+        self.acceleration_factor = 0.0
         self.turn_rate = 0.0
         self.max_durability = 0
         self.gas_capacity = 0
@@ -86,11 +85,11 @@ class GameState:
         self.max_speed = 0.0
         self.gas_consumption_scaler = 0.01
         self.drag_coefficient = 0.01 # Placeholder
+        self.friction_coefficient = 0.02 # Placeholder
         self.gas_consumption_rate = 0.1 # Placeholder
 
         # --- World and Entity State ---
-        self.active_obstacles = {}
-        self.next_obstacle_id = 0
+        self.active_obstacles = []
         self.obstacle_spawn_timer = 0
         self.active_particles = []
         self.active_flames = []
@@ -100,7 +99,7 @@ class GameState:
         self.next_pickup_id = 0
         self.active_fauna = []
         self.fauna_spawn_timer = 0
-        self.active_bosses = {}
+        self.active_bosses = []
         self.active_enemies = []
         self.enemy_spawn_timer = 0
         
@@ -131,6 +130,15 @@ class GameState:
 
         self.apply_level_bonuses()
 
+    @property
+    def all_entities(self):
+        """Returns a combined list of all active entities."""
+        return ([self.player_car] + 
+                self.active_obstacles + 
+                self.active_fauna + 
+                self.active_bosses + 
+                self.active_enemies)
+
     def gain_xp(self, xp):
         self.current_xp += xp
         while self.current_xp >= self.xp_to_next_level:
@@ -147,7 +155,8 @@ class GameState:
     def apply_level_bonuses(self):
         level_bonus_multiplier = 1.0 + (self.player_level - 1) * 0.1 # Placeholder
 
-        self.horsepower = self.base_horsepower * level_bonus_multiplier
+        self.max_speed = self.base_max_speed * level_bonus_multiplier
+        self.acceleration_factor = self.base_acceleration_factor * level_bonus_multiplier
         self.turn_rate = self.base_turn_rate * level_bonus_multiplier
         self.braking_power = self.base_braking_power * level_bonus_multiplier
 
@@ -166,7 +175,3 @@ class GameState:
             self.current_gas = self.gas_capacity
 
         self.level_damage_modifier = level_bonus_multiplier
-
-        self.acceleration_factor = self.horsepower / 500.0
-        self.max_speed = self.horsepower / 4.0
-        self.braking_deceleration_factor = self.braking_power / 100.0

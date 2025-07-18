@@ -1,58 +1,68 @@
-DefaultScreen {
-    layers: base hud controls location entity_modal;
+WorldScreen {
+    overflow: hidden;
+    layers: base hud;
 }
 
 GameView {
     layer: base;
     width: 100%;
     height: 100%;
+    overflow: hidden;
 }
 
-HUD {
+#top_hud {
     layer: hud;
     dock: top;
+    align: center top;
     width: 100%;
-    height: 1;
-    background: $panel;
-    color: $text;
-    content-align: right middle;
+    height: auto;
 }
 
-Controls {
-    layer: controls;
-    dock: top;
-    width: auto;
-    height: 1;
-    content-align: left middle;
-    background: $panel;
-    color: $text;
-}
-
-
-.control-item {
-    margin-right: 1;
-}
-
-Location {
-    layer: location;
-    dock: top;
+#bottom_hud {
+    layer: hud;
+    dock: bottom;
     width: 100%;
-    height: 1;
-    content-align: center middle;
+    height: 9;
+    layout: horizontal;
+}
+
+#quest_hud {
+    width: 33%;
+    align: left bottom;
     background: $panel;
-    color: $text;
+}
+
+#stats_hud {
+    width: 34%;
+    align: center bottom;
+    background: $panel;
+}
+
+#entity_modal {
+    width: 33%;
+    align: right bottom;
+}
+
+#location_hud {
+    width: 20;
+    height: 1;
+    background: $panel;
+    text-align: center;
+    align: center middle;
+}
+
+#compass_hud {
+    width: 20;
+    height: 3;
+    padding: 1;
+    background: $panel;
+    text-align: center;
+    align: center middle;
 }
 
 EntityModal {
-    layer: entity_modal;
-    dock: bottom;
-    width: 42;
-    height: 12;
     background: $panel;
     border: heavy white;
-    display: none; /* Hidden by default */
-    offset-x: -43;
-    offset-y: -1;
 }
 
 MainMenuScreen {

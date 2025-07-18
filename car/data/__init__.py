@@ -1,4 +1,3 @@
-from .colors import COLOR_PAIRS_DEFS
 from .game_constants import *
 from .experience import *
 from .difficulty import DIFFICULTY_LEVELS, DIFFICULTY_MODIFIERS

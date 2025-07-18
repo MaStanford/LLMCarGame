@@ -8,9 +8,9 @@ from ..widgets.weapon_info import WeaponInfo
 from ..widgets.cycle_widget import CycleWidget
 from ..logic.entity_loader import PLAYER_CARS
 from ..data.difficulty import DIFFICULTY_LEVELS, DIFFICULTY_MODIFIERS
-from ..data.colors import COLOR_PAIRS_DEFS
+from ..data.colors import CAR_COLORS
 from ..game_state import GameState
-from ..app import DefaultScreen
+from ..app import WorldScreen
 from ..entities.weapon import Weapon
 from ..world import World
 
@@ -46,7 +46,7 @@ class NewGameScreen(Screen):
                     )
                     yield CycleWidget(
                         label="Color",
-                        options=[name for name in COLOR_PAIRS_DEFS if name.startswith("CAR_")],
+                        options=list(CAR_COLORS.keys()),
                         id="color_select",
                     )
                     yield CycleWidget(
@@ -247,8 +247,7 @@ class NewGameScreen(Screen):
                 difficulty=difficulty,
                 difficulty_mods=DIFFICULTY_MODIFIERS[difficulty],
                 car_color_names=[color_name],
-                car_color_pair_num=COLOR_PAIRS_DEFS[color_name]["id"],
             )
             self.app.world = World(seed=12345)
-            self.app.switch_screen(DefaultScreen())
+            self.app.switch_screen(WorldScreen())
             self.app.set_interval(1 / 30, self.app.update_game)

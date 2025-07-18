@@ -105,6 +105,14 @@ The game is built around the **Textual TUI framework**, which provides an event-
             5.  Styling is then handled in `car/app.css` using descendant selectors (e.g., `CycleWidget.focused .cycle-value`).
         -   **Benefit**: This gives us precise control over navigation flow and visual feedback, independent of Textual's built-in focus state.
 
+- **Performance Optimizations:**
+    -   **Pre-parsing Styles:** All style strings (e.g., `"white on blue"`) in the game's data files are parsed into `rich.style.Style` objects once at startup. The rendering loop then uses these pre-compiled objects, avoiding thousands of costly string-parsing operations every frame.
+    -   **Batch Rendering:** The main `GameView` widget was optimized to address a significant performance bottleneck. Instead of drawing the screen character by character (which resulted in thousands of individual operations per frame), the rendering logic now groups adjacent characters with the same style into a single "run." This batching process dramatically reduces the number of operations required to draw the scene, leading to a major FPS improvement.
+    -   **Future Optimizations:**
+        -   **Culling Off-Screen Entities:** The rendering loop can be improved by skipping the drawing calculations for any entity that is currently outside the visible screen area.
+        -   **Terrain Caching:** Since the terrain is static, the fully rendered `Text` object for the environment can be cached. It would only need to be regenerated when the player moves a significant distance, saving a huge amount of redundant processing on every frame.
+        -   **Partial Screen Updates:** A more advanced optimization would be to track which specific parts of the screen have changed (e.g., where an entity has moved) and only redraw those "dirty" regions, rather than refreshing the entire game view.
+
 - **Game State Management:**
     - **`GameState` Class:** The central `car/game_state.py` class continues to hold the entire state of the game. Widgets and logic functions read from and write to this single source of truth.
     - **Screen Stack:** Textual's app-level screen stack (`push_screen`, `pop_screen`) is used to navigate between the main game and various menu screens.
@@ -169,18 +177,128 @@ The game is built around the **Textual TUI framework**, which provides an event-
 
 ## Tasks
 
+
+### General Tasks
+- [ ] **Finish unfinished AI behaviors:**
+    - [ ] _execute_patrol_behavior
+    - [ ] _execute_deploy_mine_behavior
+- [ ] **Introduce story elements to quests:**
+    - [ ] Add dialog story to quest when we first are offered quest
+    - [ ] Add quest story modal when we select the quest in menu
+    - [ ] Add complete quest dialog when we return to the quest giver.
+    - [ ] After completing the quest, give compass arrow to the quest giver to get reward and complete dialog.
+    - [ ] Allow quit quest option from quest giver or menu quest modal before the quest is finished
+- [ ] **Introduce multipart quests:**
+    - [ ] Quests can point to another quest for multi part quests, add next quest field, if empty this is final quest and complete reward can be given
+    - [ ] When returning to quest giver after completing a quest, another quest will automatically start if multipart. 
+    - [ ] Cancelling one quest, cancells the whole chain. 
+- [ ] **Show game over dialog with qoute when you die and prompt for new game, load, or quit**
+- [ ] **Combat system** 
+    - [ ] For minor enemies open world combat. Running away just means getting out of aggro range. 
+    - [ ] For major enemioes, combat system modal when in range, short range like pokemon battles. 
+        - [ ] Phase based combat
+        - [ ] Enemy dialog in phases
+        - [ ] Enemy tactic and weapon changes in phases
+        - [ ] Phases based off enemy health, or player health, or time or other factors
+        - [ ] You can try to run, failing quest if in a quest, but otherwise surviving. 
+- [ ] **Faction boss**
+    - [ ] You can fight the faction leader for massive faction score for winning or losing. This is an epic boss and is actually needed to take over a faction once it's at 0 rep. Each faction has a different faction boss with immense stats. 
+    - [ ] If you challenge them before their rep is 0, it's stats will be even more increased. But it will have a massive rep gain or loss, and if it brings it to 0 you still need to fight him he will just have less stats for the final fight like normal.  
+- [ ] **Neutral city**
+    - [ ] 0,0 is a neutral hub city. Quests help no faction. Shops don't have faction bonuses. This city will always be neutral and always have 0 spawn chance. 
+- [ ] **Add shop keeper dialog:**, they will say something when we get in the shop. This is shop and faction specific and dynamically generated. 
+    - [ ] When buying or selling high modifier equipment the shop keeper will make a comment, different comments based on the modifier. 
+    - [ ] When you try to buy something without enough money, shop keeper makes a wise crack
+- [ ] **Weapon swivel:**
+    - [ ] Allow weapons to swivel with key presses like car turns
+    - [ ] Swivel speed will be related to level
+- [ ] **Add quest type:** 
+    - [ ] Deliver package: Deliver a package to a towns city hall
+- [ ] **Hub city static defense:**
+    - [ ] Hub cities will have static defenses
+    - [ ] We need to define 2 or 3 static defenses such as machine gun tower, flame thrower tower, impassable barbed wire and so on
+    - [ ] How much static defenses is related to reputation.
+- [ ] **Buildings are destructible in stages:**
+    - [ ] Buildings are high health entities now
+    - [ ] We need 4-5 art for buildings at various stages of destruction
+    - [ ] At 0 HP, the building explodes and the faction loses reputation.
+    - [ ] Attacking buildings will trigger enemy vehicles periodically.
+- [ ] **Add offroad stat to cars:**
+    - [ ] Cars will have an offroad stat
+    - [ ] This is a modifier that allows better speed modifier in the wilderness
+    - [ ] This is a modifier that gives bad speed modifier for street and city
+    - [ ] This is a modifier that gives bad modifier for fuel consumption
+- [ ] **Add more terrain types:**
+    - [ ] Grass
+    - [ ] Desert
+    - [ ] Mud
+    - [ ] Sand
+    - [ ] Swamp
+    - [ ] Factions will determine the terrain type. It is immersive so the deserts rats always have a lot fo desert and sand
+    - [ ] Add Faction property that is terrain and percent chance
+- [ ] **Add map modal:**
+    - [ ] Create a map modal that can be opened with a key press.
+    - [ ] The map should show the player's current location, as well as the locations of known towns and hubs.
+    - [ ] The player should be able to select a town or hub from the map to set the compass to that location.
+
+
+## Completed Tasks
+
+- [x] Implement Main Menu UI.
+- [x] Design and implement the save/load system.
+- [x] Create the "New Game" setup flow.
+- [x] Develop the initial car and weapon selection system.
+- [x] Build the foundational procedural world generator.
+- [x] Implement the in-game Inventory Menu (Tab).
+- [x] Implement the in-game Pause Menu (Esc).
+- [x] Implement a cutscene system for events like explosions, deaths, and NPC interactions.
+- [x] Use the cutscene system for NPC dialog and quest interactions.
+- [x] Implement a boss system with a compass pointer and on-screen health bar.
+- [x] Use the cutscene system to display boss encounters.
+- [x] Use the cutscene system for item pickups, level-ups, and entering new areas.
+- [x] Implement the Quest system.
+- [x] Implement NPCs and Fauna.
+- [x] Implement advanced car customization.
+- [x] Implement the economy system.
+- [x] Add pickable colors to player car.
+- [x] Make entity unicode character have the same background color as the environment they are on.
+- [x] Add music and sound effects.
+- [x] Add 8-directional art for weapons and render them on the car.
+- [x] Create a launch script for all operating systems.
+- [x] Fix all known bugs.
+- [x] **Refine City Generation:**
+    - [x] Ensure required buildings (Gas, Ammo, Repair, City Hall) are present in every city.
+    - [x] Reduce the overall size of cities.
+    - [x] Make the ground in cities asphalt instead of grass.
+- [x] **Improve Roads:**
+    - [x] Make roads wider.
+    - [x] Verify that roads correctly increase speed and decrease fuel consumption.
+- [x] **Enhance Cutscenes:**
+    - [x] Change the explosion cutscene to a non-blocking overlay in the bottom-left of the screen.
+    - [x] Ensure the boss encounter cutscene is a non-blocking overlay in the bottom-right.
+    - [x] Implement a dynamic entity display modal that shows the name and hit points of the nearest entity within a "cutscene radius".
+    - [x] Prioritize bosses in the cutscene modal, showing them even if other entities are closer.
+- [x] **Refine weapons:**
+    - [x] Add Car stat for max attachments
+    - [x] Add car stat that is list of attachment points
+    - [x] Initial state is defined that shows a list of attachment points, and the level of attachment at that point
+    - [x] Allow attachments to be modified for a price at repair stores. 
+- [x] **Implement Weapon Scaling and Modifier System:**
+    - [x] Shops will carry weapons with modifiers based on player level and town reputation.
+    - [x] Enemies and bosses will have a chance to drop weapons with randomly generated modifiers.
+
+
 ### **Project: Migration to Textual TUI Framework**
 
 **Goal:** To perform a complete architectural migration from `curses` to the Textual framework. All UI elements, including menus, modals, and HUDs, will be rebuilt as interactive Textual widgets with a consistent, mouse-aware design. The result will be a stable, cross-platform, and modern application.
 
----
 
 **Phase 1: Core Application & Game World**
 
 - [ ] **Task 1: Foundational Setup**
-    - [ ] Add `textual` to `requirements.txt`.
-    - [ ] Create `car/app.py` to define the main `CarApp(App)` class. This will be our new entry point.
-    - [ ] Modify `car/__main__.py` to launch `CarApp`.
+    - [x] Add `textual` to `requirements.txt`.
+    - [x] Create `car/app.py` to define the main `CarApp(App)` class. This will be our new entry point.
+    - [x] Modify `car/__main__.py` to launch `CarApp`.
 
 - [x] **Task 2: The `GameView` Widget**
     - [x] Create `car/widgets/game_view.py` and define a `GameView(Widget)`.
@@ -257,101 +375,6 @@ The game is built around the **Textual TUI framework**, which provides an event-
 
 - [x] **Task 18: Documentation Update**
     - [x] Thoroughly update `GEMINI.md` to reflect the new Textual-based architecture, including the widget hierarchy, event flow, and CSS styling approach.
-
-### General Tasks
-- [ ] **Finish unfinished AI behaviors:**
-    - [ ] _execute_patrol_behavior
-    - [ ] _execute_deploy_mine_behavior
-- [ ] **Show game over dialog with qoute when you die and prompt for new game, load, or quit**
-- [ ] **Combat system** 
-    - [ ] For minor enemies open world combat. Running away just means getting out of aggro range. 
-    - [ ] For major enemioes, combat system modal when in range, short range like pokemon battles. 
-        - [ ] Phase based combat
-        - [ ] Enemy dialog in phases
-        - [ ] Enemy tactic and weapon changes in phases
-        - [ ] Phases based off enemy health, or player health, or time or other factors
-        - [ ] You can try to run, failing quest if in a quest, but otherwise surviving. 
-- [ ] **Faction boss**
-    - [ ] You can fight the faction leader for massive faction score for winning or losing. This is an epic boss and is actually needed to take over a faction once it's at 0 rep. Each faction has a different faction boss with immense stats. 
-    - [ ] If you challenge them before their rep is 0, it's stats will be even more increased. But it will have a massive rep gain or loss, and if it brings it to 0 you still need to fight him he will just have less stats for the final fight like normal.  
-- [ ] **Neutral city**
-    - [ ] 0,0 is a neutral hub city. Quests help no faction. Shops don't have faction bonuses. This city will always be neutral and always have 0 spawn chance. 
-- [ ] **Add shop keeper dialog:**, they will say something when we get in the shop. This is shop and faction specific and dynamically generated. 
-    - [ ] When buying or selling high modifier equipment the shop keeper will make a comment, different comments based on the modifier. 
-    - [ ] When you try to buy something without enough money, shop keeper makes a wise crack
-- [ ] **Weapon swivel:**
-    - [ ] Allow weapons to swivel with key presses like car turns
-    - [ ] Swivel speed will be related to level
-- [ ] **Add quest type:** 
-    - [ ] Deliver package: Deliver a package to a towns city hall
-- [ ] **Hub city static defense:**
-    - [ ] Hub cities will have static defenses
-    - [ ] We need to define 2 or 3 static defenses such as machine gun tower, flame thrower tower, impassable barbed wire and so on
-    - [ ] How much static defenses is related to reputation.
-- [ ] **Buildings are destructible in stages:**
-    - [ ] Buildings are high health entities now
-    - [ ] We need 4-5 art for buildings at various stages of destruction
-    - [ ] At 0 HP, the building explodes and the faction loses reputation.
-    - [ ] Attacking buildings will trigger enemy vehicles periodically.
-- [ ] **Add offroad stat to cars:**
-    - [ ] Cars will have an offroad stat
-    - [ ] This is a modifier that allows better speed modifier in the wilderness
-    - [ ] This is a modifier that gives bad speed modifier for street and city
-    - [ ] This is a modifier that gives bad modifier for fuel consumption
-- [ ] **Add more terrain types:**
-    - [ ] Grass
-    - [ ] Desert
-    - [ ] Mud
-    - [ ] Sand
-    - [ ] Swamp
-    - [ ] Factions will determine the terrain type. It is immersive so the deserts rats always have a lot fo desert and sand
-    - [ ] Add Faction property that is terrain and percent chance
-
-
-## Completed Tasks
-
-- [x] Implement Main Menu UI.
-- [x] Design and implement the save/load system.
-- [x] Create the "New Game" setup flow.
-- [x] Develop the initial car and weapon selection system.
-- [x] Build the foundational procedural world generator.
-- [x] Implement the in-game Inventory Menu (Tab).
-- [x] Implement the in-game Pause Menu (Esc).
-- [x] Implement a cutscene system for events like explosions, deaths, and NPC interactions.
-- [x] Use the cutscene system for NPC dialog and quest interactions.
-- [x] Implement a boss system with a compass pointer and on-screen health bar.
-- [x] Use the cutscene system to display boss encounters.
-- [x] Use the cutscene system for item pickups, level-ups, and entering new areas.
-- [x] Implement the Quest system.
-- [x] Implement NPCs and Fauna.
-- [x] Implement advanced car customization.
-- [x] Implement the economy system.
-- [x] Add pickable colors to player car.
-- [x] Make entity unicode character have the same background color as the environment they are on.
-- [x] Add music and sound effects.
-- [x] Add 8-directional art for weapons and render them on the car.
-- [x] Create a launch script for all operating systems.
-- [x] Fix all known bugs.
-- [x] **Refine City Generation:**
-    - [x] Ensure required buildings (Gas, Ammo, Repair, City Hall) are present in every city.
-    - [x] Reduce the overall size of cities.
-    - [x] Make the ground in cities asphalt instead of grass.
-- [x] **Improve Roads:**
-    - [x] Make roads wider.
-    - [x] Verify that roads correctly increase speed and decrease fuel consumption.
-- [x] **Enhance Cutscenes:**
-    - [x] Change the explosion cutscene to a non-blocking overlay in the bottom-left of the screen.
-    - [x] Ensure the boss encounter cutscene is a non-blocking overlay in the bottom-right.
-    - [x] Implement a dynamic entity display modal that shows the name and hit points of the nearest entity within a "cutscene radius".
-    - [x] Prioritize bosses in the cutscene modal, showing them even if other entities are closer.
-- [x] **Refine weapons:**
-    - [x] Add Car stat for max attachments
-    - [x] Add car stat that is list of attachment points
-    - [x] Initial state is defined that shows a list of attachment points, and the level of attachment at that point
-    - [x] Allow attachments to be modified for a price at repair stores. 
-- [x] **Implement Weapon Scaling and Modifier System:**
-    - [x] Shops will carry weapons with modifiers based on player level and town reputation.
-    - [x] Enemies and bosses will have a chance to drop weapons with randomly generated modifiers.
 
 ### Stage 1: Faction and Reputation Foundation (Completed)
 - [x] **Create `FACTION_DATA`:** Create a new file, `car/data/factions.py`, to define factions, their Hub City coordinates, and their relationships.

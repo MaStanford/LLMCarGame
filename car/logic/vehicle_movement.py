@@ -13,24 +13,47 @@ def update_vehicle_movement(game_state, world, audio_manager):
     if game_state.actions["turn_left"]: 
         turn_this_frame -= effective_turn_rate
     game_state.car_angle = (game_state.car_angle + turn_this_frame) % (2 * math.pi)
+    game_state.player_car.angle = game_state.car_angle
 
-    current_acceleration_force = 0.0
-    current_braking_force = 0.0
-    if game_state.actions["accelerate"] and game_state.current_gas > 0: 
-        current_acceleration_force = game_state.acceleration_factor
-    if game_state.actions["brake"]: 
-        current_braking_force = game_state.braking_power
+    # --- Physics Calculations ---
+    # 1. Apply engine force
+    engine_force = 0.0
+    if game_state.actions["accelerate"] and game_state.current_gas > 0:
+        engine_force = game_state.acceleration_factor
+
+    # 2. Apply braking force
+    braking_force = 0.0
+    if game_state.actions["brake"]:
+        braking_force = game_state.braking_power
+
+    # 3. Calculate resistive forces (drag and friction)
+    drag_force = game_state.drag_coefficient * (game_state.car_speed ** 2)
+    friction_force = game_state.friction_coefficient
+
+    # 4. Calculate total force and acceleration
+    # If braking, the primary force is braking. Otherwise, it's engine vs. resistance.
+    if game_state.actions["brake"]:
+        net_force = -braking_force
+    else:
+        net_force = engine_force - (drag_force + friction_force)
+
+    # 5. Update speed
+    # The change in speed is the net_force (acting as acceleration)
+    game_state.car_speed += net_force
     
-    drag_force = (game_state.drag_coefficient * (game_state.car_speed**2)) + 0.005
-    speed_change = current_acceleration_force - drag_force - current_braking_force
-    game_state.car_speed += speed_change
-
+    # Ensure speed doesn't become negative
+    if game_state.car_speed < 0:
+        game_state.car_speed = 0
+    
+    # --- Terrain and Speed Limits ---
     car_center_world_x = game_state.car_world_x + game_state.player_car.width / 2
     car_center_world_y = game_state.car_world_y + game_state.player_car.height / 2
     current_terrain = world.get_terrain_at(car_center_world_x, car_center_world_y)
     terrain_speed_mod = current_terrain.get("speed_modifier", 1.0)
     effective_max_speed = game_state.max_speed * terrain_speed_mod
-    game_state.car_speed = max(0, min(game_state.car_speed, effective_max_speed if effective_max_speed > 0 else 0))
+    
+    # 6. Enforce max speed
+    game_state.car_speed = min(game_state.car_speed, effective_max_speed if effective_max_speed > 0 else 0)
 
     # Adjust angle for world coordinates (0 is North, but math functions treat 0 as East)
     adjusted_angle = game_state.car_angle - (math.pi / 2)
@@ -60,5 +83,5 @@ def update_vehicle_movement(game_state, world, audio_manager):
     distance_this_frame = game_state.car_speed
     game_state.distance_traveled += distance_this_frame
     gas_used_moving = distance_this_frame * game_state.gas_consumption_rate * game_state.gas_consumption_scaler
-    gas_used_accel = current_acceleration_force * 0.1 if current_acceleration_force > 0 else 0
+    gas_used_accel = engine_force * 0.1 if engine_force > 0 else 0
     game_state.current_gas = max(0, game_state.current_gas - (gas_used_moving + gas_used_accel))

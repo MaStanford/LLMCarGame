@@ -60,7 +60,7 @@ def handle_collisions(game_state, world, audio_manager):
                 collided = True
                 break
         if collided: continue
-        for boss_id, boss in game_state.active_bosses.items():
+        for boss in game_state.active_bosses:
             if (boss.x <= p_x < boss.x + boss.width and boss.y <= p_y < boss.y + boss.height):
                 bosses_hit_by_projectiles[boss] = bosses_hit_by_projectiles.get(boss, 0) + p_power
                 particles_to_remove.append(i)
@@ -78,9 +78,8 @@ def handle_collisions(game_state, world, audio_manager):
         boss.hp -= damage
         if boss.hp <= 0:
             game_state.destroyed_this_frame.append(boss)
-            for key, b in list(game_state.active_bosses.items()):
-                if b == boss:
-                    del game_state.active_bosses[key]
+            if boss in game_state.active_bosses:
+                game_state.active_bosses.remove(boss)
 
     enemy_ids_to_remove = []
     for enemy, damage in enemies_hit_by_projectiles.items():
