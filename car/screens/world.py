@@ -3,7 +3,7 @@ import logging
 
 from textual.screen import Screen
 from textual.widgets import Static
-from textual.containers import Horizontal, Vertical
+from textual.containers import Horizontal, Vertical, Container
 
 from ..data.game_constants import CITY_SPACING
 from ..widgets.entity_modal import EntityModal
@@ -24,42 +24,15 @@ class WorldScreen(Screen):
 
     def on_mount(self) -> None:
         """Called when the screen is mounted."""
+        self.app.game_state.pedal_position = 0.0
         self.query_one("#game_view").focus()
-
-    def action_accelerate(self):
-        self.app.game_state.actions["accelerate"] = True
-
-    def action_brake(self):
-        self.app.game_state.actions["brake"] = True
-
-    def action_turn_left(self):
-        self.app.game_state.actions["turn_left"] = True
-
-    def action_turn_right(self):
-        self.app.game_state.actions["turn_right"] = True
-    
-    def action_fire(self):
-        self.app.game_state.actions["fire"] = True
-
-    def on_key_release(self, event: Key) -> None:
-        """Called when a key is released."""
-        if event.key == "w":
-            self.app.game_state.actions["accelerate"] = False
-        elif event.key == "s":
-            self.app.game_state.actions["brake"] = False
-        elif event.key == "a":
-            self.app.game_state.actions["turn_left"] = False
-        elif event.key == "d":
-            self.app.game_state.actions["turn_right"] = False
-        elif event.key == "space":
-            self.app.game_state.actions["fire"] = False
 
     def compose(self):
         """Compose the layout of the screen."""
         yield GameView(id="game_view", game_state=self.app.game_state, world=self.app.world)
         
         with Vertical(id="top_hud"):
-            yield FPSCounter(id="fps_counter")
+            # yield FPSCounter(id="fps_counter")
             yield LocationHUD(id="location_hud")
             yield CompassHUD(id="compass_hud")
 
@@ -73,8 +46,11 @@ class WorldScreen(Screen):
 
     def update_widgets(self):
         """Update the screen widgets."""
+        game_view = self.query_one("#game_view", GameView)
+        game_view.process_input()
+        game_view.refresh()
+        
         gs = self.app.game_state
-        self.query_one("#game_view", GameView).refresh()
         
         stats_hud = self.query_one("#stats_hud", StatsHUD)
         stats_hud.cash = gs.player_cash
@@ -86,6 +62,7 @@ class WorldScreen(Screen):
         stats_hud.level = gs.player_level
         stats_hud.xp = gs.current_xp
         stats_hud.xp_to_next_level = gs.xp_to_next_level
+        stats_hud.pedal_position = gs.pedal_position
 
         quest_hud = self.query_one("#quest_hud", QuestHUD)
         quest_hud.quest_name = gs.current_quest.name if gs.current_quest else "None"

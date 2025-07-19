@@ -2,6 +2,7 @@ from textual.widgets import Static
 from textual.reactive import reactive
 
 class CompassHUD(Static):
+    can_focus = False
     """A widget to display the direction to a target."""
 
     target_angle = reactive(0.0)
@@ -29,3 +30,4 @@ class CompassHUD(Static):
             arrow = "←"
             
         self.update(f"Quest: {arrow}")
+

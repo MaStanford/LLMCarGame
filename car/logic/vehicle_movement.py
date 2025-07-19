@@ -4,6 +4,7 @@ def update_vehicle_movement(game_state, world, audio_manager):
     """
     Handles the player's vehicle movement, including acceleration, braking, turning, and gas consumption.
     """
+    engine_force = 0.0 # Initialize here to ensure it's always available
     # --- Vehicle Movement ---
     turn_this_frame = 0.0
     speed_turn_modifier = max(0.1, 1.0 - (game_state.car_speed / (game_state.max_speed * 1.5 if game_state.max_speed > 0 else 1.5)))
@@ -15,35 +16,38 @@ def update_vehicle_movement(game_state, world, audio_manager):
     game_state.car_angle = (game_state.car_angle + turn_this_frame) % (2 * math.pi)
     game_state.player_car.angle = game_state.car_angle
 
+    # Store speed before physics calculations
+    previous_speed = game_state.car_speed
+
     # --- Physics Calculations ---
-    # 1. Apply engine force
     engine_force = 0.0
-    if game_state.actions["accelerate"] and game_state.current_gas > 0:
-        engine_force = game_state.acceleration_factor
-
-    # 2. Apply braking force
     braking_force = 0.0
-    if game_state.actions["brake"]:
-        braking_force = game_state.braking_power
+    net_force = 0.0
 
-    # 3. Calculate resistive forces (drag and friction)
-    drag_force = game_state.drag_coefficient * (game_state.car_speed ** 2)
-    friction_force = game_state.friction_coefficient
-
-    # 4. Calculate total force and acceleration
-    # If braking, the primary force is braking. Otherwise, it's engine vs. resistance.
-    if game_state.actions["brake"]:
-        net_force = -braking_force
+    if game_state.pedal_position > 0:
+        # Accelerating: only engine force applies
+        engine_force = game_state.acceleration_factor * game_state.pedal_position
+        net_force = engine_force
+    elif game_state.pedal_position < 0:
+        # Braking/Reversing: only braking/reverse force applies
+        braking_force = game_state.braking_power * abs(game_state.pedal_position)
+        # If car is moving forward, this is a brake. If stopped or reversing, it's reverse thrust.
+        if game_state.car_speed > 0:
+             net_force = -braking_force
+        else:
+             net_force = -braking_force # This will make speed negative
     else:
-        net_force = engine_force - (drag_force + friction_force)
-
-    # 5. Update speed
-    # The change in speed is the net_force (acting as acceleration)
-    game_state.car_speed += net_force
+        # Coasting (pedal_position is 0): resistance applies
+        drag_force = game_state.drag_coefficient * (game_state.car_speed ** 2) * math.copysign(1, game_state.car_speed)
+        friction_force = game_state.friction_coefficient * math.copysign(1, game_state.car_speed) if game_state.car_speed != 0 else 0
+        net_force = -drag_force - friction_force
     
-    # Ensure speed doesn't become negative
-    if game_state.car_speed < 0:
+    game_state.car_speed += net_force
+
+    # If braking brought the car to a stop, reset the pedal to prevent instant reverse
+    if previous_speed > 0 and game_state.car_speed <= 0:
         game_state.car_speed = 0
+        game_state.pedal_position = 0.0
     
     # --- Terrain and Speed Limits ---
     car_center_world_x = game_state.car_world_x + game_state.player_car.width / 2
@@ -52,8 +56,8 @@ def update_vehicle_movement(game_state, world, audio_manager):
     terrain_speed_mod = current_terrain.get("speed_modifier", 1.0)
     effective_max_speed = game_state.max_speed * terrain_speed_mod
     
-    # 6. Enforce max speed
-    game_state.car_speed = min(game_state.car_speed, effective_max_speed if effective_max_speed > 0 else 0)
+    # Enforce max speed (and max reverse speed)
+    game_state.car_speed = max(-effective_max_speed * 0.5, min(game_state.car_speed, effective_max_speed))
 
     # Adjust angle for world coordinates (0 is North, but math functions treat 0 as East)
     adjusted_angle = game_state.car_angle - (math.pi / 2)
@@ -85,3 +89,4 @@ def update_vehicle_movement(game_state, world, audio_manager):
     gas_used_moving = distance_this_frame * game_state.gas_consumption_rate * game_state.gas_consumption_scaler
     gas_used_accel = engine_force * 0.1 if engine_force > 0 else 0
     game_state.current_gas = max(0, game_state.current_gas - (gas_used_moving + gas_used_accel))
+

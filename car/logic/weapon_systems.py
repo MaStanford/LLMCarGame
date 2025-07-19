@@ -49,13 +49,27 @@ def update_weapon_systems(game_state, audio_manager):
                         p_angle = adjusted_angle + angle_offset
                         corrected_p_angle = p_angle - math.pi / 2
 
+                        # All projectiles need an origin point to calculate range
+                        origin_x, origin_y = p_x, p_y
+                        
+                        particle_char = weapon.particle
                         if "special_effect" in weapon.modifiers and weapon.modifiers["special_effect"] == "explosive_rounds":
-                            game_state.active_particles.append([p_x, p_y, corrected_p_angle, weapon.speed, projectile_power, weapon.range, "*"])
-                        elif weapon.weapon_type_id == "wep_flamethrower":
+                            particle_char = "*"
+
+                        if weapon.weapon_type_id == "wep_flamethrower":
                             end_x = p_x + weapon.range * math.cos(corrected_p_angle)
                             end_y = p_y + weapon.range * math.sin(corrected_p_angle)
                             game_state.active_flames.append([p_x, p_y, end_x, end_y, projectile_power])
                             audio_manager.play_sfx("flamethrower")
                         else:
-                            game_state.active_particles.append([p_x, p_y, corrected_p_angle, weapon.speed, projectile_power, weapon.range, weapon.particle])
+                            game_state.active_particles.append([
+                                p_x, p_y, 
+                                corrected_p_angle, 
+                                weapon.speed, 
+                                projectile_power, 
+                                weapon.range, 
+                                particle_char,
+                                origin_x,
+                                origin_y
+                            ])
                             audio_manager.play_sfx(weapon.weapon_type_id)

@@ -2,6 +2,7 @@ from textual.widgets import Static
 import time
 
 class Notifications(Static):
+    can_focus = False
     """A widget to display notifications."""
 
     def __init__(self, *args, **kwargs) -> None:
@@ -25,3 +26,4 @@ class Notifications(Static):
 
     def render(self) -> str:
         return "\n".join(n["text"] for n in self.notifications)
+

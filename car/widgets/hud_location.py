@@ -2,6 +2,7 @@ from textual.widgets import Static
 from textual.reactive import reactive
 
 class LocationHUD(Static):
+    can_focus = False
     """A widget to display the player's current location."""
 
     x = reactive(0)
@@ -23,3 +24,4 @@ class LocationHUD(Static):
             self.update(f"{self.city_name} ({self.x}, {self.y})")
         else:
             self.update(f"Location: ({self.x}, {self.y})")
+

@@ -1,4 +1,6 @@
 from textual.app import App
+from textual.events import Key
+import logging
 from .screens.world import WorldScreen
 from .screens.main_menu import MainMenuScreen
 from .screens.pause_menu import PauseScreen
@@ -12,7 +14,6 @@ from .logic.physics import update_physics_and_collisions
 from .logic.quest_logic import update_quests
 from .audio.audio import AudioManager
 from .data.game_constants import CUTSCENE_RADIUS
-from .widgets.hud_stats import StatsHUD
 from .widgets.entity_modal import EntityModal
 from .widgets.explosion import Explosion
 from .world.generation import get_buildings_in_city
@@ -89,14 +90,14 @@ class CarApp(App):
         # --- Update UI Widgets ---
         self.screen.update_widgets()
 
-        # Update FPS counter
-        current_time = time.time()
-        self.frame_count += 1
-        if current_time - self.last_time >= 1.0:
-            fps = self.frame_count / (current_time - self.last_time)
-            self.screen.query_one("#fps_counter").fps = fps
-            self.last_time = current_time
-            self.frame_count = 0
+        # # Update FPS counter
+        # current_time = time.time()
+        # self.frame_count += 1
+        # if current_time - self.last_time >= 1.0:
+        #     fps = self.frame_count / (current_time - self.last_time)
+        #     self.screen.query_one("#fps_counter").fps = fps
+        #     self.last_time = current_time
+        #     self.frame_count = 0
 
     def check_building_interaction(self):
         """Checks if the player is inside a building and pushes the appropriate screen."""

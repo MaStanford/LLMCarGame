@@ -1,4 +1,5 @@
 from textual.widget import Widget
+from textual.events import Key
 from ..common.utils import angle_to_direction
 from ..data.colors import ATTACHMENT_COLOR_MAP
 from rich.text import Text
@@ -7,13 +8,9 @@ import math
 
 class GameView(Widget):
     """A widget to display the game world."""
+    can_focus = True
     
     BINDINGS = [
-        ("w", "accelerate", "Accelerate"),
-        ("s", "brake", "Brake"),
-        ("a", "turn_left", "Turn Left"),
-        ("d", "turn_right", "Turn Right"),
-        ("space", "fire", "Fire"),
         ("escape", "push_screen('pause_menu')", "Pause"),
         ("tab", "push_screen('inventory')", "Inventory")
     ]
@@ -22,6 +19,38 @@ class GameView(Widget):
         super().__init__(*args, **kwargs)
         self.game_state = game_state
         self.world = world
+        self.active_keys = set()
+
+    def on_key(self, event: Key) -> None:
+        """Called when a key is pressed."""
+        gs = self.game_state
+        
+        if event.key == "w":
+            gs.pedal_position = min(1.0, gs.pedal_position + 0.2)
+        elif event.key == "s":
+            gs.pedal_position = max(-1.0, gs.pedal_position - 0.2)
+        else:
+            self.active_keys.add(event.key)
+
+    def process_input(self) -> None:
+        """Process input from the active_keys set for this frame."""
+        gs = self.game_state
+
+        # Reset non-pedal actions to False at the start of the frame
+        for action in ["turn_left", "turn_right", "fire"]:
+            gs.actions[action] = False
+
+        # Set actions to True if their key was pressed this frame
+        if "a" in self.active_keys:
+            gs.actions["turn_left"] = True
+        if "d" in self.active_keys:
+            gs.actions["turn_right"] = True
+        if "space" in self.active_keys:
+            gs.actions["fire"] = True
+        
+        # Clear the set for the next frame
+        self.active_keys.clear()
+
 
     def render(self) -> Text:
         """Render the game world."""
@@ -61,7 +90,7 @@ class GameView(Widget):
             self.draw_entity(canvas, styles, entity, world_start_x, world_start_y, w, h)
 
         # Render particles
-        for p_x, p_y, _, _, _, _, particle_char in gs.active_particles:
+        for p_x, p_y, _, _, _, _, particle_char, _, _ in gs.active_particles:
             sx = int(p_x - world_start_x)
             sy = int(p_y - world_start_y)
             if 0 <= sy < h and 0 <= sx < w:

@@ -1,8 +1,9 @@
 from textual.widgets import Static, ProgressBar
-from textual.containers import Vertical
+from textual.containers import Vertical, Horizontal
 from textual.reactive import reactive
 
 class StatsHUD(Static):
+    can_focus = False
     """A widget to display game statistics."""
 
     cash = reactive(0)
@@ -14,22 +15,27 @@ class StatsHUD(Static):
     level = reactive(1)
     xp = reactive(0)
     xp_to_next_level = reactive(100)
+    pedal_position = reactive(0.0)
 
     def on_mount(self) -> None:
         """Called when the widget is mounted."""
         self.update_hud()
 
     def compose(self):
-        with Vertical(classes="hud-container"):
-            yield Static(id="cash")
-            yield Static("Durability")
-            yield ProgressBar(id="durability", total=100, show_eta=False)
-            yield Static("Gas")
-            yield ProgressBar(id="gas", total=100, show_eta=False)
-            yield Static("XP")
-            yield ProgressBar(id="xp", total=100, show_eta=False)
-            yield Static(id="speed")
-            yield Static(id="level")
+        with Horizontal(classes="hud-container"):
+            with Vertical(classes="hud-column"):
+                yield Static(id="cash")
+                yield Static("Durability")
+                yield ProgressBar(id="durability", total=100, show_eta=False)
+                yield Static("Gas")
+                yield ProgressBar(id="gas", total=100, show_eta=False)
+            with Vertical(classes="hud-column"):
+                yield Static("XP")
+                yield ProgressBar(id="xp", total=100, show_eta=False)
+                yield Static("Pedal")
+                yield ProgressBar(id="pedal", total=200, show_eta=False)
+                yield Static(id="speed")
+                yield Static(id="level")
 
     def watch_cash(self, value: int) -> None:
         self.update_hud()
@@ -58,6 +64,9 @@ class StatsHUD(Static):
     def watch_xp_to_next_level(self, value: int) -> None:
         self.update_hud()
 
+    def watch_pedal_position(self, value: float) -> None:
+        self.update_hud()
+
     def update_hud(self) -> None:
         """Update all HUD elements."""
         if not self.is_mounted:
@@ -77,5 +86,9 @@ class StatsHUD(Static):
         xp_bar.total = self.xp_to_next_level
         xp_bar.progress = self.xp
 
-        self.query_one("#speed", Static).update(f"Speed: {self.speed:.1f}")
+        pedal_bar = self.query_one("#pedal", ProgressBar)
+        pedal_bar.progress = (self.pedal_position + 1.0) * 100 # Map -1 to 1 -> 0 to 200
+
+        self.query_one("#speed", Static).update(f"Speed: {abs(self.speed):.1f}")
         self.query_one("#level", Static).update(f"Level: {self.level}")
+

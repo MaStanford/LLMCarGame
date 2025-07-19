@@ -2,6 +2,7 @@ from textual.widgets import Static
 from textual.reactive import reactive
 
 class QuestHUD(Static):
+    can_focus = False
     """A widget to display quest information."""
 
     quest_name = reactive("")
@@ -17,3 +18,4 @@ class QuestHUD(Static):
     def update_quest(self) -> None:
         """Update the quest display."""
         self.update(f"Quest: {self.quest_name}")
+

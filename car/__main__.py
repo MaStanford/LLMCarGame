@@ -1,6 +1,6 @@
 import argparse
 import logging
-from logging.handlers import RotatingFileHandler
+from logging import FileHandler
 from .app import CarApp
 
 def main():
@@ -13,7 +13,7 @@ def main():
         logging.basicConfig(
             level=logging.INFO,
             handlers=[
-                RotatingFileHandler('game.log', maxBytes=5*1024*1024, backupCount=1, mode='w')
+                FileHandler('game.log', mode='w')
             ],
             format='%(asctime)s - %(levelname)s - %(message)s'
         )

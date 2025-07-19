@@ -4,6 +4,7 @@ from rich.text import Text
 from rich.panel import Panel
 
 class EntityModal(Widget):
+    can_focus = False
     """A widget to display information about the nearest entity."""
 
     name = reactive("No Target")
@@ -23,3 +24,4 @@ class EntityModal(Widget):
         content = f"{hp_bar}\n\n{art_str}"
         
         return Panel(Text(content, justify="center"), title=self.name)
+

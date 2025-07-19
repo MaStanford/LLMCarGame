@@ -38,68 +38,53 @@ def handle_collisions(game_state, world, audio_manager):
     Returns a list of notification messages.
     """
     notifications = []
+    
     # --- Projectile Collisions ---
-    particles_to_remove = []
-    enemies_hit_by_projectiles = {}
-    bosses_hit_by_projectiles = {}
+    projectiles_to_remove = set()
+    
+    # Using a copy of the list to iterate while potentially modifying the original
     for i, p_state in enumerate(game_state.active_particles):
-        p_x, p_y, p_angle, p_speed, p_power, p_range_left, p_char = p_state
-        p_dist = p_speed
-        p_x += p_dist * math.cos(p_angle)
-        p_y += p_dist * math.sin(p_angle)
-        p_range_left -= p_dist
-        if p_range_left <= 0:
-            particles_to_remove.append(i)
-            continue
-        collided = False
-        for enemy in game_state.active_enemies:
-            if (enemy.x <= p_x < enemy.x + enemy.width and enemy.y <= p_y < enemy.y + enemy.height):
-                enemies_hit_by_projectiles[enemy] = enemies_hit_by_projectiles.get(enemy, 0) + p_power
-                audio_manager.play_sfx("enemy_hit")
-                particles_to_remove.append(i)
-                collided = True
-                break
-        if collided: continue
-        for boss in game_state.active_bosses:
-            if (boss.x <= p_x < boss.x + boss.width and boss.y <= p_y < boss.y + boss.height):
-                bosses_hit_by_projectiles[boss] = bosses_hit_by_projectiles.get(boss, 0) + p_power
-                particles_to_remove.append(i)
-                collided = True
-                break
-        if collided: continue
+        p_x, p_y, _, _, p_power, _, _, _, _ = p_state
+        
+        # Check for collisions with terrain
         p_terrain = world.get_terrain_at(p_x, p_y)
         if not p_terrain.get("passable", True):
-            particles_to_remove.append(i)
-            collided = True
-        if not collided:
-            game_state.active_particles[i] = [p_x, p_y, p_angle, p_speed, p_power, p_range_left, p_char]
+            projectiles_to_remove.add(i)
+            continue
 
-    for boss, damage in bosses_hit_by_projectiles.items():
-        boss.hp -= damage
-        if boss.hp <= 0:
-            game_state.destroyed_this_frame.append(boss)
-            if boss in game_state.active_bosses:
-                game_state.active_bosses.remove(boss)
+        # Check for collisions with enemies
+        for enemy in game_state.active_enemies:
+            if (enemy.x <= p_x < enemy.x + enemy.width and 
+                enemy.y <= p_y < enemy.y + enemy.height):
+                enemy.durability -= p_power
+                audio_manager.play_sfx("enemy_hit")
+                projectiles_to_remove.add(i)
+                if enemy.durability <= 0:
+                    game_state.destroyed_this_frame.append(enemy)
+                    handle_enemy_loot_drop(game_state, enemy)
+                    notifications.append(f"Destroyed {enemy.__class__.__name__}!")
+                    game_state.active_enemies.remove(enemy)
+                break # Projectile can only hit one enemy
+        
+        # Check for collisions with bosses
+        for boss in game_state.active_bosses:
+            if (boss.x <= p_x < boss.x + boss.width and 
+                boss.y <= p_y < boss.y + boss.height):
+                boss.durability -= p_power
+                audio_manager.play_sfx("enemy_hit")
+                projectiles_to_remove.add(i)
+                if boss.durability <= 0:
+                    game_state.destroyed_this_frame.append(boss)
+                    if boss in game_state.active_bosses:
+                        game_state.active_bosses.remove(boss)
+                break # Projectile can only hit one boss
 
-    enemy_ids_to_remove = []
-    for enemy, damage in enemies_hit_by_projectiles.items():
-        enemy.durability -= damage
-        if enemy.durability <= 0:
-            game_state.destroyed_this_frame.append(enemy)
-            enemy_ids_to_remove.append(enemy)
-
-    for enemy in enemy_ids_to_remove:
-        handle_enemy_loot_drop(game_state, enemy)
-        notifications.append(f"Destroyed {enemy.__class__.__name__}!")
-        game_state.active_enemies.remove(enemy)
-
-    unique_indices = sorted(list(set(particles_to_remove)), reverse=True)
-    for i in unique_indices:
-        if i < len(game_state.active_particles):
-            del game_state.active_particles[i]
+    # Remove projectiles that have collided
+    if projectiles_to_remove:
+        game_state.active_particles = [p for i, p in enumerate(game_state.active_particles) if i not in projectiles_to_remove]
 
     # --- Obstacle Collisions ---
-    for obstacle in game_state.active_obstacles:
+    for obstacle in game_state.active_obstacles[:]: # Iterate over a copy
         if (game_state.player_car.x < obstacle.x + obstacle.width and
             game_state.player_car.x + game_state.player_car.width > obstacle.x and
             game_state.player_car.y < obstacle.y + obstacle.height and
@@ -112,7 +97,7 @@ def handle_collisions(game_state, world, audio_manager):
                 game_state.active_obstacles.remove(obstacle)
                 game_state.gain_xp(obstacle.xp_value)
                 if random.random() < obstacle.drop_rate:
-                    pass
+                    pass # Future loot drop implementation
 
     # --- Pickup Collisions ---
     pickups_to_remove = []

@@ -14,9 +14,9 @@ class GameState:
         self.car_color_names = car_color_names
         
         # --- Player Actions ---
+        self.pedal_position = 0.0  # -1.0 for full brake, 1.0 for full accelerator
         self.actions = {
-            "accelerate": False, "brake": False, "turn_left": False, 
-            "turn_right": False, "fire": False
+            "turn_left": False, "turn_right": False, "fire": False
         }
         
         # --- Player State ---

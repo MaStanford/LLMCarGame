@@ -1,5 +1,4 @@
 WorldScreen {
-    overflow: hidden;
     layers: base hud;
 }
 
@@ -7,40 +6,60 @@ GameView {
     layer: base;
     width: 100%;
     height: 100%;
-    overflow: hidden;
 }
 
 #top_hud {
     layer: hud;
     dock: top;
-    align: center top;
     width: 100%;
     height: auto;
+    align: center top;
 }
 
 #bottom_hud {
     layer: hud;
     dock: bottom;
     width: 100%;
-    height: 9;
-    layout: horizontal;
+    height: 7; /* Constrain height */
+    align: left bottom;
+    margin-top: 1;
+}
+
+#quest_hud, #stats_hud, #entity_modal {
+    background: $panel;
 }
 
 #quest_hud {
-    width: 33%;
-    align: left bottom;
-    background: $panel;
-}
-
-#stats_hud {
-    width: 34%;
-    align: center bottom;
-    background: $panel;
+    height: 7; /* Constrain height */
+    width: 28%;
 }
 
 #entity_modal {
-    width: 33%;
-    align: right bottom;
+    height: 7; /* Constrain height */
+    width: 28%;
+}
+
+#stats_hud {
+    height: 7; /* Constrain height */
+    width: 44%;
+}
+
+#stats_hud .hud-container {
+    layout: horizontal;
+}
+
+#stats_hud .hud-column {
+    width: 1fr;
+    padding: 0 1;
+}
+
+#notifications {
+    layer: hud;
+    dock: top;
+    align: right top;
+    width: auto;
+    height: auto;
+    padding: 1;
 }
 
 #location_hud {
