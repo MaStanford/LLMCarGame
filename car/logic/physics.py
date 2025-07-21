@@ -1,7 +1,6 @@
 from .vehicle_movement import update_vehicle_movement
 from .weapon_systems import update_weapon_systems
 from .collision_detection import handle_collisions
-import logging
 import math
 
 def update_physics_and_collisions(game_state, world, audio_manager):
@@ -32,7 +31,6 @@ def update_physics_and_collisions(game_state, world, audio_manager):
         if distance_traveled < max_range:
             p_state[0], p_state[1] = p_x, p_y
             particles_to_keep.append(p_state)
-            logging.info(f"PHYSICS: Updating projectile to ({p_x:.2f}, {p_y:.2f})")
     game_state.active_particles = particles_to_keep
 
     # 4. Process all collisions and their effects

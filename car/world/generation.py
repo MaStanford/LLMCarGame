@@ -1,7 +1,6 @@
 import random
 import string
 import math
-import logging
 from ..data.game_constants import (
     CITY_SPACING, CITY_SIZE, MIN_BUILDINGS_PER_CITY, MAX_BUILDINGS_PER_CITY,
     MIN_BUILDING_DIM, MAX_BUILDING_DIM, ROAD_WIDTH, BUILDING_SHOP_BUFFER
@@ -54,7 +53,6 @@ def generate_city(grid_x, grid_y):
     if cache_key in building_cache:
         return building_cache[cache_key]
 
-    logging.info(f"GENERATION: Generating buildings for city at ({grid_x}, {grid_y})")
     buildings = []
     occupied_zones = []
     city_seed = f"{grid_x}-{grid_y}"
@@ -89,7 +87,6 @@ def generate_city(grid_x, grid_y):
                 building_data = {**new_building, "type": building_type, "city_id": cache_key}
                 buildings.append(building_data)
                 occupied_zones.append(new_building)
-                logging.info(f"GENERATION: Placed required building: {building_data}")
                 break
 
     num_generic_buildings = local_random.randint(MIN_BUILDINGS_PER_CITY, MAX_BUILDINGS_PER_CITY)
@@ -118,7 +115,6 @@ def generate_city(grid_x, grid_y):
                 building_data = {**new_building, "type": "GENERIC", "name": building_name, "city_id": cache_key}
                 buildings.append(building_data)
                 occupied_zones.append(new_building)
-                logging.info(f"GENERATION: Placed generic building: {building_data}")
                 break
 
     building_cache[cache_key] = buildings
