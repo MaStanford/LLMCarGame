@@ -62,7 +62,7 @@ class Motorcycle(PlayerCar):
         super().__init__(
             x, y, art,
             durability=40,
-            speed=12.0,
+            speed=6.0,
             acceleration=1.2,
             handling=0.3,
             braking_power=0.9,

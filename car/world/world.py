@@ -9,6 +9,9 @@ class World:
     def __init__(self, seed):
         self.seed = seed
         self.random = random.Random(seed)
+        self.terrain_data = TERRAIN_DATA
+        self.building_data = BUILDING_DATA
+        self.city_spacing = CITY_SPACING
 
     def get_terrain_at(self, x, y):
         grid_x = round(x / CITY_SPACING)

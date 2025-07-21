@@ -68,6 +68,6 @@ BUILDING_DATA = {
             " ╚═════╧═════╝ "
         ],
         "width": 15, "height": 1,
-        "color_pair_name": "BUILDING_OUTLINE_COLOR"
+        "color_pair_name": "BUILDING_WALL"
     }
 }

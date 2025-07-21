@@ -21,10 +21,13 @@ def update_weapon_systems(game_state, audio_manager):
                     game_state.ammo_counts[ammo_type] -= 1
                     game_state.weapon_cooldowns[weapon.instance_id] = weapon.fire_rate
                     
-                    # Adjust angle for world coordinates
-                    adjusted_angle = game_state.car_angle
-                    car_cos = math.cos(adjusted_angle)
-                    car_sin = math.sin(adjusted_angle)
+                    # Get the car's current angle (in game-world coordinates, where 0 is North)
+                    car_angle_rad = game_state.car_angle
+                    
+                    # Convert to standard mathematical angle for trig functions (where 0 is East)
+                    math_angle_rad = car_angle_rad - math.pi / 2
+                    car_cos = math.cos(math_angle_rad)
+                    car_sin = math.sin(math_angle_rad)
                     
                     # Muzzle position in car's local space
                     muzzle_local_x = point_data["offset_x"]
@@ -35,7 +38,6 @@ def update_weapon_systems(game_state, audio_manager):
                     rotated_muzzle_y = muzzle_local_x * car_sin + muzzle_local_y * car_cos
                     
                     # Final projectile position in world coordinates
-                    # This logic mirrors the renderer's screen coordinate calculation
                     p_x = game_state.car_world_x + rotated_muzzle_x
                     p_y = game_state.car_world_y + rotated_muzzle_y
                     
@@ -46,8 +48,11 @@ def update_weapon_systems(game_state, audio_manager):
                         if weapon.pellet_count > 1:
                             angle_offset = (i - (weapon.pellet_count - 1) / 2) * weapon.spread_angle / (weapon.pellet_count -1)
                         
-                        p_angle = adjusted_angle + angle_offset
-                        corrected_p_angle = p_angle - math.pi / 2
+                        # Final projectile angle in game-world coordinates
+                        p_angle_rad = car_angle_rad + angle_offset
+                        
+                        # Convert to mathematical angle for physics calculations
+                        p_math_angle_rad = p_angle_rad - math.pi / 2
 
                         # All projectiles need an origin point to calculate range
                         origin_x, origin_y = p_x, p_y
@@ -57,14 +62,14 @@ def update_weapon_systems(game_state, audio_manager):
                             particle_char = "*"
 
                         if weapon.weapon_type_id == "wep_flamethrower":
-                            end_x = p_x + weapon.range * math.cos(corrected_p_angle)
-                            end_y = p_y + weapon.range * math.sin(corrected_p_angle)
+                            end_x = p_x + weapon.range * math.cos(p_math_angle_rad)
+                            end_y = p_y + weapon.range * math.sin(p_math_angle_rad)
                             game_state.active_flames.append([p_x, p_y, end_x, end_y, projectile_power])
                             audio_manager.play_sfx("flamethrower")
                         else:
                             game_state.active_particles.append([
                                 p_x, p_y, 
-                                corrected_p_angle, 
+                                p_math_angle_rad, 
                                 weapon.speed, 
                                 projectile_power, 
                                 weapon.range, 

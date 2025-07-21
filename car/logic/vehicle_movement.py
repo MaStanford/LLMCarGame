@@ -19,42 +19,43 @@ def update_vehicle_movement(game_state, world, audio_manager):
     # Store speed before physics calculations
     previous_speed = game_state.car_speed
 
-    # --- Physics Calculations ---
-    engine_force = 0.0
-    braking_force = 0.0
-    net_force = 0.0
-
-    if game_state.pedal_position > 0:
-        # Accelerating: only engine force applies
-        engine_force = game_state.acceleration_factor * game_state.pedal_position
-        net_force = engine_force
-    elif game_state.pedal_position < 0:
-        # Braking/Reversing: only braking/reverse force applies
-        braking_force = game_state.braking_power * abs(game_state.pedal_position)
-        # If car is moving forward, this is a brake. If stopped or reversing, it's reverse thrust.
-        if game_state.car_speed > 0:
-             net_force = -braking_force
-        else:
-             net_force = -braking_force # This will make speed negative
-    else:
-        # Coasting (pedal_position is 0): resistance applies
-        drag_force = game_state.drag_coefficient * (game_state.car_speed ** 2) * math.copysign(1, game_state.car_speed)
-        friction_force = game_state.friction_coefficient * math.copysign(1, game_state.car_speed) if game_state.car_speed != 0 else 0
-        net_force = -drag_force - friction_force
-    
-    game_state.car_speed += net_force
-
-    # If braking brought the car to a stop, reset the pedal to prevent instant reverse
-    if previous_speed > 0 and game_state.car_speed <= 0:
-        game_state.car_speed = 0
-        game_state.pedal_position = 0.0
-    
     # --- Terrain and Speed Limits ---
     car_center_world_x = game_state.car_world_x + game_state.player_car.width / 2
     car_center_world_y = game_state.car_world_y + game_state.player_car.height / 2
     current_terrain = world.get_terrain_at(car_center_world_x, car_center_world_y)
     terrain_speed_mod = current_terrain.get("speed_modifier", 1.0)
     effective_max_speed = game_state.max_speed * terrain_speed_mod
+
+    # --- Physics Calculations ---
+    # 1. Calculate target speed based on pedal position
+    target_speed = game_state.pedal_position * effective_max_speed
+    # Reverse speed is capped at 50% of max speed
+    if target_speed < 0:
+        target_speed *= 0.5
+
+    # 2. Calculate the difference between current and target speed
+    speed_diff = target_speed - game_state.car_speed
+
+    # 3. Determine the force to apply (acceleration or braking)
+    # The force is proportional to the car's acceleration stat, but we ensure it doesn't overshoot the target.
+    if abs(speed_diff) < game_state.acceleration_factor:
+        change_in_speed = speed_diff
+    else:
+        change_in_speed = game_state.acceleration_factor * math.copysign(1, speed_diff)
+
+    # 4. Apply coasting resistance if there's no pedal input
+    if game_state.pedal_position == 0:
+        drag_force = game_state.drag_coefficient * (game_state.car_speed ** 2) * math.copysign(1, game_state.car_speed)
+        friction_force = game_state.friction_coefficient * math.copysign(1, game_state.car_speed) if game_state.car_speed != 0 else 0
+        change_in_speed -= (drag_force + friction_force)
+
+    # 5. Update car speed
+    game_state.car_speed += change_in_speed
+
+    # If braking brought the car to a stop, reset the pedal to prevent instant reverse
+    if previous_speed > 0 and game_state.car_speed <= 0 and game_state.pedal_position < 0:
+        game_state.car_speed = 0
+        game_state.pedal_position = 0.0
     
     # Enforce max speed (and max reverse speed)
     game_state.car_speed = max(-effective_max_speed * 0.5, min(game_state.car_speed, effective_max_speed))

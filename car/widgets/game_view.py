@@ -2,6 +2,8 @@ from textual.widget import Widget
 from textual.events import Key
 from ..common.utils import angle_to_direction
 from ..data.colors import ATTACHMENT_COLOR_MAP
+from ..data.game_constants import CITY_SPACING
+from ..world.generation import get_buildings_in_city
 from rich.text import Text
 from rich.style import Style
 import math
@@ -73,6 +75,13 @@ class GameView(Widget):
                 terrain = self.world.get_terrain_at(cwx, cwy)
                 canvas[y][x] = terrain.get("char", " ")
                 styles[y][x] = terrain.get("style", Style())
+
+        # Render buildings
+        city_grid_x = round(gs.car_world_x / CITY_SPACING)
+        city_grid_y = round(gs.car_world_y / CITY_SPACING)
+        buildings = get_buildings_in_city(city_grid_x, city_grid_y)
+        for building in buildings:
+            self.draw_building(canvas, styles, building, world_start_x, world_start_y, w, h)
 
         # Render all entities
         world_end_x = world_start_x + w
@@ -172,6 +181,49 @@ class GameView(Widget):
                     if 0 <= y < h and 0 <= x < w:
                         canvas[y][x] = char
                         styles[y][x] = entity_style
+
+    def draw_building(self, canvas, styles, building, world_start_x, world_start_y, w, h):
+        """Draws a single building on the canvas."""
+        b_x, b_y, b_w, b_h = building["x"], building["y"], building["w"], building["h"]
+        b_type = building.get("type", "GENERIC")
+
+        # Calculate screen position
+        start_sx = int(b_x - world_start_x)
+        start_sy = int(b_y - world_start_y)
+
+        # Get the base style for the building type
+        building_style = Style(bgcolor="rgb(80,80,80)") # Default for generic
+        if b_type != "GENERIC":
+            color_name = self.world.building_data[b_type].get("color_pair_name", "BUILDING_WALL")
+            building_style = self.world.terrain_data[color_name]["style"]
+
+        if b_type != "GENERIC" and b_type in self.world.building_data:
+            art = self.world.building_data[b_type].get("art", [])
+            for i, line in enumerate(art):
+                for j, char in enumerate(line):
+                    if char != ' ':
+                        sx, sy = start_sx + j, start_sy + i
+                        if 0 <= sy < h and 0 <= sx < w:
+                            canvas[sy][sx] = char
+                            styles[sy][sx] = building_style
+        else:
+            # Fallback to procedural drawing for GENERIC buildings
+            end_sx = start_sx + b_w
+            end_sy = start_sy + b_h
+            wall_style = self.world.terrain_data["BUILDING_WALL"]["style"]
+            fill_style = Style(bgcolor="rgb(50,50,50)") # Darker fill for generic
+            for sy in range(start_sy, end_sy):
+                for sx in range(start_sx, end_sx):
+                    if 0 <= sy < h and 0 <= sx < w:
+                        char = " "
+                        style = fill_style
+                        # Edges
+                        if sy == start_sy or sy == end_sy - 1 or sx == start_sx or sx == end_sx - 1:
+                             char = " "
+                             style = wall_style
+                        
+                        canvas[sy][sx] = char
+                        styles[sy][sx] = style
 
     def draw_weapon(self, canvas, styles, parent_entity, weapon, point_data, world_start_x, world_start_y, w, h):
         """Draws a weapon on the canvas at its attachment point."""
