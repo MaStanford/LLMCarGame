@@ -7,6 +7,7 @@ from .screens.pause_menu import PauseScreen
 from .screens.inventory import InventoryScreen
 from .screens.shop import ShopScreen
 from .screens.city_hall import CityHallScreen
+from .screens.game_over import GameOverScreen
 from .game_state import GameState
 from .world import World
 from .logic.spawning import spawn_enemy, spawn_fauna, spawn_obstacle
@@ -81,6 +82,11 @@ class CarApp(App):
             gs.menu_nav_cooldown -= 1
         
         if not gs.pause_menu_open and not gs.menu_open:
+            if gs.game_over:
+                self.stop_game_loop()
+                self.push_screen(GameOverScreen())
+                return
+
             notifications = update_physics_and_collisions(gs, self.world, self.audio_manager)
             for notification in notifications:
                 self.screen.query_one("#notifications", Notifications).add_notification(notification)

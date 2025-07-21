@@ -1,30 +1,25 @@
-from textual.app import ComposeResult
 from textual.screen import ModalScreen
 from textual.widgets import Button, Static
 from textual.containers import Vertical
 
 class GameOverScreen(ModalScreen):
-    """A modal screen for the game over state."""
+    """The game over screen."""
 
-    def __init__(self, message: str) -> None:
-        self.message = message
-        super().__init__()
-
-    def compose(self) -> ComposeResult:
+    def compose(self):
+        """Compose the layout of the screen."""
         with Vertical(id="game-over-dialog"):
-            yield Static("GAME OVER!", id="game-over-title")
-            yield Static(self.message, id="game-over-message")
-            yield Button("Play Again", variant="primary", id="play-again")
-            yield Button("Exit", variant="error", id="exit")
+            yield Static("Game Over", id="game-over-title")
+            yield Button("New Game", id="new_game", variant="primary")
+            yield Button("Load Game", id="load_game", variant="default")
+            yield Button("Quit", id="quit", variant="error")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "play-again":
-            # This is a bit tricky. We need to tell the app to restart the game.
-            # A custom event or a callback would be ideal here.
-            # For now, we'll just pop this screen and the main menu will handle it.
-            self.app.pop_screen() # Pop self
-            self.app.pop_screen() # Pop DefaultScreen
-            from .main_menu import MainMenuScreen
-            self.app.push_screen(MainMenuScreen())
-        elif event.button.id == "exit":
+        """Handle button press events."""
+        if event.button.id == "new_game":
+            self.app.stop_game_loop()
+            self.app.switch_screen("new_game")
+        elif event.button.id == "load_game":
+            self.app.stop_game_loop()
+            self.app.switch_screen("load_game")
+        elif event.button.id == "quit":
             self.app.exit()

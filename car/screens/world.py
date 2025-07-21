@@ -52,7 +52,6 @@ class WorldScreen(Screen):
     def update_widgets(self):
         """Update the screen widgets."""
         game_view = self.query_one("#game_view", GameView)
-        game_view.process_input()
         game_view.refresh()
         
         gs = self.app.game_state
