@@ -77,10 +77,9 @@ class Hatchback(PlayerCar):
                 "hood_gun": {"level": "light", "offset_x": 0, "offset_y": -2},
                 "roof_rack": {"level": "light", "offset_x": 0, "offset_y": -1},
                 "hatch_gun": {"level": "medium", "offset_x": 0, "offset_y": 2}
+            },
+            default_weapons={
+                "hatch_gun": "wep_shotgun"
             }
         )
         self.max_attachments = 4
-        # Default loadout for this chassis
-        self.default_weapons = {
-            "hatch_gun": "wep_shotgun"
-        }

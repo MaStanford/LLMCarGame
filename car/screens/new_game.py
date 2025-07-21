@@ -258,8 +258,5 @@ class NewGameScreen(Screen):
             self.app.game_state = game_state
             self.app.world = World(seed=12345)
             
-            # Spawn initial entities now that the player has a position
-            spawn_initial_entities(self.app.game_state, self.app.world)
-
             self.app.switch_screen(WorldScreen())
             self.app.game_loop = self.app.set_interval(1 / 30, self.app.update_game)

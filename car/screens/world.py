@@ -2,7 +2,7 @@ import math
 import logging
 
 from textual.screen import Screen
-from textual.widgets import Static
+from textual.widgets import Static, Footer
 from textual.containers import Horizontal, Vertical, Container
 
 from ..data.game_constants import CITY_SPACING
@@ -17,20 +17,48 @@ from ..widgets.notifications import Notifications
 from ..widgets.fps_counter import FPSCounter
 from ..world.generation import get_city_name
 from ..logic.spawning import spawn_initial_entities
+from .inventory import InventoryScreen
+from .pause_menu import PauseScreen
 
 from textual.events import Key
+from textual.binding import Binding
 
 class WorldScreen(Screen):
     """The default screen for the game."""
 
+    BINDINGS = [
+        Binding("escape", "toggle_pause", "Pause"),
+        Binding("tab", "toggle_inventory", "Inventory"),
+    ]
+
     def on_mount(self) -> None:
         """Called when the screen is mounted."""
-        # Set sensible spawn and despawn radii based on screen size
-        corner_distance = math.sqrt((self.size.width / 2)**2 + (self.size.height / 2)**2)
-        self.app.game_state.spawn_radius = corner_distance + 5 # Spawn just outside the corner
-        self.app.game_state.despawn_radius = self.app.game_state.spawn_radius * 1.5
+        gs = self.app.game_state
+        
+        # Synchronize the player car's entity position with the game state's world position
+        gs.player_car.x = gs.car_world_x
+        gs.player_car.y = gs.car_world_y
+        
+        # Spawn an initial batch of entities
+        spawn_initial_entities(gs, self.app.world)
         
         self.query_one("#game_view").focus()
+
+    def action_toggle_pause(self) -> None:
+        """Toggle the pause menu."""
+        if self.app.game_state.pause_menu_open:
+            self.app.pop_screen()
+        else:
+            self.app.game_state.pause_menu_open = True
+            self.app.push_screen(PauseScreen())
+
+    def action_toggle_inventory(self) -> None:
+        """Toggle the inventory screen."""
+        if self.app.game_state.menu_open:
+            self.app.pop_screen()
+        else:
+            self.app.game_state.menu_open = True
+            self.app.push_screen(InventoryScreen())
 
     def compose(self):
         """Compose the layout of the screen."""
@@ -48,10 +76,12 @@ class WorldScreen(Screen):
 
         """Modal for showing notifications like "x item picked up"""""
         yield Notifications(id="notifications")
+        yield Footer()
 
     def update_widgets(self):
         """Update the screen widgets."""
         game_view = self.query_one("#game_view", GameView)
+        game_view.process_input()
         game_view.refresh()
         
         gs = self.app.game_state
@@ -67,6 +97,15 @@ class WorldScreen(Screen):
         stats_hud.xp = gs.current_xp
         stats_hud.xp_to_next_level = gs.xp_to_next_level
         stats_hud.pedal_position = gs.pedal_position
+        
+        # For now, just display the ammo for the first weapon
+        first_weapon = next(iter(gs.mounted_weapons.values()), None)
+        if first_weapon:
+            stats_hud.ammo = gs.ammo_counts.get(first_weapon.ammo_type, 0)
+            stats_hud.max_ammo = 999 # Placeholder for max ammo
+        else:
+            stats_hud.ammo = 0
+            stats_hud.max_ammo = 0
 
         quest_hud = self.query_one("#quest_hud", QuestHUD)
         quest_hud.quest_name = gs.current_quest.name if gs.current_quest else "None"
@@ -79,10 +118,20 @@ class WorldScreen(Screen):
         location.city_name = get_city_name(grid_x, grid_y)
 
         compass = self.query_one("#compass_hud", CompassHUD)
-        if gs.current_quest and gs.current_quest.boss:
-            boss = gs.current_quest.boss
-            angle_to_boss = math.atan2(boss.y - gs.car_world_y, boss.x - gs.car_world_x)
-            compass.target_angle = math.degrees(angle_to_boss)
+        if gs.current_quest:
+            if gs.current_quest.ready_to_turn_in:
+                # Point to quest giver
+                city_x = gs.current_quest.city_id[0] * CITY_SPACING
+                city_y = gs.current_quest.city_id[1] * CITY_SPACING
+                angle_to_target = math.atan2(city_y - gs.car_world_y, city_x - gs.car_world_x)
+            elif gs.current_quest.boss:
+                # Point to boss
+                boss = gs.current_quest.boss
+                angle_to_target = math.atan2(boss.y - gs.car_world_y, boss.x - gs.car_world_x)
+            else:
+                angle_to_target = 0
+            
+            compass.target_angle = math.degrees(angle_to_target)
             compass.player_angle = gs.car_angle
         else:
             compass.target_angle = 0

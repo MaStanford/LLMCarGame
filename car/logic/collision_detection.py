@@ -102,7 +102,7 @@ def handle_collisions(game_state, world, audio_manager):
             audio_manager.play_sfx("crash")
             
             # Apply damage (assuming enemies have a collision_damage attribute)
-            player.durability -= getattr(enemy, "collision_damage", 5)
+            game_state.current_durability -= getattr(enemy, "collision_damage", 5)
             enemy.durability -= getattr(player, "collision_damage", 5)
             
             if enemy.durability <= 0:
@@ -113,13 +113,11 @@ def handle_collisions(game_state, world, audio_manager):
 
     # --- Obstacle Collisions ---
     for obstacle in game_state.active_obstacles[:]: # Iterate over a copy
-        if (game_state.player_car.x < obstacle.x + obstacle.width and
-            game_state.player_car.x + game_state.player_car.width > obstacle.x and
-            game_state.player_car.y < obstacle.y + obstacle.height and
-            game_state.player_car.y + game_state.player_car.height > obstacle.y):
+        obstacle_rect = (obstacle.x, obstacle.y, obstacle.width, obstacle.height)
+        if check_collision(player_rect, obstacle_rect):
             
             audio_manager.play_sfx("crash")
-            game_state.player_car.durability -= obstacle.damage
+            game_state.current_durability -= obstacle.damage
             obstacle.durability -= 10
             if obstacle.durability <= 0:
                 game_state.active_obstacles.remove(obstacle)

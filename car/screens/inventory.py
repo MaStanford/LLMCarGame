@@ -73,7 +73,8 @@ class InventoryScreen(ModalScreen):
         else:
             widget = self.query_one("#attachments", WeaponListWidget)
         
-        widget.selected_index = (widget.selected_index + amount + len(widget.weapons)) % len(widget.weapons)
+        if widget.weapons:
+            widget.selected_index = (widget.selected_index + amount + len(widget.weapons)) % len(widget.weapons)
 
     def action_switch_focus(self) -> None:
         """Switch focus between the inventory and attachment lists."""

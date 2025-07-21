@@ -122,7 +122,7 @@ class GameState:
         self.menu_selected_section_idx = 0
         self.menu_selected_item_idx = 0
         self.menu_preview_angle = 0.0
-        self.spawn_radius = 0
+        self.safe_zone_radius = 0
         self.despawn_radius = 0
         self.screen_width = 0
         self.screen_height = 0

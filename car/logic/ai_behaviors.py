@@ -1,5 +1,6 @@
 import math
 import random
+from ..entities.obstacles.mine import Mine
 
 def _execute_chase_behavior(enemy, game_state, edata):
     """Moves the enemy towards the player."""
@@ -44,34 +45,51 @@ def _execute_stationary_behavior(enemy, game_state, edata):
     enemy.vy = 0
 
 def _execute_patrol_behavior(enemy, game_state, edata):
-    """Moves the enemy back and forth along a patrol path."""
-    # Initialize patrol direction if not present
-    if not hasattr(enemy, 'patrol_direction'):
-        enemy.patrol_direction = random.choice([(1, 0), (-1, 0), (0, 1), (0, -1)])
-    
-    # Check if it's time to change direction (e.g., after a certain time)
-    if not hasattr(enemy, 'patrol_timer'):
-        enemy.patrol_timer = 5 # seconds
-    
-    # In a real implementation, you'd decrement this timer
-    # For now, we'll just keep the movement simple.
-    
-    enemy.vx = enemy.patrol_direction[0] * edata.speed * 0.5 # Patrol at half speed
-    enemy.vy = enemy.patrol_direction[1] * edata.speed * 0.5
+    """Moves the enemy between two patrol points."""
+    # Initialize patrol points on the first run
+    if not hasattr(enemy, 'patrol_start'):
+        enemy.patrol_start = (enemy.x - 10, enemy.y - 10)
+        enemy.patrol_end = (enemy.x + 10, enemy.y + 10)
+        enemy.patrol_target = enemy.patrol_end
+
+    # Determine target coordinates
+    target_x, target_y = enemy.patrol_target
+
+    # Move towards the target
+    dx = target_x - enemy.x
+    dy = target_y - enemy.y
+    dist = math.sqrt(dx*dx + dy*dy)
+
+    if dist > 1: # If not at the target yet
+        enemy.vx = (dx / dist) * edata.speed * 0.5 # Patrol at half speed
+        enemy.vy = (dy / dist) * edata.speed * 0.5
+    else:
+        # Arrived at target, switch to the other point
+        enemy.patrol_target = enemy.patrol_start if enemy.patrol_target == enemy.patrol_end else enemy.patrol_end
+        enemy.vx = 0
+        enemy.vy = 0
 
 def _execute_deploy_mine_behavior(enemy, game_state, edata):
-    """Stops and attempts to lay a mine behind it."""
+    """Stops and lays a mine behind the enemy."""
     # Stop moving to deploy
     enemy.vx = 0
     enemy.vy = 0
-    # In the main game loop, you would check for this behavior
-    # and trigger the mine-laying logic.
-    # e.g., world.add_obstacle(Mine(enemy.x, enemy.y))
-    # This function itself just handles the movement part.
-    # We can add a cooldown to prevent constant mine laying.
-    if not hasattr(enemy, 'mine_cooldown') or enemy.mine_cooldown <= 0:
-        # Signal to the game world that a mine should be dropped
-        # This is a conceptual implementation. The actual creation
-        # of the mine object would happen in the world update logic.
-        game_state.request_mine_deployment(enemy.x, enemy.y)
-        enemy.mine_cooldown = 5 # 5-second cooldown
+
+    # Use a cooldown to prevent spamming
+    if not hasattr(enemy, 'mine_cooldown'):
+        enemy.mine_cooldown = 0
+    
+    if enemy.mine_cooldown <= 0:
+        # Get position behind the enemy
+        # (This is a simplified model, assuming enemy is facing player)
+        dx = game_state.car_world_x - enemy.x
+        dy = game_state.car_world_y - enemy.y
+        dist = math.sqrt(dx*dx + dy*dy)
+        
+        mine_x = enemy.x - (dx / dist) * 2 # Place it 2 units behind
+        mine_y = enemy.y - (dy / dist) * 2
+
+        game_state.active_obstacles.append(Mine(mine_x, mine_y))
+        enemy.mine_cooldown = 5 * 30 # 5-second cooldown at 30 FPS
+    else:
+        enemy.mine_cooldown -= 1

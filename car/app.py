@@ -52,15 +52,6 @@ class CarApp(App):
             self.game_state.pause_menu_open = False
             self.game_state.menu_open = False
 
-    def action_push_screen(self, screen: str) -> None:
-        """Action to push a screen."""
-        if screen == "pause_menu":
-            self.game_state.pause_menu_open = True
-            self.push_screen(PauseScreen())
-        elif screen == "inventory":
-            self.game_state.menu_open = True
-            self.push_screen(InventoryScreen())
-
     def switch_screen(self, screen) -> None:
         """Switch to a new screen."""
         if screen == "main_menu":

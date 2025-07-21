@@ -1,5 +1,5 @@
 import random
-from .quests import Quest, KillBossObjective, KillCountObjective, SurvivalObjective, QUEST_TEMPLATES
+from ..data.quests import Quest, KillBossObjective, KillCountObjective, SurvivalObjective, QUEST_TEMPLATES
 from ..logic.entity_loader import PLAYER_CARS
 from ..entities.base import Entity
 from .boss import Boss
@@ -155,4 +155,29 @@ def check_for_faction_takeover(game_state):
             
             del game_state.faction_reputation[faction_id]
     return notifications
+
+def complete_quest(game_state):
+    """Handles the logic for completing a quest."""
+    quest = game_state.current_quest
+    rewards = quest.rewards
+    game_state.gain_xp(rewards.get("xp", 0))
+    game_state.player_cash += rewards.get("cash", 0)
+    
+    # Increase reputation with quest giver
+    giver_faction_id = quest.quest_giver_faction
+    if giver_faction_id:
+        if giver_faction_id not in game_state.faction_reputation:
+            game_state.faction_reputation[giver_faction_id] = 0
+        game_state.faction_reputation[giver_faction_id] += 10
+
+    # Decrease reputation with target
+    target_faction_id = quest.target_faction
+    if target_faction_id:
+        if target_faction_id not in game_state.faction_reputation:
+            game_state.faction_reputation[target_faction_id] = 0
+        game_state.faction_reputation[target_faction_id] -= 15
+
+    game_state.current_quest = None
+    # (Add notifications for reputation changes)
+    check_for_faction_takeover(game_state)
 

@@ -35,7 +35,7 @@ FACTION_DATA = {
             "dustwind_caravans": "Neutral",
             "the_junction": "Neutral"
         },
-        "units": ["technical", "scav_hauler", "engineer"]
+        "units": ["technical", "scav_hauler", "engineer", "miner"]
     },
     "rust_prophets": {
         "name": "The Rust Prophets",

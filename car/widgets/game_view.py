@@ -12,11 +12,6 @@ class GameView(Widget):
     """A widget to display the game world."""
     can_focus = True
     
-    BINDINGS = [
-        ("escape", "push_screen('pause_menu')", "Pause"),
-        ("tab", "push_screen('inventory')", "Inventory")
-    ]
-
     def __init__(self, game_state, world, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.game_state = game_state
@@ -237,9 +232,9 @@ class GameView(Widget):
         art_w = max(len(line) for line in art) if art else 0
 
         # --- Rotation Logic (mirrors weapon_systems.py) ---
-        adjusted_angle = parent_entity.angle
-        car_cos = math.cos(adjusted_angle)
-        car_sin = math.sin(adjusted_angle)
+        math_angle_rad = parent_entity.angle - math.pi / 2
+        car_cos = math.cos(math_angle_rad)
+        car_sin = math.sin(math_angle_rad)
         
         offset_x = point_data["offset_x"]
         offset_y = point_data["offset_y"]

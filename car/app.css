@@ -101,10 +101,13 @@ MainMenuScreen Button {
 
 PauseScreen {
     align: center middle;
+    layout: vertical;
+    width: 40;
+    height: 11;
 }
 
 PauseScreen Button {
-    width: 40;
+    width: 100%;
     margin: 1;
 }
 
@@ -226,8 +229,9 @@ GameOverScreen {
 }
 
 #game-over-dialog {
-    width: 50;
-    height: 10;
+    layout: vertical;
+    width: 30;
+    height: 15;
     border: heavy white;
     background: $panel;
     align: center middle;

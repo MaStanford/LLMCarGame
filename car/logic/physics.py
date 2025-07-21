@@ -51,7 +51,7 @@ def update_physics_and_collisions(game_state, world, audio_manager):
     game_state.active_obstacles = [o for o in game_state.active_obstacles if (o.x - game_state.car_world_x)**2 + (o.y - game_state.car_world_y)**2 < despawn_radius_sq]
     
     # 7. Check for game over condition
-    if game_state.player_car.durability <= 0:
+    if game_state.current_durability <= 0:
         game_state.game_over = True
 
     return notifications

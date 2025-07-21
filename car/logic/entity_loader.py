@@ -6,11 +6,50 @@ VEHICLE_PATH = "vehicles"
 CHARACTER_PATH = "characters"
 OBSTACLE_PATH = "obstacles"
 
-PLAYER_CARS = []
-ENEMY_VEHICLES = []
-ENEMY_CHARACTERS = []
-FAUNA = []
-OBSTACLES = []
+from ..entities.vehicles.hatchback import Hatchback
+from ..entities.vehicles.sports_car import SportsCar
+from ..entities.vehicles.sedan import Sedan
+from ..entities.vehicles.muscle_car import MuscleCar
+from ..entities.vehicles.truck import Truck
+from ..entities.vehicles.van import Van
+from ..entities.vehicles.hotrod import Hotrod
+from ..entities.vehicles.panel_wagon import PanelWagon
+from ..entities.vehicles.rusty_sedan import RustySedan
+from ..entities.vehicles.raider_buggy import RaiderBuggy
+from ..entities.vehicles.technical import Technical
+from ..entities.vehicles.war_rig import WarRig
+from ..entities.vehicles.miner import Miner
+from ..entities.characters.bandit import Bandit
+from ..entities.characters.marauder import Marauder
+from ..entities.characters.cat import Cat
+from ..entities.characters.dog import Dog
+from ..entities.characters.cow import Cow
+from ..entities.obstacles.rock import Rock
+from ..entities.obstacles.tire_pile import TirePile
+from ..entities.obstacles.scrap_barricade import ScrapBarricade
+from ..entities.obstacles.wrecked_husk import WreckedHusk
+from ..entities.obstacles.oil_barrel import OilBarrel
+
+PLAYER_CARS = [
+    Hatchback, SportsCar, Sedan, MuscleCar, Truck, Van, Hotrod, PanelWagon
+]
+
+ENEMY_VEHICLES = [
+    RustySedan, RaiderBuggy, Technical, WarRig, Miner
+]
+
+ENEMY_CHARACTERS = [
+    Bandit, Marauder
+]
+
+FAUNA = [
+    Cat, Dog, Cow
+]
+
+OBSTACLES = [
+    Rock, TirePile, ScrapBarricade, WreckedHusk, OilBarrel
+]
+
 
 def _populate_entities():
     """

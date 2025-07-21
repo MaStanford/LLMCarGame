@@ -55,6 +55,7 @@ class Quest:
         self.time_limit = time_limit
         self.completed = False
         self.failed = False
+        self.ready_to_turn_in = False
 
     def update(self, game_state):
         if self.time_limit is not None:
@@ -75,6 +76,9 @@ QUEST_TEMPLATES = {
     "raid_convoy": {
         "name": "Raid Convoy: {target_faction_name}",
         "description": "The {quest_giver_faction_name} wants you to disrupt a supply convoy from the {target_faction_name}. Destroy 5 of their transport vehicles.",
+        "offer_dialog": "Their supply lines are stretched thin. A surgical strike now could cripple their operations in this sector. Can you handle it?",
+        "detail_dialog": "We've received intel about a lightly-guarded supply convoy moving through this area. Your mission is to intercept and destroy five of their transport vehicles. Expect resistance, but we have faith in your abilities.",
+        "completion_dialog": "Excellent work. Their supply chain is in chaos. This will give us the opening we need. Here is your payment.",
         "objectives": [
             (KillCountObjective, [5]),
         ],
@@ -87,6 +91,9 @@ QUEST_TEMPLATES = {
     "assassinate_rival": {
         "name": "Assassinate: {target_faction_name} Captain",
         "description": "Take out a high-value target from the {target_faction_name}. They are leading a patrol in this sector.",
+        "offer_dialog": "A rival captain has been a thorn in our side for too long. We need someone to permanently remove them from the board. Are you up for it?",
+        "detail_dialog": "This won't be easy. The target is a seasoned veteran in a modified Muscle Car. They'll be heavily armed and likely have an escort. Find them, eliminate them, and send a message.",
+        "completion_dialog": "They won't be bothering us anymore. You've done us a great service. Here's your reward.",
         "objectives": [
             (KillBossObjective, ["faction_captain"]),
         ],
@@ -107,6 +114,9 @@ QUEST_TEMPLATES = {
     "defend_outpost": {
         "name": "Defend Outpost from {target_faction_name}",
         "description": "An outpost is under attack from the {target_faction_name}. Hold them off until reinforcements arrive.",
+        "offer_dialog": "We're in a tight spot! Our outpost is being overrun. We need you to hold the line until our reinforcements can get there. Can you do it?",
+        "detail_dialog": "The enemy is throwing everything they have at us. Survive their assault for a few minutes. A lieutenant is leading the final wave; take them out to break their morale and secure the outpost.",
+        "completion_dialog": "You saved those people! We were cutting it close, but you bought us the time we needed. We're in your debt.",
         "objectives": [
             (SurvivalObjective, [3000, "rival_lieutenant"]), # 150 seconds
         ],
