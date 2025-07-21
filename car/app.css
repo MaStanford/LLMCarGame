@@ -108,10 +108,34 @@ PauseScreen Button {
     margin: 1;
 }
 
-InventoryScreen {
-    layout: grid;
+InventoryScreen #inventory_grid {
     grid-size: 2 2;
     grid-gutter: 1;
+    padding: 1;
+}
+
+#car_preview {
+    column-span: 1;
+    row-span: 1;
+    border: heavy white;
+}
+
+#attachments {
+    column-span: 1;
+    row-span: 1;
+    border: heavy white;
+}
+
+#inventory {
+    column-span: 1;
+    row-span: 1;
+    border: heavy white;
+}
+
+#stats {
+    column-span: 1;
+    row-span: 1;
+    border: heavy white;
 }
 
 ShopScreen, CityHallScreen {

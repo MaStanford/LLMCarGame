@@ -6,6 +6,14 @@ from ..data.game_constants import CITY_SPACING, CITY_SIZE
 from ..data.factions import FACTION_DATA
 from ..world.generation import get_city_faction
 
+def spawn_initial_entities(game_state, world):
+    """Spawns an initial dense field of entities around the player."""
+    logging.info("SPAWN: Spawning initial entities.")
+    # Spawn a larger number of obstacles and fauna in a wider radius
+    for _ in range(30): # More entities for the initial spawn
+        spawn_obstacle(game_state, world, is_initial_spawn=True)
+        spawn_fauna(game_state, world, is_initial_spawn=True)
+
 def _get_distance_to_nearest_city_center(x, y):
     """Calculates the distance to the nearest city center."""
     grid_x = round(x / CITY_SPACING)
@@ -87,14 +95,22 @@ def spawn_enemy(game_state, world):
             return
     logging.warning("SPAWN: Could not find a valid spawn location after 10 attempts.")
 
-def spawn_fauna(game_state, world):
+def spawn_fauna(game_state, world, is_initial_spawn=False):
     """Spawns a new fauna."""
     fauna_class = random.choice(FAUNA)
+    
+    # Determine spawn radius
+    if is_initial_spawn:
+        min_dist = 10 # Spawn closer for the initial batch
+        max_dist = game_state.spawn_radius * 1.2
+    else:
+        min_dist = game_state.spawn_radius # Spawn just off-screen
+        max_dist = game_state.despawn_radius * 0.9 # But not so far they despawn
     
     # Find a valid spawn location
     for _ in range(10):
         sangle = random.uniform(0, 2 * math.pi)
-        sdist = random.uniform(game_state.spawn_radius * 0.8, game_state.spawn_radius)
+        sdist = random.uniform(min_dist, max_dist)
         sx = game_state.car_world_x + sdist * math.cos(sangle)
         sy = game_state.car_world_y + sdist * math.sin(sangle)
         
@@ -103,14 +119,22 @@ def spawn_fauna(game_state, world):
             game_state.active_fauna.append(new_fauna)
             return
 
-def spawn_obstacle(game_state, world):
+def spawn_obstacle(game_state, world, is_initial_spawn=False):
     """Spawns a new obstacle."""
     obstacle_class = random.choice(OBSTACLES)
     
+    # Determine spawn radius
+    if is_initial_spawn:
+        min_dist = 10 # Spawn closer for the initial batch
+        max_dist = game_state.spawn_radius * 1.2
+    else:
+        min_dist = game_state.spawn_radius # Spawn just off-screen
+        max_dist = game_state.despawn_radius * 0.9 # But not so far they despawn
+
     # Find a valid spawn location
     for _ in range(10):
         sangle = random.uniform(0, 2 * math.pi)
-        sdist = random.uniform(game_state.spawn_radius * 0.8, game_state.spawn_radius)
+        sdist = random.uniform(min_dist, max_dist)
         sx = game_state.car_world_x + sdist * math.cos(sangle)
         sy = game_state.car_world_y + sdist * math.sin(sangle)
         
@@ -118,3 +142,4 @@ def spawn_obstacle(game_state, world):
             new_obstacle = obstacle_class(sx, sy)
             game_state.active_obstacles.append(new_obstacle)
             return
+

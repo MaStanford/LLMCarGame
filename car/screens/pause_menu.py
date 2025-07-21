@@ -1,5 +1,6 @@
 from textual.screen import ModalScreen
 from textual.widgets import Button
+from ..logic.save_load import save_game
 
 class PauseScreen(ModalScreen):
     """The pause menu screen."""
@@ -15,6 +16,13 @@ class PauseScreen(ModalScreen):
         """Handle button press events."""
         if event.button.id == "resume":
             self.app.pop_screen()
+        elif event.button.id == "save_game":
+            save_game(self.app.game_state)
+            self.app.screen.query_one("#notifications").add_notification("Game Saved!")
+            self.app.pop_screen()
+        elif event.button.id == "main_menu":
+            self.app.stop_game_loop()
+            self.app.switch_screen("main_menu")
         elif event.button.id == "quit":
             self.app.exit()
-        # We will add logic for save_game and main_menu later
+

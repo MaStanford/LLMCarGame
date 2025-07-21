@@ -16,6 +16,7 @@ from ..widgets.game_view import GameView
 from ..widgets.notifications import Notifications
 from ..widgets.fps_counter import FPSCounter
 from ..world.generation import get_city_name
+from ..logic.spawning import spawn_initial_entities
 
 from textual.events import Key
 
@@ -28,6 +29,7 @@ class WorldScreen(Screen):
         corner_distance = math.sqrt((self.size.width / 2)**2 + (self.size.height / 2)**2)
         self.app.game_state.spawn_radius = corner_distance + 5 # Spawn just outside the corner
         self.app.game_state.despawn_radius = self.app.game_state.spawn_radius * 1.5
+        
         self.query_one("#game_view").focus()
 
     def compose(self):

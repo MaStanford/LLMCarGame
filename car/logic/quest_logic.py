@@ -7,77 +7,71 @@ from ..data.game_constants import CITY_SPACING
 from ..world.generation import get_buildings_in_city, get_city_faction
 from ..data.factions import FACTION_DATA
 
-def handle_quest_interaction(game_state, world, audio_manager):
-    """
-    Handles the player's interaction with quest givers (City Hall).
-    Returns a list of notification messages.
-    """
-    notifications = []
-    if not game_state.current_quest:
-        grid_x = round(game_state.car_world_x / CITY_SPACING)
-        grid_y = round(game_state.car_world_y / CITY_SPACING)
-        city_buildings = get_buildings_in_city(grid_x, grid_y)
+def get_available_quests(game_state):
+    """Generates a list of available quests for the current city."""
+    quests = []
+    quest_giver_faction_id = get_city_faction(game_state.car_world_x, game_state.car_world_y)
+    quest_giver_faction = FACTION_DATA[quest_giver_faction_id]
+    
+    hostile_factions = [fid for fid, rel in quest_giver_faction["relationships"].items() if rel == "Hostile"]
+    if not hostile_factions:
+        return []
 
-        for building in city_buildings:
-            if building['x'] <= game_state.car_world_x < building['x'] + building['w'] and \
-               building['y'] <= game_state.car_world_y < building['y'] + building['h']:
-                if building["type"] == "city_hall":
-                    quest_giver_faction_id = get_city_faction(game_state.car_world_x, game_state.car_world_y)
-                    quest_giver_faction = FACTION_DATA[quest_giver_faction_id]
-                    
-                    hostile_factions = [fid for fid, rel in quest_giver_faction["relationships"].items() if rel == "Hostile"]
-                    if not hostile_factions:
-                        notifications.append("No available quests at this time.")
-                        return notifications
+    # Generate 3 quests
+    for _ in range(3):
+        target_faction_id = random.choice(hostile_factions)
+        target_faction = FACTION_DATA[target_faction_id]
 
-                    target_faction_id = random.choice(hostile_factions)
-                    target_faction = FACTION_DATA[target_faction_id]
+        quest_template_key = random.choice(list(QUEST_TEMPLATES.keys()))
+        quest_template = QUEST_TEMPLATES[quest_template_key]
 
-                    quest_template_key = random.choice(list(QUEST_TEMPLATES.keys()))
-                    quest_template = QUEST_TEMPLATES[quest_template_key]
+        objectives = []
+        for obj_class, args in quest_template["objectives"]:
+            objectives.append(obj_class(*args))
 
-                    objectives = []
-                    for obj_class, args in quest_template["objectives"]:
-                        objectives.append(obj_class(*args))
+        name = quest_template["name"].format(target_faction_name=target_faction["name"])
+        description = quest_template["description"].format(
+            quest_giver_faction_name=quest_giver_faction["name"],
+            target_faction_name=target_faction["name"]
+        )
 
-                    # Format dynamic strings
-                    name = quest_template["name"].format(target_faction_name=target_faction["name"])
-                    description = quest_template["description"].format(
-                        quest_giver_faction_name=quest_giver_faction["name"],
-                        target_faction_name=target_faction["name"]
-                    )
+        quests.append(Quest(
+            name=name,
+            description=description,
+            objectives=objectives,
+            rewards=quest_template["rewards"],
+            city_id=(round(game_state.car_world_x / CITY_SPACING), round(game_state.car_world_y / CITY_SPACING)),
+            quest_giver_faction=quest_giver_faction_id,
+            target_faction=target_faction_id,
+            time_limit=quest_template.get("time_limit")
+        ))
+    return quests
 
-                    game_state.current_quest = Quest(
-                        name=name,
-                        description=description,
-                        objectives=objectives,
-                        rewards=quest_template["rewards"],
-                        city_id=building["city_id"],
-                        quest_giver_faction=quest_giver_faction_id,
-                        target_faction=target_faction_id,
-                        time_limit=quest_template.get("time_limit")
-                    )
-                    notifications.append(f"New Quest: {game_state.current_quest.name}")
-
-                    if "boss" in quest_template:
-                        boss_data = quest_template["boss"]
-                        boss_name = boss_data["name"].format(target_faction_name=target_faction["name"])
-                        boss_car_class = next((c for c in PLAYER_CARS if c.__name__.lower() == boss_data["car"].lower().replace(" ", "_")), None)
-                        if boss_car_class:
-                            boss_car_instance = boss_car_class(0, 0)
-                            boss = Boss(boss_name, boss_car_instance, boss_data["hp_multiplier"])
-                            boss.x = game_state.car_world_x + random.uniform(-200, 200)
-                            boss.y = game_state.car_world_y + random.uniform(-200, 200)
-                            boss.hp = boss_car_instance.durability * boss.hp_multiplier
-                            boss.art = boss_car_instance.art
-                            boss.width, boss.height = Entity.get_car_dimensions(boss.art)
-                            game_state.active_bosses.append(boss)
-                            audio_manager.stop_music()
-                            audio_manager.play_music("car/sounds/boss.mid")
-                    return notifications
-    else:
-        notifications.append("You already have an active quest.")
-    return notifications
+def handle_quest_acceptance(game_state, quest):
+    """Handles the logic for accepting a quest."""
+    game_state.current_quest = quest
+    
+    # Check if the quest has a boss and spawn it
+    quest_template_key = next((k for k, v in QUEST_TEMPLATES.items() if v["name"] == quest.name.split(" ")[0]), None)
+    if quest_template_key:
+        quest_template = QUEST_TEMPLATES[quest_template_key]
+        if "boss" in quest_template:
+            boss_data = quest_template["boss"]
+            target_faction = FACTION_DATA[quest.target_faction]
+            boss_name = boss_data["name"].format(target_faction_name=target_faction["name"])
+            boss_car_class = next((c for c in PLAYER_CARS if c.__name__.lower() == boss_data["car"].lower().replace(" ", "_")), None)
+            if boss_car_class:
+                boss_car_instance = boss_car_class(0, 0)
+                boss = Boss(boss_name, boss_car_instance, boss_data["hp_multiplier"])
+                boss.x = game_state.car_world_x + random.uniform(-200, 200)
+                boss.y = game_state.car_world_y + random.uniform(-200, 200)
+                boss.hp = boss_car_instance.durability * boss.hp_multiplier
+                boss.art = boss_car_instance.art
+                boss.width, boss.height = Entity.get_car_dimensions(boss.art)
+                game_state.active_bosses.append(boss)
+                game_state.current_quest.boss = boss # Link boss to quest
+                # audio_manager.stop_music()
+                # audio_manager.play_music("car/sounds/boss.mid")
 
 def update_quests(game_state, audio_manager):
     """

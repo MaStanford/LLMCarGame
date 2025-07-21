@@ -34,17 +34,38 @@ class CarApp(App):
         self.audio_manager = AudioManager()
         self.frame_count = 0
         self.last_time = time.time()
+        self.game_loop = None
+
+    def stop_game_loop(self):
+        """Stops the game loop timer."""
+        if self.game_loop:
+            self.game_loop.stop()
 
     def on_mount(self) -> None:
         """Called when the app is first mounted."""
         self.push_screen(MainMenuScreen())
 
+    def on_screen_resume(self, screen) -> None:
+        """Called when a screen is popped and another is resumed."""
+        if isinstance(screen, WorldScreen):
+            self.game_state.pause_menu_open = False
+            self.game_state.menu_open = False
+
     def action_push_screen(self, screen: str) -> None:
         """Action to push a screen."""
         if screen == "pause_menu":
+            self.game_state.pause_menu_open = True
             self.push_screen(PauseScreen())
         elif screen == "inventory":
+            self.game_state.menu_open = True
             self.push_screen(InventoryScreen())
+
+    def switch_screen(self, screen) -> None:
+        """Switch to a new screen."""
+        if screen == "main_menu":
+            super().switch_screen(MainMenuScreen())
+        else:
+            super().switch_screen(screen)
 
 
 
@@ -87,8 +108,8 @@ class CarApp(App):
             # Check for building interactions
             self.check_building_interaction()
 
-        # --- Update UI Widgets ---
-        self.screen.update_widgets()
+            # --- Update UI Widgets ---
+            self.screen.update_widgets()
 
         # # Update FPS counter
         # current_time = time.time()
@@ -106,9 +127,13 @@ class CarApp(App):
         for building in buildings:
             if (building['x'] <= gs.car_world_x < building['x'] + building['w'] and
                 building['y'] <= gs.car_world_y < building['y'] + building['h']):
-                if building['type'] == 'shop':
-                    self.push_screen(ShopScreen())
-                elif building['type'] == 'city_hall':
+                
+                building_type = building.get("type")
+                if building_type in ["mechanic_shop", "gas_station", "weapon_shop"]:
+                    gs.menu_open = True
+                    self.push_screen(ShopScreen(shop_type=building_type))
+                elif building_type == 'city_hall':
+                    gs.menu_open = True
                     self.push_screen(CityHallScreen())
                 return
 

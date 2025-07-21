@@ -1,59 +1,74 @@
-from textual.app import ComposeResult
 from textual.screen import ModalScreen
-from textual.widgets import Button, Static
-from textual.containers import Vertical
+from textual.widgets import Header, Footer, Static, Button
+from textual.containers import Grid
+from textual.binding import Binding
+from ..logic.quest_logic import get_available_quests, handle_quest_acceptance
 
 class CityHallScreen(ModalScreen):
-    """A modal screen for the city hall."""
+    """The city hall screen for accepting quests."""
 
-    def __init__(self, game_state) -> None:
-        self.game_state = game_state
-        super().__init__()
+    BINDINGS = [
+        Binding("escape", "app.pop_screen", "Back"),
+        Binding("up", "move_selection(-1)", "Up"),
+        Binding("down", "move_selection(1)", "Down"),
+    ]
 
-    def compose(self) -> ComposeResult:
-        with Vertical(id="city-hall-dialog"):
-            yield Static("City Hall", id="city-hall-title")
-            # We'll populate quests dynamically later
-            yield Button("View Quests", id="view-quests")
-            yield Button("Back", id="back")
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.available_quests = []
+        self.selected_index = 0
+
+    def on_mount(self) -> None:
+        """Called when the screen is mounted."""
+        self.available_quests = get_available_quests(self.app.game_state)
+        self.update_quest_display()
+
+    def update_quest_display(self) -> None:
+        """Update the quest display."""
+        # Quest List
+        quest_list = self.query_one("#quest_list", Static)
+        list_str = ""
+        for i, quest in enumerate(self.available_quests):
+            if i == self.selected_index:
+                list_str += f"> {quest.name}\n"
+            else:
+                list_str += f"  {quest.name}\n"
+        quest_list.update(list_str)
+
+        # Quest Info
+        if self.available_quests:
+            selected_quest = self.available_quests[self.selected_index]
+            quest_info = self.query_one("#quest_info", Static)
+            info_str = f"""
+            {selected_quest.name}
+
+            {selected_quest.description}
+
+            Rewards:
+            - XP: {selected_quest.rewards.get("xp", 0)}
+            - Cash: ${selected_quest.rewards.get("cash", 0)}
+            """
+            quest_info.update(info_str)
+
+    def action_move_selection(self, amount: int) -> None:
+        """Move the selection in the quest list."""
+        self.selected_index = (self.selected_index + amount + len(self.available_quests)) % len(self.available_quests)
+        self.update_quest_display()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "back":
-            self.app.pop_screen()
-        elif event.button.id == "view-quests":
-            # In a real scenario, we'd fetch and display a list of quests.
-            # For now, we'll just show a placeholder briefing.
-            from ..logic.quests import QUESTS
-            quest = list(QUESTS.values())[0] # Get a sample quest
-            self.app.push_screen(QuestBriefingScreen(quest))
+        """Handle accept button presses."""
+        if event.button.id == "accept_quest":
+            if self.available_quests:
+                selected_quest = self.available_quests[self.selected_index]
+                handle_quest_acceptance(self.app.game_state, selected_quest)
+                self.app.screen.query_one("#notifications").add_notification(f"New Quest: {selected_quest.name}")
+                self.app.pop_screen()
 
-class QuestBriefingScreen(ModalScreen):
-    """A modal screen for the quest briefing."""
-
-    def __init__(self, quest) -> None:
-        self.quest = quest
-        super().__init__()
-
-    def compose(self) -> ComposeResult:
-        with Vertical(id="quest-briefing-dialog"):
-            yield Static("Contract Briefing", id="quest-briefing-title")
-            yield Static(f"GIVER: {self.quest.quest_giver_faction}")
-            yield Static(f"TARGET: {self.quest.target_faction}")
-            yield Static("OBJECTIVE:")
-            yield Static(self.quest.description)
-            yield Static("REWARDS:")
-            yield Static(f"- Cash: {self.quest.rewards['cash']}")
-            yield Static(f"- XP: {self.quest.rewards['xp']}")
-            yield Static("CONSEQUENCES:")
-            yield Static(f"- {self.quest.quest_giver_faction} Reputation: +10")
-            yield Static(f"- {self.quest.target_faction} Reputation: -15")
-            yield Button("Accept Contract", variant="primary", id="accept")
-            yield Button("Decline", variant="error", id="decline")
-
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "accept":
-            # Here we would add the quest to the player's state
-            self.app.pop_screen()
-            self.app.pop_screen() # Also pop CityHallScreen
-        elif event.button.id == "decline":
-            self.app.pop_screen()
+    def compose(self):
+        """Compose the layout of the screen."""
+        yield Header(show_clock=True)
+        with Grid(id="city_hall_grid"):
+            yield Static("Available Contracts", id="quest_list")
+            yield Static("Quest Details", id="quest_info")
+            yield Button("Accept", id="accept_quest", variant="primary")
+        yield Footer()

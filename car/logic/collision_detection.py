@@ -32,6 +32,15 @@ def find_safe_exit_spot(world, building):
         
     return building['x'], building['y'] # Fallback
 
+def check_collision(rect1, rect2):
+    """Checks if two rectangles are colliding."""
+    x1, y1, w1, h1 = rect1
+    x2, y2, w2, h2 = rect2
+    return (x1 < x2 + w2 and
+            x1 + w1 > x2 and
+            y1 < y2 + h2 and
+            y1 + h1 > y2)
+
 def handle_collisions(game_state, world, audio_manager):
     """
     Handles all collision detection and resolution.
@@ -82,6 +91,25 @@ def handle_collisions(game_state, world, audio_manager):
     # Remove projectiles that have collided
     if projectiles_to_remove:
         game_state.active_particles = [p for i, p in enumerate(game_state.active_particles) if i not in projectiles_to_remove]
+
+    # --- Player-Enemy Collision ---
+    player = game_state.player_car
+    player_rect = (player.x, player.y, player.width, player.height)
+    
+    for enemy in game_state.active_enemies[:]: # Iterate over a copy
+        enemy_rect = (enemy.x, enemy.y, enemy.width, enemy.height)
+        if check_collision(player_rect, enemy_rect):
+            audio_manager.play_sfx("crash")
+            
+            # Apply damage (assuming enemies have a collision_damage attribute)
+            player.durability -= getattr(enemy, "collision_damage", 5)
+            enemy.durability -= getattr(player, "collision_damage", 5)
+            
+            if enemy.durability <= 0:
+                game_state.destroyed_this_frame.append(enemy)
+                handle_enemy_loot_drop(game_state, enemy)
+                notifications.append(f"Destroyed {enemy.__class__.__name__}!")
+                game_state.active_enemies.remove(enemy)
 
     # --- Obstacle Collisions ---
     for obstacle in game_state.active_obstacles[:]: # Iterate over a copy
