@@ -242,12 +242,19 @@ class NewGameScreen(Screen):
             difficulty = self.query_one("#difficulty_select", CycleWidget).options[self.query_one("#difficulty_select", CycleWidget).current_index]
             color_name = self.query_one("#color_select", CycleWidget).options[self.query_one("#color_select", CycleWidget).current_index]
             
-            self.app.game_state = GameState(
+            game_state = GameState(
                 selected_car_index=self.selected_car_index,
                 difficulty=difficulty,
                 difficulty_mods=DIFFICULTY_MODIFIERS[difficulty],
                 car_color_names=[color_name],
             )
+            # Set initial player position
+            game_state.car_world_x = 10.0
+            game_state.car_world_y = 10.0
+            game_state.player_car.x = game_state.car_world_x
+            game_state.player_car.y = game_state.car_world_y
+            
+            self.app.game_state = game_state
             self.app.world = World(seed=12345)
             self.app.switch_screen(WorldScreen())
             self.app.set_interval(1 / 30, self.app.update_game)

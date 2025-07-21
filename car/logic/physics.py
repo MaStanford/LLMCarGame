@@ -38,13 +38,18 @@ def update_physics_and_collisions(game_state, world, audio_manager):
     # 4. Process all collisions and their effects
     notifications = handle_collisions(game_state, world, audio_manager)
 
-    # 5. Update enemy AI and movement
+    # 5. Update AI and movement for all non-player entities
     for enemy in game_state.active_enemies:
         enemy.update(game_state, world)
+    for fauna in game_state.active_fauna:
+        fauna.update(game_state, world)
+    for boss in game_state.active_bosses:
+        boss.update(game_state, world)
         
     # 6. Despawn entities that are too far away
-    game_state.active_enemies = [e for e in game_state.active_enemies if (e.x - game_state.car_world_x)**2 + (e.y - game_state.car_world_y)**2 < game_state.despawn_radius**2]
-    game_state.active_fauna = [f for f in game_state.active_fauna if (f.x - game_state.car_world_x)**2 + (f.y - game_state.car_world_y)**2 < game_state.despawn_radius**2]
-    game_state.active_obstacles = [o for o in game_state.active_obstacles if (o.x - game_state.car_world_x)**2 + (o.y - game_state.car_world_y)**2 < game_state.despawn_radius**2]
+    despawn_radius_sq = game_state.despawn_radius**2
+    game_state.active_enemies = [e for e in game_state.active_enemies if (e.x - game_state.car_world_x)**2 + (e.y - game_state.car_world_y)**2 < despawn_radius_sq]
+    game_state.active_fauna = [f for f in game_state.active_fauna if (f.x - game_state.car_world_x)**2 + (f.y - game_state.car_world_y)**2 < despawn_radius_sq]
+    game_state.active_obstacles = [o for o in game_state.active_obstacles if (o.x - game_state.car_world_x)**2 + (o.y - game_state.car_world_y)**2 < despawn_radius_sq]
     
     return notifications

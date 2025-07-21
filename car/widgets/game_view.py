@@ -146,7 +146,7 @@ class GameView(Widget):
             art = art.split('\n')
 
         # Apply color to player car
-        entity_style = Style(color="white") # Default style
+        entity_style = Style(color="white") # Default style for all entities
         if entity is self.game_state.player_car:
             color_name = self.game_state.car_color_names[0]
             color = color_name.lower().replace("car_", "")

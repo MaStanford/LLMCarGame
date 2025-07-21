@@ -91,3 +91,7 @@ def update_vehicle_movement(game_state, world, audio_manager):
     gas_used_accel = engine_force * 0.1 if engine_force > 0 else 0
     game_state.current_gas = max(0, game_state.current_gas - (gas_used_moving + gas_used_accel))
 
+    # Synchronize the player_car entity's position with the game state
+    game_state.player_car.x = game_state.car_world_x
+    game_state.player_car.y = game_state.car_world_y
+

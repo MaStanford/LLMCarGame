@@ -24,7 +24,10 @@ class WorldScreen(Screen):
 
     def on_mount(self) -> None:
         """Called when the screen is mounted."""
-        self.app.game_state.pedal_position = 0.0
+        # Set sensible spawn and despawn radii based on screen size
+        corner_distance = math.sqrt((self.size.width / 2)**2 + (self.size.height / 2)**2)
+        self.app.game_state.spawn_radius = corner_distance + 5 # Spawn just outside the corner
+        self.app.game_state.despawn_radius = self.app.game_state.spawn_radius * 1.5
         self.query_one("#game_view").focus()
 
     def compose(self):
