@@ -106,6 +106,7 @@ class GameState:
         # --- Quest State ---
         self.current_quest = None
         self.faction_reputation = {}
+        self.waypoint = None
 
         # --- UI and Game Flow State ---
         self.shop_cooldown = 0

@@ -231,7 +231,7 @@ GameOverScreen {
 #game-over-dialog {
     layout: vertical;
     width: 30;
-    height: 15;
+    height: 17;
     border: heavy white;
     background: $panel;
     align: center middle;

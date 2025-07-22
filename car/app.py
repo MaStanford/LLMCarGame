@@ -8,6 +8,7 @@ from .screens.inventory import InventoryScreen
 from .screens.shop import ShopScreen
 from .screens.city_hall import CityHallScreen
 from .screens.game_over import GameOverScreen
+from .screens.map import MapScreen
 from .game_state import GameState
 from .world import World
 from .logic.spawning import spawn_enemy, spawn_fauna, spawn_obstacle
@@ -129,9 +130,12 @@ class CarApp(App):
                 if building_type in ["mechanic_shop", "gas_station", "weapon_shop"]:
                     gs.menu_open = True
                     self.push_screen(ShopScreen(shop_type=building_type))
-                elif building_type == 'city_hall':
-                    gs.menu_open = True
-                    self.push_screen(CityHallScreen())
+                elif screen == "inventory":
+            self.game_state.menu_open = True
+            self.push_screen(InventoryScreen())
+        elif screen == "map":
+            self.game_state.menu_open = True
+            self.push_screen(MapScreen())
                 return
 
     def find_closest_entity(self):

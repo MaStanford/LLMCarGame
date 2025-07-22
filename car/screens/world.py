@@ -19,6 +19,7 @@ from ..world.generation import get_city_name
 from ..logic.spawning import spawn_initial_entities
 from .inventory import InventoryScreen
 from .pause_menu import PauseScreen
+from .map import MapScreen
 
 from textual.events import Key
 from textual.binding import Binding
@@ -29,6 +30,7 @@ class WorldScreen(Screen):
     BINDINGS = [
         Binding("escape", "toggle_pause", "Pause"),
         Binding("tab", "toggle_inventory", "Inventory"),
+        Binding("m", "push_screen('map')", "Map"),
     ]
 
     def on_mount(self) -> None:
@@ -118,19 +120,20 @@ class WorldScreen(Screen):
         location.city_name = get_city_name(grid_x, grid_y)
 
         compass = self.query_one("#compass_hud", CompassHUD)
-        if gs.current_quest:
+        target_x, target_y = None, None
+        
+        if gs.waypoint:
+            target_x, target_y = gs.waypoint
+        elif gs.current_quest:
             if gs.current_quest.ready_to_turn_in:
-                # Point to quest giver
-                city_x = gs.current_quest.city_id[0] * CITY_SPACING
-                city_y = gs.current_quest.city_id[1] * CITY_SPACING
-                angle_to_target = math.atan2(city_y - gs.car_world_y, city_x - gs.car_world_x)
+                target_x = gs.current_quest.city_id[0] * CITY_SPACING
+                target_y = gs.current_quest.city_id[1] * CITY_SPACING
             elif gs.current_quest.boss:
-                # Point to boss
                 boss = gs.current_quest.boss
-                angle_to_target = math.atan2(boss.y - gs.car_world_y, boss.x - gs.car_world_x)
-            else:
-                angle_to_target = 0
-            
+                target_x, target_y = boss.x, boss.y
+        
+        if target_x is not None:
+            angle_to_target = math.atan2(target_y - gs.car_world_y, target_x - gs.car_world_x)
             compass.target_angle = math.degrees(angle_to_target)
             compass.player_angle = gs.car_angle
         else:
