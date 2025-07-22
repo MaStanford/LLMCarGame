@@ -80,34 +80,14 @@ def update_quests(game_state, audio_manager):
     """
     notifications = []
     if game_state.current_quest:
-        game_state.current_quest.update(game_state)
+        if not game_state.current_quest.ready_to_turn_in:
+            game_state.current_quest.update(game_state)
 
-        if game_state.current_quest.completed:
-            rewards = game_state.current_quest.rewards
-            game_state.gain_xp(rewards.get("xp", 0))
-            game_state.player_cash += rewards.get("cash", 0)
-            
-            # Increase reputation with quest giver
-            giver_faction_id = game_state.current_quest.quest_giver_faction
-            if giver_faction_id:
-                if giver_faction_id not in game_state.faction_reputation:
-                    game_state.faction_reputation[giver_faction_id] = 0
-                game_state.faction_reputation[giver_faction_id] += 10
-                notifications.append(f"Reputation with {FACTION_DATA[giver_faction_id]['name']} increased!")
-
-            # Decrease reputation with target
-            target_faction_id = game_state.current_quest.target_faction
-            if target_faction_id:
-                if target_faction_id not in game_state.faction_reputation:
-                    game_state.faction_reputation[target_faction_id] = 0
-                game_state.faction_reputation[target_faction_id] -= 15
-                notifications.append(f"Reputation with {FACTION_DATA[target_faction_id]['name']} decreased!")
-
-            notifications.append(f"Quest Complete: {game_state.current_quest.name}")
-            game_state.current_quest = None
+        if game_state.current_quest.completed and not game_state.current_quest.ready_to_turn_in:
+            game_state.current_quest.ready_to_turn_in = True
+            notifications.append(f"Objective complete! Return to {get_city_name(*game_state.current_quest.city_id)}.")
             audio_manager.stop_music()
             audio_manager.play_music("car/sounds/world.mid")
-            notifications.extend(check_for_faction_takeover(game_state))
 
         elif game_state.current_quest.failed:
             giver_faction_id = game_state.current_quest.quest_giver_faction

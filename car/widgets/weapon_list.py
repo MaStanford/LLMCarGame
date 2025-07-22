@@ -23,10 +23,16 @@ class WeaponListWidget(Static):
     def update_render(self) -> None:
         """Update the displayed list."""
         list_str = ""
-        for i, weapon in enumerate(self.weapons):
+        for i, weapon_data in enumerate(self.weapons):
+            name = ""
+            if isinstance(weapon_data, dict):
+                name = weapon_data.get("name", "Unknown")
+            elif hasattr(weapon_data, "name"):
+                name = weapon_data.name
+            
             if i == self.selected_index:
-                list_str += f"> {weapon.name}\n"
+                list_str += f"> {name}\n"
             else:
-                list_str += f"  {weapon.name}\n"
+                list_str += f"  {name}\n"
         self.update(list_str)
 

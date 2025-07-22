@@ -1,9 +1,14 @@
 from textual.screen import ModalScreen
 from textual.widgets import Header, Footer, Static, Button
 from textual.containers import Container
+from textual.binding import Binding
 
 class QuestDetailScreen(ModalScreen):
     """A screen to display the details of the current quest."""
+
+    BINDINGS = [
+        Binding("escape", "app.pop_screen", "Back"),
+    ]
 
     def compose(self):
         """Compose the layout of the screen."""

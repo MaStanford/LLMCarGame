@@ -46,6 +46,10 @@ class WorldScreen(Screen):
         
         self.query_one("#game_view").focus()
 
+        # Hide FPS counter if not in dev mode
+        if not self.app.dev_mode:
+            self.query_one("#fps_counter").display = False
+
     def action_toggle_pause(self) -> None:
         """Toggle the pause menu."""
         if self.app.game_state.pause_menu_open:
@@ -67,7 +71,7 @@ class WorldScreen(Screen):
         yield GameView(id="game_view", game_state=self.app.game_state, world=self.app.world)
         
         with Vertical(id="top_hud"):
-            # yield FPSCounter(id="fps_counter")
+            yield FPSCounter(id="fps_counter")
             yield LocationHUD(id="location_hud")
             yield CompassHUD(id="compass_hud")
 
@@ -126,9 +130,11 @@ class WorldScreen(Screen):
             target_x, target_y = gs.waypoint
         elif gs.current_quest:
             if gs.current_quest.ready_to_turn_in:
+                # Point to quest giver
                 target_x = gs.current_quest.city_id[0] * CITY_SPACING
                 target_y = gs.current_quest.city_id[1] * CITY_SPACING
             elif gs.current_quest.boss:
+                # Point to boss
                 boss = gs.current_quest.boss
                 target_x, target_y = boss.x, boss.y
         

@@ -67,11 +67,9 @@ class SportsCar(PlayerCar):
             braking_power=0.6,
             # Attachment points for weapons
             attachment_points={
-                "hood_gun": {"level": "light", "offset_x": 0, "offset_y": -3.0},
-                "roof_rack": {"level": "not_installed", "offset_x": 0, "offset_y": 0},
-                "left_fender": {"level": "not_installed", "offset_x": 3.5, "offset_y": 1.5},
-                "right_fender": {"level": "not_installed", "offset_x": 7.5, "offset_y": 1.5}
-            }
+                "hood_gun": {"name": "Hood Gun", "level": "light", "offset_x": 0, "offset_y": -2},
+                "spoiler_gun": {"name": "Spoiler Gun", "level": "medium", "offset_x": 0, "offset_y": 2}
+            },
         )
         self.max_attachments = 4
         # Default loadout for this chassis

@@ -74,12 +74,9 @@ class Sedan(PlayerCar):
             braking_power=0.7,
             # Attachment points for weapons
             attachment_points={
-                "hood_gun": {"level": "medium", "offset_x": 0, "offset_y": -2},
-                "roof_rack": {"level": "light", "offset_x": 0, "offset_y": -1},
-                "trunk_gun": {"level": "light", "offset_x": 0, "offset_y": 2},
-                "left_fender": {"level": "not_installed", "offset_x": -2, "offset_y": 0},
-                "right_fender": {"level": "not_installed", "offset_x": 2, "offset_y": 0}
-            }
+                "hood_gun": {"name": "Hood Gun", "level": "light", "offset_x": 0, "offset_y": -2},
+                "trunk_gun": {"name": "Trunk Gun", "level": "light", "offset_x": 0, "offset_y": 2}
+            },
         )
         self.max_attachments = 5
         # Default loadout for this chassis

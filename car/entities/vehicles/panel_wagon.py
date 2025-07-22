@@ -74,12 +74,10 @@ class PanelWagon(PlayerCar):
             braking_power=0.55,
             # Attachment points for weapons
             attachment_points={
-                "hood_gun": {"level": "medium", "offset_x": 0, "offset_y": -3},
-                "roof_rack": {"level": "heavy", "offset_x": 0, "offset_y": -1},
-                "rear_door_gun": {"level": "light", "offset_x": 0, "offset_y": 3},
-                "left_panel_gun": {"level": "medium", "offset_x": -3, "offset_y": 0},
-                "right_panel_gun": {"level": "medium", "offset_x": 3, "offset_y": 0}
-            }
+                "roof_rack": {"name": "Roof Rack", "level": "medium", "offset_x": 0, "offset_y": -1},
+                "side_gun_left": {"name": "Left Side Gun", "level": "light", "offset_x": -2, "offset_y": 0},
+                "side_gun_right": {"name": "Right Side Gun", "level": "light", "offset_x": 2, "offset_y": 0}
+            },
         )
         self.max_attachments = 6
         # Default loadout for this chassis

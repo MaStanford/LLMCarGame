@@ -406,3 +406,23 @@ The game is built around the **Textual TUI framework**, which provides an event-
 ## Known Issues
 
 - **Curses/Terminal Errors:** The game may crash on startup with a `curses` error (e.g., `nocbreak() returned ERR`). This is often due to an incompatible terminal environment or the terminal window being too small. This is a known issue with the `curses` library and the environment in which the game is being run. **Gemini, do not attempt to fix this error.** It is an environmental issue, not a code issue.
+
+### **Project: The Grand Inventory UX Refactor**
+
+**Goal:** To perform a complete overhaul of the `InventoryScreen` to create a more intuitive, informative, and visually appealing user experience.
+
+**Phase 1: Visual and Data Enhancements**
+- [ ] **Display Attachment Size:** The "Current Loadout" list will be modified to display the size of an attachment point (e.g., "Light", "Medium") if the slot is empty.
+- [ ] **Scrolling Inventory:** The player's inventory list will be made vertically scrollable to accommodate a large number of items.
+- [ ] **Weapon Info Modifiers:** The `WeaponInfo` panel will be enhanced to display a weapon's modifiers, if any exist.
+- [ ] **Comprehensive Stats Panel:** The stats panel will be expanded to include the current quest, player level, XP, and a detailed breakdown of all ammo counts.
+
+**Phase 2: Implementing the Equip/Unequip Logic**
+- [ ] **Refined Input:** The key bindings will be updated. 'A' and 'D' will rotate the car preview, while 'Left' and 'Right' will switch focus between the loadout and inventory lists.
+- [ ] **State Machine for Equipping:** The core logic will be rebuilt as a simple state machine to handle all equipping and unequipping actions in an intuitive way:
+    - **Browsing:** The default state. The player can freely move between the loadout and inventory lists.
+    - **Equip Mode:** Activated by selecting a weapon from the inventory. The focus shifts to the loadout, and the player can then select a slot to mount the weapon.
+    - **Choose Weapon Mode:** Activated by selecting an empty slot in the loadout. The focus shifts to the inventory, and the player can then select a weapon to mount.
+    - **Unequip Confirmation Mode:** Activated by selecting an already-equipped weapon in the loadout. Selecting the same slot again will unequip the weapon and return it to the inventory.
+- [ ] **Flashing Attachment Markers:** The car preview will be enhanced with a new visual system.
+    - When the player highlights an attachment slot in the loadout list, the corresponding marker on the car preview will flash between the slot's number and a circle icon, clearly indicating the selected point.

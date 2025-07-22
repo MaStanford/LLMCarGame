@@ -62,11 +62,16 @@ class GameState:
 
         # --- Player State ---
         self.player_inventory = []
-        self.mounted_weapons = {
-            mount_point: Weapon(weapon_type_id, instance_id=f"{weapon_type_id}_default") 
-            for mount_point, weapon_type_id in self.player_car.default_weapons.items()
-        }
         self.attachment_points = self.player_car.attachment_points
+        
+        # Initialize all attachment points as empty
+        self.mounted_weapons = {point_name: None for point_name in self.attachment_points}
+        
+        # Equip default weapons
+        for mount_point, weapon_type_id in self.player_car.default_weapons.items():
+            if mount_point in self.mounted_weapons:
+                self.mounted_weapons[mount_point] = Weapon(weapon_type_id, instance_id=f"{weapon_type_id}_default")
+
         self.ammo_counts = {}
         self.weapon_cooldowns = {}
 

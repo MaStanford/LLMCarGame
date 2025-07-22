@@ -74,13 +74,12 @@ class Hotrod(PlayerCar):
             braking_power=0.8,
             # Attachment points for weapons
             attachment_points={
-                "engine_gun": {"level": "heavy", "offset_x": 0, "offset_y": -2},
-                "left_exhaust_gun": {"level": "light", "offset_x": -2, "offset_y": 0},
-                "right_exhaust_gun": {"level": "light", "offset_x": 2, "offset_y": 0}
-            }
+                "hood_gun": {"name": "Hood Gun", "level": "light", "offset_x": 0, "offset_y": -2},
+                "spoiler_gun": {"name": "Spoiler Gun", "level": "medium", "offset_x": 0, "offset_y": 2}
+            },
         )
         self.max_attachments = 3
         # Default loadout for this chassis
         self.default_weapons = {
-            "engine_gun": "wep_flamethrower"
+            "hood_gun": "wep_flamethrower"
         }

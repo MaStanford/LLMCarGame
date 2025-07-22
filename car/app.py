@@ -18,6 +18,8 @@ from .audio.audio import AudioManager
 from .data.game_constants import CUTSCENE_RADIUS
 from .widgets.entity_modal import EntityModal
 from .widgets.explosion import Explosion
+from .widgets.notifications import Notifications
+from .widgets.fps_counter import FPSCounter
 from .world.generation import get_buildings_in_city
 import random
 import math
@@ -37,6 +39,7 @@ class CarApp(App):
         self.frame_count = 0
         self.last_time = time.time()
         self.game_loop = None
+        self.dev_mode = False
 
     def stop_game_loop(self):
         """Stops the game loop timer."""
@@ -109,14 +112,15 @@ class CarApp(App):
             # --- Update UI Widgets ---
             self.screen.update_widgets()
 
-        # # Update FPS counter
-        # current_time = time.time()
-        # self.frame_count += 1
-        # if current_time - self.last_time >= 1.0:
-        #     fps = self.frame_count / (current_time - self.last_time)
-        #     self.screen.query_one("#fps_counter").fps = fps
-        #     self.last_time = current_time
-        #     self.frame_count = 0
+        # Update FPS counter
+        current_time = time.time()
+        self.frame_count += 1
+        if current_time - self.last_time >= 1.0:
+            fps = self.frame_count / (current_time - self.last_time)
+            if self.is_running and self.screen and isinstance(self.screen, WorldScreen):
+                 self.screen.query_one("#fps_counter").fps = fps
+            self.last_time = current_time
+            self.frame_count = 0
 
     def check_building_interaction(self):
         """Checks if the player is inside a building and pushes the appropriate screen."""
@@ -130,12 +134,9 @@ class CarApp(App):
                 if building_type in ["mechanic_shop", "gas_station", "weapon_shop"]:
                     gs.menu_open = True
                     self.push_screen(ShopScreen(shop_type=building_type))
-                elif screen == "inventory":
-            self.game_state.menu_open = True
-            self.push_screen(InventoryScreen())
-        elif screen == "map":
-            self.game_state.menu_open = True
-            self.push_screen(MapScreen())
+                elif building_type == 'city_hall':
+                    gs.menu_open = True
+                    self.push_screen(CityHallScreen())
                 return
 
     def find_closest_entity(self):

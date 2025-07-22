@@ -10,7 +10,6 @@ from ..logic.entity_loader import PLAYER_CARS
 from ..data.difficulty import DIFFICULTY_LEVELS, DIFFICULTY_MODIFIERS
 from ..data.colors import CAR_COLORS
 from ..game_state import GameState
-from ..app import WorldScreen
 from ..entities.weapon import Weapon
 from ..world import World
 from ..logic.spawning import spawn_initial_entities
@@ -239,6 +238,7 @@ class NewGameScreen(Screen):
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press events."""
+        from ..app import WorldScreen # Local import to avoid circular dependency
         if event.button.id == "start_game":
             difficulty = self.query_one("#difficulty_select", CycleWidget).options[self.query_one("#difficulty_select", CycleWidget).current_index]
             color_name = self.query_one("#color_select", CycleWidget).options[self.query_one("#color_select", CycleWidget).current_index]

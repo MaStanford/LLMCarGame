@@ -67,12 +67,9 @@ class Truck(PlayerCar):
             braking_power=0.5,
             # Attachment points for weapons
             attachment_points={
-                "hood_gun": {"level": "heavy", "offset_x": 0, "offset_y": -3},
-                "roof_rack": {"level": "heavy", "offset_x": 0, "offset_y": -1},
-                "bed_gun": {"level": "heavy", "offset_x": 0, "offset_y": 3},
-                "front_bumper_gun": {"level": "medium", "offset_x": 0, "offset_y": -4},
-                "rear_bumper_gun": {"level": "medium", "offset_x": 0, "offset_y": 4}
-            }
+                "hood_gun": {"name": "Hood Gun", "level": "medium", "offset_x": 0, "offset_y": -2},
+                "bed_gun": {"name": "Bed Gun", "level": "heavy", "offset_x": 0, "offset_y": 2}
+            },
         )
         self.max_attachments = 7
         # Default loadout for this chassis

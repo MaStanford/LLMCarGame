@@ -102,8 +102,8 @@ MainMenuScreen Button {
 PauseScreen {
     align: center middle;
     layout: vertical;
-    width: 40;
-    height: 11;
+    width: 30;
+    height: 15;
 }
 
 PauseScreen Button {
@@ -112,32 +112,25 @@ PauseScreen Button {
 }
 
 InventoryScreen #inventory_grid {
-    grid-size: 2 2;
+    grid-size: 2;
     grid-gutter: 1;
     padding: 1;
 }
 
 #car_preview {
-    column-span: 1;
-    row-span: 1;
     border: heavy white;
 }
 
 #attachments {
-    column-span: 1;
-    row-span: 1;
     border: heavy white;
+    height: 12;
 }
 
 #inventory {
-    column-span: 1;
-    row-span: 1;
     border: heavy white;
 }
 
 #stats {
-    column-span: 1;
-    row-span: 1;
     border: heavy white;
 }
 

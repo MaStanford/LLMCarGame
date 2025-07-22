@@ -75,12 +75,10 @@ class Van(PlayerCar):
             braking_power=0.4,
             # Attachment points for weapons
             attachment_points={
-                "hood_gun": {"level": "heavy", "offset_x": 0, "offset_y": -3},
-                "roof_rack": {"level": "heavy", "offset_x": 0, "offset_y": -1},
-                "left_side_gun": {"level": "medium", "offset_x": -3, "offset_y": 0},
-                "right_side_gun": {"level": "medium", "offset_x": 3, "offset_y": 0},
-                "rear_gun": {"level": "light", "offset_x": 0, "offset_y": 3}
-            }
+                "roof_rack": {"name": "Roof Rack", "level": "heavy", "offset_x": 0, "offset_y": -1},
+                "side_gun_left": {"name": "Left Side Gun", "level": "medium", "offset_x": -2, "offset_y": 0},
+                "side_gun_right": {"name": "Right Side Gun", "level": "medium", "offset_x": 2, "offset_y": 0}
+            },
         )
         self.max_attachments = 6
         # Default loadout for this chassis

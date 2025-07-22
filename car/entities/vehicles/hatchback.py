@@ -74,9 +74,9 @@ class Hatchback(PlayerCar):
             braking_power=0.75,
             # Attachment points for weapons
             attachment_points={
-                "hood_gun": {"level": "light", "offset_x": 0, "offset_y": -2},
-                "roof_rack": {"level": "light", "offset_x": 0, "offset_y": -1},
-                "hatch_gun": {"level": "medium", "offset_x": 0, "offset_y": 2}
+                "hood_gun": {"name": "Hood Gun", "level": "light", "offset_x": 0, "offset_y": -2},
+                "roof_rack": {"name": "Roof Rack", "level": "light", "offset_x": 0, "offset_y": -1},
+                "hatch_gun": {"name": "Hatch Gun", "level": "medium", "offset_x": 0, "offset_y": 1}
             },
             default_weapons={
                 "hatch_gun": "wep_shotgun"

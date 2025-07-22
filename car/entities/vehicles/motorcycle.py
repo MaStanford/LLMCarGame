@@ -68,9 +68,9 @@ class Motorcycle(PlayerCar):
             braking_power=0.9,
             # Attachment points for weapons
             attachment_points={
-                "handlebar_gun": {"level": "light", "offset_x": 0, "offset_y": -1},
-                "saddlebag_gun": {"level": "light", "offset_x": 0, "offset_y": 1}
-            }
+                "front_gun": {"name": "Front Gun", "level": "light", "offset_x": 0, "offset_y": -1},
+                "rear_gun": {"name": "Rear Gun", "level": "light", "offset_x": 0, "offset_y": 1}
+            },
         )
         self.max_attachments = 2
         # Default loadout for this chassis

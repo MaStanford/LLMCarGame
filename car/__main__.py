@@ -7,6 +7,7 @@ def main():
     """Main entry point for the game."""
     parser = argparse.ArgumentParser(description="A terminal-based automotive RPG.")
     parser.add_argument("--log", action="store_true", help="Enable logging to game.log")
+    parser.add_argument("--dev", action="store_true", help="Enable dev mode")
     args = parser.parse_args()
 
     if args.log:
@@ -19,6 +20,7 @@ def main():
         )
     
     app = CarApp()
+    app.dev_mode = args.dev
     app.run()
 
 if __name__ == "__main__":
