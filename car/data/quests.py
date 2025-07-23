@@ -11,7 +11,8 @@ class KillBossObjective(Objective):
         self.boss_name = boss_name
 
     def update(self, game_state):
-        if self.boss_name not in game_state["active_bosses"]:
+        # A boss is just a powerful enemy, so we check the active_enemies list
+        if not any(enemy.name == self.boss_name for enemy in game_state.active_enemies):
             self.completed = True
 
 class KillCountObjective(Objective):

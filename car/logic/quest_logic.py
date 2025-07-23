@@ -2,7 +2,6 @@ import random
 from ..data.quests import Quest, KillBossObjective, KillCountObjective, SurvivalObjective, QUEST_TEMPLATES
 from ..logic.entity_loader import PLAYER_CARS
 from ..entities.base import Entity
-from .boss import Boss
 from ..data.game_constants import CITY_SPACING
 from ..world.generation import get_buildings_in_city, get_city_faction
 from ..data.factions import FACTION_DATA
@@ -112,12 +111,12 @@ def update_quests(game_state, audio_manager):
 
 def check_for_faction_takeover(game_state):
     """
-    Checks if a faction's reputation has dropped low enough to be taken over.
+    Checks if a faction's reputation and boss status allow for a takeover.
     Returns a list of notification messages.
     """
     notifications = []
     for faction_id, rep in list(game_state.faction_reputation.items()):
-        if rep <= -100: # Takeover threshold
+        if rep <= -100 and faction_id in game_state.defeated_bosses:
             # Find the faction with the highest reputation
             player_allies = [f_id for f_id, r in game_state.faction_reputation.items() if r > 0]
             if not player_allies:

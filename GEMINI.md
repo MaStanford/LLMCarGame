@@ -163,6 +163,7 @@ The game is built around the **Textual TUI framework**, which provides an event-
     - **`car/ui/entity_modal.py`:** Handles the **persistent, non-blocking entity display**. This is a core HUD element that dynamically shows information about the closest enemy or boss during live gameplay. It also contains the logic for playing entity-specific animations, like explosions, within its modal window, ensuring that all aspects of an entity's dynamic visualization are handled in one place.
 
 - **Faction and Reputation System:** The game features a dynamic faction and reputation system that influences gameplay and world state.
+    - **Faction Bosses:** Each major faction has a unique and powerful Faction Boss. Players can challenge these bosses under specific conditions (e.g., extremely low reputation with that faction, or extremely high reputation with a rival). Defeating a Faction Boss is a prerequisite for a hostile takeover of that faction's territory and results in a massive shift in inter-faction reputation.
     - **Hub Cities and Factions:** The world is anchored by a few non-procedural **Hub Cities**, each serving as the capital for a specific **Faction**. The rest of the world is procedurally generated, with territory control determined by proximity to the nearest Hub City.
     - **Reputation:** The player's reputation with each faction is tracked in the `GameState`. Reputation is gained by completing quests for a faction and lost by completing quests against them or attacking their units.
     - **Dynamic Quests:** Quests are dynamically generated based on faction relationships. Faction leaders in Hub Cities offer quests that target their rivals, creating a system of conflict and consequence.
@@ -185,9 +186,6 @@ The game is built around the **Textual TUI framework**, which provides an event-
 
 
 ### General Tasks
-- [ ] **Finish unfinished AI behaviors:**
-    - [ ] _execute_patrol_behavior
-    - [ ] _execute_deploy_mine_behavior
 - [ ] **Combat system** 
     - [ ] For minor enemies open world combat. Running away just means getting out of aggro range. 
     - [ ] For major enemioes, combat system modal when in range, short range like pokemon battles. 
@@ -196,9 +194,6 @@ The game is built around the **Textual TUI framework**, which provides an event-
         - [ ] Enemy tactic and weapon changes in phases
         - [ ] Phases based off enemy health, or player health, or time or other factors
         - [ ] You can try to run, failing quest if in a quest, but otherwise surviving. 
-- [ ] **Faction boss**
-    - [ ] You can fight the faction leader for massive faction score for winning or losing. This is an epic boss and is actually needed to take over a faction once it's at 0 rep. Each faction has a different faction boss with immense stats. 
-    - [ ] If you challenge them before their rep is 0, it's stats will be even more increased. But it will have a massive rep gain or loss, and if it brings it to 0 you still need to fight him he will just have less stats for the final fight like normal.  
 - [ ] **Neutral city**
     - [ ] 0,0 is a neutral hub city. Quests help no faction. Shops don't have faction bonuses. This city will always be neutral and always have 0 spawn chance. 
 - [ ] **Add shop keeper dialog:**, they will say something when we get in the shop. This is shop and faction specific and dynamically generated. 
@@ -207,6 +202,7 @@ The game is built around the **Textual TUI framework**, which provides an event-
 - [ ] **Weapon swivel:**
     - [ ] Allow weapons to swivel with key presses like car turns
     - [ ] Swivel speed will be related to level
+    - [ ] Mouse can be used, cursor is where projectile will be shot at, so figure out angle to hit the cursor location and mouse click to shoot. 
 - [ ] **Add quest type:** 
     - [ ] Deliver package: Deliver a package to a towns city hall
 - [ ] **Hub city static defense:**
@@ -299,6 +295,12 @@ The game is built around the **Textual TUI framework**, which provides an event-
     - [x] **Refined Input:** The key bindings will be updated. 'A' and 'D' will rotate the car preview, while 'Left' and 'Right' will switch focus between the loadout and inventory lists.
     - [x] **State Machine for Equipping:** The core logic will be rebuilt as a simple state machine to handle all equipping and unequipping actions in an intuitive way.
     - [x] **Flashing Attachment Markers:** The car preview will be enhanced with a new visual system.
+- [x] **Finish unfinished AI behaviors:**
+    - [x] _execute_patrol_behavior
+    - [x] _execute_deploy_mine_behavior
+- [x] **Faction boss**
+    - [x] You can fight the faction leader for massive faction score for winning or losing. This is an epic boss and is actually needed to take over a faction once it's at 0 rep. Each faction has a different faction boss with immense stats. 
+    - [x] If you challenge them before their rep is 0, it's stats will be even more increased. But it will have a massive rep gain or loss, and if it brings it to 0 you still need to fight him he will just have less stats for the final fight like normal.  
 
 
 ### **Project: Migration to Textual TUI Framework**

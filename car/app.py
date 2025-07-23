@@ -145,15 +145,19 @@ class CarApp(App):
         closest = None
         min_dist_sq = CUTSCENE_RADIUS**2
 
-        for boss in gs.active_bosses:
-            dist_sq = (boss.x - gs.car_world_x)**2 + (boss.y - gs.car_world_y)**2
-            if dist_sq < min_dist_sq:
-                min_dist_sq = dist_sq
-                closest = {
-                    "name": boss.name, "hp": boss.hp, "max_hp": boss.max_durability,
-                    "art": boss.art.get("N", [])
-                }
+        # Prioritize finding the closest faction boss
+        for enemy in gs.active_enemies:
+            if getattr(enemy, "is_faction_boss", False):
+                dist_sq = (enemy.x - gs.car_world_x)**2 + (enemy.y - gs.car_world_y)**2
+                if dist_sq < min_dist_sq:
+                    min_dist_sq = dist_sq
+                    art = enemy.art.get("N") if isinstance(enemy.art, dict) else enemy.art
+                    closest = {
+                        "name": enemy.name, "hp": enemy.durability, "max_hp": enemy.max_durability,
+                        "art": art
+                    }
         
+        # If no boss is nearby, find the closest normal enemy
         if not closest:
             for enemy in gs.active_enemies:
                 dist_sq = (enemy.x - gs.car_world_x)**2 + (enemy.y - gs.car_world_y)**2

@@ -104,7 +104,6 @@ class GameState:
         self.next_pickup_id = 0
         self.active_fauna = []
         self.fauna_spawn_timer = 0
-        self.active_bosses = []
         self.active_enemies = []
         self.enemy_spawn_timer = 0
         
@@ -112,6 +111,8 @@ class GameState:
         self.current_quest = None
         self.faction_reputation = {}
         self.waypoint = None
+        self.can_challenge_boss = {}
+        self.defeated_bosses = set()
 
         # --- UI and Game Flow State ---
         self.shop_cooldown = 0
@@ -142,7 +143,6 @@ class GameState:
         return ([self.player_car] + 
                 self.active_obstacles + 
                 self.active_fauna + 
-                self.active_bosses + 
                 self.active_enemies)
 
     def gain_xp(self, xp):

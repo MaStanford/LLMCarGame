@@ -41,8 +41,6 @@ def update_physics_and_collisions(game_state, world, audio_manager):
         enemy.update(game_state, world)
     for fauna in game_state.active_fauna:
         fauna.update(game_state, world)
-    for boss in game_state.active_bosses:
-        boss.update(game_state, world)
         
     # 6. Despawn entities that are too far away
     despawn_radius_sq = game_state.despawn_radius**2
