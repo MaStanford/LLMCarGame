@@ -155,6 +155,7 @@ The game is built around the **Textual TUI framework**, which provides an event-
 - **Combat System:**
     - **Damage:** The game loop in `car/game.py` manages damage, experience, and loot drops.
 - **Quest System:** `car/logic/quests.py` - The `Quest` class and `QUESTS` dictionary define the quests in the game. The game loop in `car/game.py` tracks player quests and objectives. When a player accepts a quest, a boss is spawned. The player can then track the boss using a compass on the UI. When the player is near the boss, a persistent modal appears with the boss's name. When the boss is defeated, the player receives a reward and the quest is completed.
+    - **Multipart Quests:** The quest system now supports multi-step quest chains. The `Quest` data structure includes a `next_quest_id` field, allowing for the creation of narrative arcs. The `CityHallScreen` provides a seamless UX for completing one part of a quest and immediately receiving the next.
 - **Economy:**
     - **Shops:** `car/data/shops.py` - The `SHOP_DATA` dictionary defines the shops in the game. The game loop in `car/game.py` handles currency and transactions at shops.
 - **Cutscenes & Modals:**
@@ -187,10 +188,6 @@ The game is built around the **Textual TUI framework**, which provides an event-
 - [ ] **Finish unfinished AI behaviors:**
     - [ ] _execute_patrol_behavior
     - [ ] _execute_deploy_mine_behavior
-- [ ] **Introduce multipart quests:**
-    - [ ] Quests can point to another quest for multi part quests, add next quest field, if empty this is final quest and complete reward can be given
-    - [ ] When returning to quest giver after completing a quest, another quest will automatically start if multipart. 
-    - [ ] Cancelling one quest, cancells the whole chain. 
 - [ ] **Combat system** 
     - [ ] For minor enemies open world combat. Running away just means getting out of aggro range. 
     - [ ] For major enemioes, combat system modal when in range, short range like pokemon battles. 
@@ -290,6 +287,10 @@ The game is built around the **Textual TUI framework**, which provides an event-
     - [x] Add complete quest dialog when we return to the quest giver.
     - [x] After completing the quest, give compass arrow to the quest giver to get reward and complete dialog.
     - [x] Allow quit quest option from quest giver or menu quest modal before the quest is finished
+- [x] **Introduce multipart quests:**
+    - [x] Quests can point to another quest for multi part quests, add next quest field, if empty this is final quest and complete reward can be given
+    - [x] When returning to quest giver after completing a quest, another quest will automatically start if multipart. 
+    - [x] Cancelling one quest, cancells the whole chain. 
 - [x] **The Grand Inventory UX Refactor**
     - [x] **Display Attachment Size:** The "Current Loadout" list will be modified to display the size of an attachment point (e.g., "Light", "Medium") if the slot is empty.
     - [x] **Scrolling Inventory:** The player's inventory list will be made vertically scrollable to accommodate a large number of items.
