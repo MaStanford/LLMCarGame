@@ -155,7 +155,7 @@ The game is built around the **Textual TUI framework**, which provides an event-
 - **Combat System:**
     - **Damage:** The game loop in `car/game.py` manages damage, experience, and loot drops.
 - **Quest System:** `car/logic/quests.py` - The `Quest` class and `QUESTS` dictionary define the quests in the game. The game loop in `car/game.py` tracks player quests and objectives. When a player accepts a quest, a boss is spawned. The player can then track the boss using a compass on the UI. When the player is near the boss, a persistent modal appears with the boss's name. When the boss is defeated, the player receives a reward and the quest is completed.
-    - **Multipart Quests:** The quest system now supports multi-step quest chains. The `Quest` data structure includes a `next_quest_id` field, allowing for the creation of narrative arcs. The `CityHallScreen` provides a seamless UX for completing one part of a quest and immediately receiving the next.
+    - **Multipart Quests:** The quest system now supports multi-step quest chains. The `Quest` data structure includes a `next_quest_id` field, allowing for the creation of narrative arcs. The `CityHallScreen` provides a seamless UX for completing one part of a quest and immediately receiving the next. An explicit `requires_turn_in` flag allows for quests that complete immediately upon finishing their objectives.
 - **Economy:**
     - **Shops:** `car/data/shops.py` - The `SHOP_DATA` dictionary defines the shops in the game. The game loop in `car/game.py` handles currency and transactions at shops.
 - **Cutscenes & Modals:**
