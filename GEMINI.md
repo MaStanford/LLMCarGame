@@ -104,6 +104,11 @@ The game is built around the **Textual TUI framework**, which provides an event-
             4.  A helper method, `update_focus`, applies a `.focused` CSS class to the currently indexed widget.
             5.  Styling is then handled in `car/app.css` using descendant selectors (e.g., `CycleWidget.focused .cycle-value`).
         -   **Benefit**: This gives us precise control over navigation flow and visual feedback, independent of Textual's built-in focus state.
+    -   **The Grand Inventory UX Refactor (`InventoryScreen`)**:
+        -   **Layout:** The inventory screen is a two-column layout. The left column contains the rotatable car preview and the "Loadout" list. The right column contains the scrollable player "Inventory" list, the `WeaponInfo` panel, and a comprehensive player stats display.
+        -   **Interactive Preview:** The car preview can be rotated 360 degrees. When the "Loadout" list is focused, the currently selected attachment point flashes on the car preview, alternating between its index number and a circle icon.
+        -   **Equip/Unequip Logic:** The screen uses a simple state machine to provide an intuitive workflow for equipping, unequipping, and swapping weapons between the inventory and the loadout.
+        -   **Dynamic Info:** The `WeaponInfo` panel automatically updates to show the stats and modifiers of the currently selected weapon in either list.
 
 - **Performance Optimizations:**
     -   **Pre-parsing Styles:** All style strings (e.g., `"white on blue"`) in the game's data files are parsed into `rich.style.Style` objects once at startup. The rendering loop then uses these pre-compiled objects, avoiding thousands of costly string-parsing operations every frame.
@@ -182,17 +187,10 @@ The game is built around the **Textual TUI framework**, which provides an event-
 - [ ] **Finish unfinished AI behaviors:**
     - [ ] _execute_patrol_behavior
     - [ ] _execute_deploy_mine_behavior
-- [ ] **Introduce story elements to quests:**
-    - [ ] Add dialog story to quest when we first are offered quest
-    - [ ] Add quest story modal when we select the quest in menu
-    - [ ] Add complete quest dialog when we return to the quest giver.
-    - [ ] After completing the quest, give compass arrow to the quest giver to get reward and complete dialog.
-    - [ ] Allow quit quest option from quest giver or menu quest modal before the quest is finished
 - [ ] **Introduce multipart quests:**
     - [ ] Quests can point to another quest for multi part quests, add next quest field, if empty this is final quest and complete reward can be given
     - [ ] When returning to quest giver after completing a quest, another quest will automatically start if multipart. 
     - [ ] Cancelling one quest, cancells the whole chain. 
-- [ ] **Show game over dialog with qoute when you die and prompt for new game, load, or quit**
 - [ ] **Combat system** 
     - [ ] For minor enemies open world combat. Running away just means getting out of aggro range. 
     - [ ] For major enemioes, combat system modal when in range, short range like pokemon battles. 
@@ -236,11 +234,6 @@ The game is built around the **Textual TUI framework**, which provides an event-
     - [ ] Swamp
     - [ ] Factions will determine the terrain type. It is immersive so the deserts rats always have a lot fo desert and sand
     - [ ] Add Faction property that is terrain and percent chance
-- [ ] **Add map modal:**
-    - [ ] Create a map modal that can be opened with a key press.
-    - [ ] The map should show the player's current location, as well as the locations of known towns and hubs.
-    - [ ] The player should be able to select a town or hub from the map to set the compass to that location.
-
 
 ## Completed Tasks
 
@@ -286,6 +279,25 @@ The game is built around the **Textual TUI framework**, which provides an event-
 - [x] **Implement Weapon Scaling and Modifier System:**
     - [x] Shops will carry weapons with modifiers based on player level and town reputation.
     - [x] Enemies and bosses will have a chance to drop weapons with randomly generated modifiers.
+- [x] **Show game over dialog with qoute when you die and prompt for new game, load, or quit**
+- [x] **Add map modal:**
+    - [x] Create a map modal that can be opened with a key press.
+    - [x] The map should show the player's current location, as well as the locations of known towns and hubs.
+    - [x] The player should be able to select a town or hub from the map to set the compass to that location.
+- [x] **Introduce story elements to quests:**
+    - [x] Add dialog story to quest when we first are offered quest
+    - [x] Add quest story modal when we select the quest in menu
+    - [x] Add complete quest dialog when we return to the quest giver.
+    - [x] After completing the quest, give compass arrow to the quest giver to get reward and complete dialog.
+    - [x] Allow quit quest option from quest giver or menu quest modal before the quest is finished
+- [x] **The Grand Inventory UX Refactor**
+    - [x] **Display Attachment Size:** The "Current Loadout" list will be modified to display the size of an attachment point (e.g., "Light", "Medium") if the slot is empty.
+    - [x] **Scrolling Inventory:** The player's inventory list will be made vertically scrollable to accommodate a large number of items.
+    - [x] **Weapon Info Modifiers:** The `WeaponInfo` panel will be enhanced to display a weapon's modifiers, if any exist.
+    - [x] **Comprehensive Stats Panel:** The stats panel will be expanded to include the current quest, player level, XP, and a detailed breakdown of all ammo counts.
+    - [x] **Refined Input:** The key bindings will be updated. 'A' and 'D' will rotate the car preview, while 'Left' and 'Right' will switch focus between the loadout and inventory lists.
+    - [x] **State Machine for Equipping:** The core logic will be rebuilt as a simple state machine to handle all equipping and unequipping actions in an intuitive way.
+    - [x] **Flashing Attachment Markers:** The car preview will be enhanced with a new visual system.
 
 
 ### **Project: Migration to Textual TUI Framework**
@@ -406,23 +418,3 @@ The game is built around the **Textual TUI framework**, which provides an event-
 ## Known Issues
 
 - **Curses/Terminal Errors:** The game may crash on startup with a `curses` error (e.g., `nocbreak() returned ERR`). This is often due to an incompatible terminal environment or the terminal window being too small. This is a known issue with the `curses` library and the environment in which the game is being run. **Gemini, do not attempt to fix this error.** It is an environmental issue, not a code issue.
-
-### **Project: The Grand Inventory UX Refactor**
-
-**Goal:** To perform a complete overhaul of the `InventoryScreen` to create a more intuitive, informative, and visually appealing user experience.
-
-**Phase 1: Visual and Data Enhancements**
-- [ ] **Display Attachment Size:** The "Current Loadout" list will be modified to display the size of an attachment point (e.g., "Light", "Medium") if the slot is empty.
-- [ ] **Scrolling Inventory:** The player's inventory list will be made vertically scrollable to accommodate a large number of items.
-- [ ] **Weapon Info Modifiers:** The `WeaponInfo` panel will be enhanced to display a weapon's modifiers, if any exist.
-- [ ] **Comprehensive Stats Panel:** The stats panel will be expanded to include the current quest, player level, XP, and a detailed breakdown of all ammo counts.
-
-**Phase 2: Implementing the Equip/Unequip Logic**
-- [ ] **Refined Input:** The key bindings will be updated. 'A' and 'D' will rotate the car preview, while 'Left' and 'Right' will switch focus between the loadout and inventory lists.
-- [ ] **State Machine for Equipping:** The core logic will be rebuilt as a simple state machine to handle all equipping and unequipping actions in an intuitive way:
-    - **Browsing:** The default state. The player can freely move between the loadout and inventory lists.
-    - **Equip Mode:** Activated by selecting a weapon from the inventory. The focus shifts to the loadout, and the player can then select a slot to mount the weapon.
-    - **Choose Weapon Mode:** Activated by selecting an empty slot in the loadout. The focus shifts to the inventory, and the player can then select a weapon to mount.
-    - **Unequip Confirmation Mode:** Activated by selecting an already-equipped weapon in the loadout. Selecting the same slot again will unequip the weapon and return it to the inventory.
-- [ ] **Flashing Attachment Markers:** The car preview will be enhanced with a new visual system.
-    - When the player highlights an attachment slot in the loadout list, the corresponding marker on the car preview will flash between the slot's number and a circle icon, clearly indicating the selected point.
