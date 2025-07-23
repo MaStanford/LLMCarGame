@@ -14,7 +14,8 @@ class WarRig(Vehicle):
             "█████████████████",
             "(●)═(●)═════(●)═(●)"
         ]
-        super().__init__(x, y, art, durability=500, speed=0.3, acceleration=0.1, handling=0.1)
+        super().__init__(x, y, art, durability=300, speed=1.8, acceleration=0.2, handling=0.03)
+        self.is_major_enemy = True
         self.xp_value = 200
         self.cash_value = 300
         self.drop_item = "repair_kit"

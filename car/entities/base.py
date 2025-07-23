@@ -13,6 +13,7 @@ class Entity(ABC):
         self.max_durability = durability
         self.patrol_target_x = None
         self.patrol_target_y = None
+        self.is_major_enemy = False
         self.patrol_target_x = None
         self.patrol_target_y = None
 

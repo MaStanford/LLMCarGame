@@ -28,13 +28,19 @@ class WorldScreen(Screen):
     """The default screen for the game."""
 
     BINDINGS = [
-        Binding("escape", "toggle_pause", "Pause"),
-        Binding("tab", "toggle_inventory", "Inventory"),
-        Binding("m", "push_screen('map')", "Map"),
+        Binding("w", "accelerate", "Accelerate", show=True),
+        Binding("s", "brake", "Brake", show=True),
+        Binding("a", "turn_left", "Turn Left", show=True),
+        Binding("d", "turn_right", "Turn Right", show=True),
+        Binding("space", "fire", "Fire", show=True),
+        Binding("escape", "toggle_pause", "Pause", show=True),
+        Binding("tab", "toggle_inventory", "Inventory", show=True),
+        Binding("m", "push_screen('map')", "Map", show=True),
     ]
 
     def on_mount(self) -> None:
         """Called when the screen is mounted."""
+        self.focus()
         gs = self.app.game_state
         
         # Synchronize the player car's entity position with the game state's world position
@@ -43,12 +49,26 @@ class WorldScreen(Screen):
         
         # Spawn an initial batch of entities
         spawn_initial_entities(gs, self.app.world)
-        
-        self.query_one("#game_view").focus()
 
         # Hide FPS counter if not in dev mode
         if not self.app.dev_mode:
             self.query_one("#fps_counter").display = False
+
+    def action_accelerate(self) -> None:
+        gs = self.app.game_state
+        gs.pedal_position = min(1.0, gs.pedal_position + 0.2)
+    def action_brake(self) -> None:
+        gs = self.app.game_state
+        gs.pedal_position = max(-1.0, gs.pedal_position - 0.2)
+    def action_turn_left(self) -> None:
+        gs = self.app.game_state
+        gs.car_angle -= gs.turn_rate
+    def action_turn_right(self) -> None:
+        gs = self.app.game_state
+        gs.car_angle += gs.turn_rate
+    def action_fire(self) -> None:
+        gs = self.app.game_state
+        gs.actions["fire"] = True
 
     def action_toggle_pause(self) -> None:
         """Toggle the pause menu."""
@@ -87,7 +107,6 @@ class WorldScreen(Screen):
     def update_widgets(self):
         """Update the screen widgets."""
         game_view = self.query_one("#game_view", GameView)
-        game_view.process_input()
         game_view.refresh()
         
         gs = self.app.game_state
@@ -166,7 +185,3 @@ class WorldScreen(Screen):
             explosion.offset = (int(destroyed.x - gs.car_world_x + self.size.width / 2), 
                                 int(destroyed.y - gs.car_world_y + self.size.height / 2))
         gs.destroyed_this_frame.clear()
-
-
-
-

@@ -12,6 +12,10 @@ This project is a collaboration between two super-developers with a shared passi
 5.  **Verify:** Verify the changes or fix or feature is working. 
 6.  **Commit Changes:** After the changes are made, and verified, Gemini will keep track of the modified files and prompt to either commit the changes or wait for more changes.
 
+**Preferred tools:**
+1. Git tools for reading files.
+2. Always grab the latest version of the file, it's very possible we have changes outside this session. 
+
 ## Summary
 
 This project is a terminal-based, open-world, automotive RPG survival game. Players select a starting vehicle and embark on an adventure in an infinitely-generated, random world. The map features roads connecting cities, surrounded by various types of wilderness.
@@ -419,5 +423,3 @@ The game is built around the **Textual TUI framework**, which provides an event-
 ## Roadmap
 
 ## Known Issues
-
-- **Curses/Terminal Errors:** The game may crash on startup with a `curses` error (e.g., `nocbreak() returned ERR`). This is often due to an incompatible terminal environment or the terminal window being too small. This is a known issue with the `curses` library and the environment in which the game is being run. **Gemini, do not attempt to fix this error.** It is an environmental issue, not a code issue.

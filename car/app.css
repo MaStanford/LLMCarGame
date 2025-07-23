@@ -315,3 +315,32 @@ QuestBriefingScreen {
     text-style: bold;
     text-align: center;
 }
+
+CombatScreen {
+    align: center middle;
+}
+
+#combat_grid {
+    grid-size: 2;
+    grid-gutter: 1;
+    width: 100%;
+    height: 15;
+}
+
+#player_panel, #enemy_panel {
+    border: heavy white;
+    align: center middle;
+}
+
+#combat_actions {
+    grid-size: 3;
+    grid-gutter: 1;
+    width: 100%;
+    height: 3;
+}
+
+#combat_log {
+    height: 6;
+    border: heavy white;
+    padding: 1;
+}

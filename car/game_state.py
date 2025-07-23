@@ -113,6 +113,7 @@ class GameState:
         self.waypoint = None
         self.can_challenge_boss = {}
         self.defeated_bosses = set()
+        self.combat_enemy = None
 
         # --- UI and Game Flow State ---
         self.shop_cooldown = 0

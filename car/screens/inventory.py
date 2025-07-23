@@ -40,6 +40,7 @@ class InventoryScreen(ModalScreen):
         """Called when the screen is unmounted."""
         if self.blink_timer:
             self.blink_timer.stop()
+        self.app.game_state.menu_open = False
 
     def toggle_blink(self) -> None:
         """Toggle the blink state for the attachment point marker."""

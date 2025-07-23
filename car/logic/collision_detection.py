@@ -75,19 +75,6 @@ def handle_collisions(game_state, world, audio_manager):
                     game_state.active_enemies.remove(enemy)
                 break # Projectile can only hit one enemy
         
-        # Check for collisions with bosses
-        for boss in game_state.active_bosses:
-            if (boss.x <= p_x < boss.x + boss.width and 
-                boss.y <= p_y < boss.y + boss.height):
-                boss.durability -= p_power
-                audio_manager.play_sfx("enemy_hit")
-                projectiles_to_remove.add(i)
-                if boss.durability <= 0:
-                    game_state.destroyed_this_frame.append(boss)
-                    if boss in game_state.active_bosses:
-                        game_state.active_bosses.remove(boss)
-                break # Projectile can only hit one boss
-
     # Remove projectiles that have collided
     if projectiles_to_remove:
         game_state.active_particles = [p for i, p in enumerate(game_state.active_particles) if i not in projectiles_to_remove]

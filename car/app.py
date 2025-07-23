@@ -50,12 +50,6 @@ class CarApp(App):
         """Called when the app is first mounted."""
         self.push_screen(MainMenuScreen())
 
-    def on_screen_resume(self, screen) -> None:
-        """Called when a screen is popped and another is resumed."""
-        if isinstance(screen, WorldScreen):
-            self.game_state.pause_menu_open = False
-            self.game_state.menu_open = False
-
     def switch_screen(self, screen) -> None:
         """Switch to a new screen."""
         if screen == "main_menu":

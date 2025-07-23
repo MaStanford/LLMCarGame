@@ -11,7 +11,7 @@ class PauseScreen(ModalScreen):
     BINDINGS = [
         Binding("up", "focus_previous", "Up"),
         Binding("down", "focus_next", "Down"),
-        Binding("escape", "app.pop_screen", "Back"),
+        Binding("escape", "app.toggle_pause", "Back"),
     ]
 
     def __init__(self) -> None:
