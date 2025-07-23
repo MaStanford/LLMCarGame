@@ -77,14 +77,28 @@ class CityHallScreen(ModalScreen):
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle accept button presses."""
+        gs = self.app.game_state
+        
         if self.is_turn_in:
-            complete_quest(self.app.game_state)
+            # Complete the current quest part
+            complete_quest(gs)
             self.app.screen.query_one("#notifications").add_notification("Quest Complete!")
-            self.app.pop_screen()
+            
+            # Check if there's a new quest in the chain
+            if gs.current_quest:
+                # It's a multi-part quest, so refresh the screen for the next part
+                self.is_turn_in = False
+                self.available_quests = [gs.current_quest]
+                self.selected_index = 0
+                self.update_quest_display()
+            else:
+                # End of the quest chain
+                self.app.pop_screen()
         else:
+            # Accepting a new quest
             if self.available_quests:
                 selected_quest = self.available_quests[self.selected_index]
-                handle_quest_acceptance(self.app.game_state, selected_quest)
+                handle_quest_acceptance(gs, selected_quest)
                 self.app.screen.query_one("#notifications").add_notification(f"New Quest: {selected_quest.name}")
                 self.app.pop_screen()
 

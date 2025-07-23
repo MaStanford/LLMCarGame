@@ -44,7 +44,7 @@ class SurvivalObjective(Objective):
             self.completed = True
 
 class Quest:
-    def __init__(self, name, description, objectives, rewards, city_id=None, quest_giver_faction=None, target_faction=None, time_limit=None):
+    def __init__(self, name, description, objectives, rewards, city_id=None, quest_giver_faction=None, target_faction=None, time_limit=None, next_quest_id=None):
         self.name = name
         self.description = description
         self.objectives = objectives
@@ -53,6 +53,7 @@ class Quest:
         self.quest_giver_faction = quest_giver_faction
         self.target_faction = target_faction
         self.time_limit = time_limit
+        self.next_quest_id = next_quest_id
         self.completed = False
         self.failed = False
         self.ready_to_turn_in = False
@@ -86,7 +87,8 @@ QUEST_TEMPLATES = {
             "xp": 750,
             "cash": 300,
         },
-        "time_limit": 3600 # 2 minutes
+        "time_limit": 3600, # 2 minutes
+        "next_quest_id": "assassinate_rival"
     },
     "assassinate_rival": {
         "name": "Assassinate: {target_faction_name} Captain",

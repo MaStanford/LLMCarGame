@@ -136,28 +136,71 @@ def check_for_faction_takeover(game_state):
             del game_state.faction_reputation[faction_id]
     return notifications
 
+def generate_quest(game_state, quest_id):
+    """Generates a single Quest object from a given template ID."""
+    quest_template = QUEST_TEMPLATES.get(quest_id)
+    if not quest_template:
+        return None
+
+    # Faction logic mirrors get_available_quests
+    quest_giver_faction_id = get_city_faction(game_state.car_world_x, game_state.car_world_y)
+    quest_giver_faction = FACTION_DATA[quest_giver_faction_id]
+    hostile_factions = [fid for fid, rel in quest_giver_faction["relationships"].items() if rel == "Hostile"]
+    if not hostile_factions:
+        return None # Can't generate a quest without a target
+    target_faction_id = random.choice(hostile_factions)
+    target_faction = FACTION_DATA[target_faction_id]
+
+    objectives = []
+    for obj_class, args in quest_template["objectives"]:
+        objectives.append(obj_class(*args))
+
+    name = quest_template["name"].format(target_faction_name=target_faction["name"])
+    description = quest_template["description"].format(
+        quest_giver_faction_name=quest_giver_faction["name"],
+        target_faction_name=target_faction["name"]
+    )
+
+    return Quest(
+        name=name,
+        description=description,
+        objectives=objectives,
+        rewards=quest_template["rewards"],
+        city_id=(round(game_state.car_world_x / CITY_SPACING), round(game_state.car_world_y / CITY_SPACING)),
+        quest_giver_faction=quest_giver_faction_id,
+        target_faction=target_faction_id,
+        time_limit=quest_template.get("time_limit"),
+        next_quest_id=quest_template.get("next_quest_id")
+    )
+
 def complete_quest(game_state):
-    """Handles the logic for completing a quest."""
+    """
+    Handles the logic for completing a quest.
+    If the quest is part of a chain, it sets up the next quest.
+    Otherwise, it clears the current quest.
+    """
     quest = game_state.current_quest
+    if not quest:
+        return
+
+    # Grant rewards
     rewards = quest.rewards
     game_state.gain_xp(rewards.get("xp", 0))
     game_state.player_cash += rewards.get("cash", 0)
     
-    # Increase reputation with quest giver
+    # Update reputation
     giver_faction_id = quest.quest_giver_faction
     if giver_faction_id:
-        if giver_faction_id not in game_state.faction_reputation:
-            game_state.faction_reputation[giver_faction_id] = 0
-        game_state.faction_reputation[giver_faction_id] += 10
-
-    # Decrease reputation with target
+        game_state.faction_reputation[giver_faction_id] = game_state.faction_reputation.get(giver_faction_id, 0) + 10
     target_faction_id = quest.target_faction
     if target_faction_id:
-        if target_faction_id not in game_state.faction_reputation:
-            game_state.faction_reputation[target_faction_id] = 0
-        game_state.faction_reputation[target_faction_id] -= 15
+        game_state.faction_reputation[target_faction_id] = game_state.faction_reputation.get(target_faction_id, 0) - 15
 
-    game_state.current_quest = None
-    # (Add notifications for reputation changes)
+    # Check for next quest in the chain
+    if quest.next_quest_id:
+        game_state.current_quest = generate_quest(game_state, quest.next_quest_id)
+    else:
+        game_state.current_quest = None
+    
     check_for_faction_takeover(game_state)
 
