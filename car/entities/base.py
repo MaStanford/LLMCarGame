@@ -11,6 +11,8 @@ class Entity(ABC):
         self.height = 0
         self.durability = durability
         self.max_durability = durability
+        self.patrol_target_x = None
+        self.patrol_target_y = None
 
     @staticmethod
     def get_car_dimensions(car_art_list):

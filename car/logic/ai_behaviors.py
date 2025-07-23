@@ -44,52 +44,50 @@ def _execute_stationary_behavior(enemy, game_state, edata):
     enemy.vx = 0
     enemy.vy = 0
 
-def _execute_patrol_behavior(enemy, game_state, edata):
-    """Moves the enemy between two patrol points."""
-    # Initialize patrol points on the first run
-    if not hasattr(enemy, 'patrol_start'):
-        enemy.patrol_start = (enemy.x - 10, enemy.y - 10)
-        enemy.patrol_end = (enemy.x + 10, enemy.y + 10)
-        enemy.patrol_target = enemy.patrol_end
+def _execute_patrol_behavior(entity, game_state):
+    """
+    Moves the entity towards its patrol target.
+    If the target is reached, a new one is generated.
+    """
+    if entity.patrol_target_x is None:
+        # Assign an initial patrol target if none exists
+        entity.patrol_target_x = entity.x + random.uniform(-100, 100)
+        entity.patrol_target_y = entity.y + random.uniform(-100, 100)
 
-    # Determine target coordinates
-    target_x, target_y = enemy.patrol_target
+    # Check if the entity has reached its target
+    dist_to_target_sq = (entity.x - entity.patrol_target_x)**2 + (entity.y - entity.patrol_target_y)**2
+    if dist_to_target_sq < 25: # Close enough
+        entity.patrol_target_x = entity.x + random.uniform(-100, 100)
+        entity.patrol_target_y = entity.y + random.uniform(-100, 100)
 
     # Move towards the target
-    dx = target_x - enemy.x
-    dy = target_y - enemy.y
-    dist = math.sqrt(dx*dx + dy*dy)
+    angle_to_target = math.atan2(entity.patrol_target_y - entity.y, entity.patrol_target_x - entity.x)
+    entity.angle = angle_to_target
+    entity.pedal_position = 0.5 # Cruise speed
 
-    if dist > 1: # If not at the target yet
-        enemy.vx = (dx / dist) * edata.speed * 0.5 # Patrol at half speed
-        enemy.vy = (dy / dist) * edata.speed * 0.5
-    else:
-        # Arrived at target, switch to the other point
-        enemy.patrol_target = enemy.patrol_start if enemy.patrol_target == enemy.patrol_end else enemy.patrol_end
-        enemy.vx = 0
-        enemy.vy = 0
 
-def _execute_deploy_mine_behavior(enemy, game_state, edata):
-    """Stops and lays a mine behind the enemy."""
-    # Stop moving to deploy
-    enemy.vx = 0
-    enemy.vy = 0
+def _execute_deploy_mine_behavior(entity, game_state):
+    """
+    Flees from the player and deploys a mine.
+    """
+    if "mine_cooldown" not in entity.ai_state:
+        entity.ai_state["mine_cooldown"] = 0
 
-    # Use a cooldown to prevent spamming
-    if not hasattr(enemy, 'mine_cooldown'):
-        enemy.mine_cooldown = 0
-    
-    if enemy.mine_cooldown <= 0:
-        # Get position behind the enemy
-        # (This is a simplified model, assuming enemy is facing player)
-        dx = game_state.car_world_x - enemy.x
-        dy = game_state.car_world_y - enemy.y
-        dist = math.sqrt(dx*dx + dy*dy)
-        
-        mine_x = enemy.x - (dx / dist) * 2 # Place it 2 units behind
-        mine_y = enemy.y - (dy / dist) * 2
+    if entity.ai_state["mine_cooldown"] > 0:
+        entity.ai_state["mine_cooldown"] -= 1
+        # While cooling down, just chase the player
+        _execute_chase_behavior(entity, game_state)
+        return
 
-        game_state.active_obstacles.append(Mine(mine_x, mine_y))
-        enemy.mine_cooldown = 5 * 30 # 5-second cooldown at 30 FPS
-    else:
-        enemy.mine_cooldown -= 1
+    # Flee from the player
+    angle_from_player = math.atan2(entity.y - game_state.car_world_y, entity.x - game_state.car_world_x)
+    entity.angle = angle_from_player
+    entity.pedal_position = 1.0
+
+    # Deploy a mine if far enough away
+    dist_from_player_sq = (entity.x - game_state.car_world_x)**2 + (entity.y - game_state.car_world_y)**2
+    if dist_from_player_sq > 100: # Deploy mine when 10 units away
+        from ..entities.obstacles.mine import Mine
+        new_mine = Mine(entity.x, entity.y)
+        game_state.active_obstacles.append(new_mine)
+        entity.ai_state["mine_cooldown"] = 150 # 5 seconds cooldown

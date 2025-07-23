@@ -86,6 +86,8 @@ def spawn_enemy(game_state, world):
 
     if world.get_terrain_at(sx, sy).get("passable", True):
         new_enemy = enemy_class(sx, sy)
+        new_enemy.patrol_target_x = sx + random.uniform(-100, 100)
+        new_enemy.patrol_target_y = sy + random.uniform(-100, 100)
         game_state.active_enemies.append(new_enemy)
 
 def spawn_fauna(game_state, world, is_initial_spawn=False):
