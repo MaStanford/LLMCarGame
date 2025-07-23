@@ -44,7 +44,7 @@ class SurvivalObjective(Objective):
             self.completed = True
 
 class Quest:
-    def __init__(self, name, description, objectives, rewards, city_id=None, quest_giver_faction=None, target_faction=None, time_limit=None, next_quest_id=None):
+    def __init__(self, name, description, objectives, rewards, city_id=None, quest_giver_faction=None, target_faction=None, time_limit=None, next_quest_id=None, requires_turn_in=True):
         self.name = name
         self.description = description
         self.objectives = objectives
@@ -54,6 +54,7 @@ class Quest:
         self.target_faction = target_faction
         self.time_limit = time_limit
         self.next_quest_id = next_quest_id
+        self.requires_turn_in = requires_turn_in
         self.completed = False
         self.failed = False
         self.ready_to_turn_in = False

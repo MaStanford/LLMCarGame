@@ -84,10 +84,17 @@ def update_quests(game_state, audio_manager):
             game_state.current_quest.update(game_state)
 
         if game_state.current_quest.completed and not game_state.current_quest.ready_to_turn_in:
-            game_state.current_quest.ready_to_turn_in = True
-            notifications.append(f"Objective complete! Return to {get_city_name(*game_state.current_quest.city_id)}.")
-            audio_manager.stop_music()
-            audio_manager.play_music("car/sounds/world.mid")
+            if game_state.current_quest.requires_turn_in:
+                game_state.current_quest.ready_to_turn_in = True
+                notifications.append(f"Objective complete! Return to {get_city_name(*game_state.current_quest.city_id)}.")
+                audio_manager.stop_music()
+                audio_manager.play_music("car/sounds/world.mid")
+            else:
+                # For quests that complete immediately without turn-in
+                complete_quest(game_state)
+                notifications.append(f"Quest Complete: {game_state.current_quest.name}")
+                audio_manager.stop_music()
+                audio_manager.play_music("car/sounds/world.mid")
 
         elif game_state.current_quest.failed:
             giver_faction_id = game_state.current_quest.quest_giver_faction

@@ -66,6 +66,7 @@ def _execute_patrol_behavior(entity, game_state):
     entity.pedal_position = 0.5 # Cruise speed
 
 
+
 def _execute_deploy_mine_behavior(entity, game_state):
     """
     Flees from the player and deploys a mine.
