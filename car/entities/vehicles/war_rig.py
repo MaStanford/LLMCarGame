@@ -15,6 +15,7 @@ class WarRig(Vehicle):
             "(●)═(●)═════(●)═(●)"
         ]
         super().__init__(x, y, art, durability=300, speed=1.8, acceleration=0.2, handling=0.03)
+        self.name = "War Rig"
         self.is_major_enemy = True
         self.xp_value = 200
         self.cash_value = 300

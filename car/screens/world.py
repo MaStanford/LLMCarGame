@@ -37,8 +37,8 @@ class WorldScreen(Screen):
         Binding("space", "fire", "Fire", show=True),
         Binding("escape", "toggle_pause", "Pause", show=True),
         Binding("tab", "toggle_inventory", "Inventory", show=True),
-        Binding("m", "push_screen('map')", "Map", show=True),
-        Binding("f", "push_screen('faction')", "Factions", show=True),
+        Binding("m", "show_map", "Map", show=True),
+        Binding("f", "show_factions", "Factions", show=True),
     ]
 
     def on_mount(self) -> None:
@@ -60,15 +60,20 @@ class WorldScreen(Screen):
     def action_accelerate(self) -> None:
         gs = self.app.game_state
         gs.pedal_position = min(1.0, gs.pedal_position + 0.2)
+
     def action_brake(self) -> None:
         gs = self.app.game_state
+
         gs.pedal_position = max(-1.0, gs.pedal_position - 0.2)
+
     def action_turn_left(self) -> None:
         gs = self.app.game_state
         gs.car_angle -= gs.turn_rate
+
     def action_turn_right(self) -> None:
         gs = self.app.game_state
         gs.car_angle += gs.turn_rate
+        
     def action_fire(self) -> None:
         gs = self.app.game_state
         gs.actions["fire"] = True
@@ -89,13 +94,21 @@ class WorldScreen(Screen):
             self.app.game_state.menu_open = True
             self.app.push_screen(InventoryScreen())
 
+    def action_show_map(self) -> None:
+        """Pushes the map screen."""
+        self.app.push_screen(MapScreen())
+        
+    def action_show_factions(self) -> None:
+        """Pushes the faction screen."""
+        self.app.push_screen(FactionScreen())
+
     def compose(self):
         """Compose the layout of the screen."""
         yield GameView(id="game_view", game_state=self.app.game_state, world=self.app.world)
         
         with Vertical(id="top_hud"):
             yield FPSCounter(id="fps_counter")
-            yield LocationHUD(id="location_hud")
+            yield HudLocation(id="location_hud")
             yield CompassHUD(id="compass_hud")
 
         with Horizontal(id="bottom_hud"):
@@ -138,7 +151,7 @@ class WorldScreen(Screen):
         quest_hud = self.query_one("#quest_hud", QuestHUD)
         quest_hud.quest_name = gs.current_quest.name if gs.current_quest else "None"
 
-        location = self.query_one("#location_hud", LocationHUD)
+        location = self.query_one("#location_hud", HudLocation)
         location.x = int(gs.car_world_x)
         location.y = int(gs.car_world_y)
         grid_x = round(gs.car_world_x / CITY_SPACING)
@@ -175,7 +188,7 @@ class WorldScreen(Screen):
 
         # Update Entity Modal
         entity_modal = self.query_one("#entity_modal", EntityModal)
-        closest_entity = self.app.find_closest_entity()
+        closest_entity = gs.closest_entity_info
         if closest_entity:
             entity_modal.name = closest_entity["name"]
             entity_modal.hp = closest_entity["hp"]

@@ -370,3 +370,9 @@ CombatScreen {
     border: heavy white;
     padding: 1;
 }
+
+#faction_grid {
+    grid-size: 2 1;
+    grid-columns: 1fr 2fr;
+    padding: 1;
+}

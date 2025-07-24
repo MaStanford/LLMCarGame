@@ -14,6 +14,7 @@ class RaiderBuggy(Vehicle):
             "(●)---(●)"
         ]
         super().__init__(x, y, art, durability=40, speed=0.9, acceleration=0.7, handling=0.8)
+        self.name = "Raider Buggy"
         self.xp_value = 15
         self.cash_value = 20
         self.drop_item = "ammo_bullet"

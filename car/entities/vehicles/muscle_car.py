@@ -16,6 +16,7 @@ class MuscleCar(Vehicle):
             " (●)▀▀▀▀▀(●) "
         ]
         super().__init__(x, y, art, durability=85, speed=8.5, acceleration=0.9, handling=0.18)
+        self.name = "Muscle Car"
         self.xp_value = 40
         self.cash_value = 75
         self.drop_item = "repair_kit"

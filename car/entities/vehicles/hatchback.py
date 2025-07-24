@@ -83,3 +83,4 @@ class Hatchback(PlayerCar):
             }
         )
         self.max_attachments = 4
+        self.name = "Hatchback"

@@ -11,8 +11,10 @@ class MapView(Widget):
     def __init__(self, game_state, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.game_state = game_state
-        self.cursor_x = self.size.width // 2
-        self.cursor_y = self.size.height // 2
+        self.cursor_x = 0
+        self.cursor_y = 0
+        self.cached_map = None
+        self.cached_styles = None
 
     def on_mount(self) -> None:
         """Called when the widget is mounted."""
@@ -42,44 +44,50 @@ class MapView(Widget):
             gs.waypoint = (grid_x * CITY_SPACING, grid_y * CITY_SPACING)
             self.app.screen.query_one("#notifications").add_notification(f"Waypoint set to {get_city_name(grid_x, grid_y)}.")
 
-    def render(self) -> Text:
-        """Render the map."""
+    def _generate_map_cache(self):
+        """Generates the static parts of the map and caches them."""
         gs = self.game_state
         w, h = self.size
+        scale = 200
         
-        # Center the map on the player
-        map_center_x = gs.car_world_x
-        map_center_y = gs.car_world_y
-        
-        # Determine the scale of the map (how many world units per character)
-        scale = 200 # Lower is more zoomed in
-        
-        map_start_x = map_center_x - (w / 2) * scale
-        map_start_y = map_center_y - (h / 2) * scale
+        map_start_x = gs.car_world_x - (w / 2) * scale
+        map_start_y = gs.car_world_y - (h / 2) * scale
 
-        canvas = [[' ' for _ in range(w)] for _ in range(h)]
-        styles = [[Style() for _ in range(w)] for _ in range(h)]
+        self.cached_map = [[' ' for _ in range(w)] for _ in range(h)]
+        self.cached_styles = [[Style() for _ in range(w)] for _ in range(h)]
 
-        # Draw the map features
         for y in range(h):
             for x in range(w):
                 world_x = map_start_x + x * scale
                 world_y = map_start_y + y * scale
                 
-                # Roads
                 if abs(world_x % CITY_SPACING) < ROAD_WIDTH * scale or abs(world_y % CITY_SPACING) < ROAD_WIDTH * scale:
-                    canvas[y][x] = "+"
-                    styles[y][x] = Style(color="bright_black")
+                    self.cached_map[y][x] = "+"
+                    self.cached_styles[y][x] = Style(color="bright_black")
                 
-                # Cities
                 grid_x = round(world_x / CITY_SPACING)
                 grid_y = round(world_y / CITY_SPACING)
                 if get_city_name(grid_x, grid_y):
                     city_center_x = grid_x * CITY_SPACING
                     city_center_y = grid_y * CITY_SPACING
                     if abs(world_x - city_center_x) < 10 * scale and abs(world_y - city_center_y) < 10 * scale:
-                        canvas[y][x] = "C"
-                        styles[y][x] = Style(color="cyan", bold=True)
+                        self.cached_map[y][x] = "C"
+                        self.cached_styles[y][x] = Style(color="cyan", bold=True)
+
+    def render(self) -> Text:
+        """Render the map."""
+        if self.cached_map is None:
+            self._generate_map_cache()
+
+        # Start with a copy of the cached map
+        canvas = [row[:] for row in self.cached_map]
+        styles = [row[:] for row in self.cached_styles]
+        
+        gs = self.game_state
+        w, h = self.size
+        scale = 200
+        map_start_x = gs.car_world_x - (w / 2) * scale
+        map_start_y = gs.car_world_y - (h / 2) * scale
 
         # Draw Player
         player_x = int((gs.car_world_x - map_start_x) / scale)

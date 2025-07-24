@@ -50,6 +50,8 @@ OBSTACLES = [
     Rock, TirePile, ScrapBarricade, WreckedHusk, OilBarrel
 ]
 
+ALL_VEHICLES = PLAYER_CARS + ENEMY_VEHICLES
+
 
 def _populate_entities():
     """

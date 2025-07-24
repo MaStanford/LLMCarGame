@@ -83,3 +83,4 @@ class Sedan(PlayerCar):
         self.default_weapons = {
             "hood_gun": "wep_lmg"
         }
+        self.name = "Sedan"

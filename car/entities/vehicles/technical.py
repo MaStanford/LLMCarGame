@@ -14,6 +14,7 @@ class Technical(Vehicle):
             " (●)═(●) "
         ]
         super().__init__(x, y, art, durability=70, speed=0.7, acceleration=0.5, handling=0.6)
+        self.name = "Technical"
         self.xp_value = 25
         self.cash_value = 40
         self.drop_item = "ammo_bullet"

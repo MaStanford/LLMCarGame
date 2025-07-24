@@ -100,6 +100,11 @@ class CarApp(App):
             for notification in quest_notifications:
                 self.screen.query_one("#notifications", Notifications).add_notification(notification)
 
+            # --- Throttled UI Updates ---
+            # Only search for the closest entity 4 times a second to save performance
+            if self.frame_count % 8 == 0:
+                gs.closest_entity_info = self.find_closest_entity()
+
             # --- Update UI Widgets ---
             self.screen.update_widgets()
 

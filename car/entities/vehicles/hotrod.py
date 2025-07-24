@@ -83,3 +83,4 @@ class Hotrod(PlayerCar):
         self.default_weapons = {
             "hood_gun": "wep_flamethrower"
         }
+        self.name = "Hotrod"

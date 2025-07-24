@@ -14,6 +14,7 @@ class Peacekeeper(Vehicle):
             " (●)═(●) "
         ]
         super().__init__(x, y, art, durability=80, speed=0.6, acceleration=0.5, handling=0.7)
+        self.name = "Peacekeeper"
         self.xp_value = 10
         self.cash_value = 15
         self.drop_item = "ammo_bullet"

@@ -136,6 +136,7 @@ class GameState:
         self.screen_width = 0
         self.screen_height = 0
         self.notifications = []
+        self.closest_entity_info = None
 
         self.apply_level_bonuses()
 

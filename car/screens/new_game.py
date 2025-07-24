@@ -2,6 +2,7 @@ import json
 import importlib
 import os
 import shutil
+import pprint
 from textual.app import ComposeResult
 from textual.containers import Vertical, Container
 from textual.screen import Screen
@@ -247,10 +248,11 @@ class NewGameScreen(Screen):
             
             new_faction_data = generate_factions_from_llm()
             if new_faction_data:
-                # Write the new factions to a temporary file
+                # Write the new factions to a temporary file using pprint
+                # to ensure Python-compatible syntax (e.g., None instead of null).
                 with open("temp/factions.py", "w") as f:
                     f.write("FACTION_DATA = ")
-                    json.dump(new_faction_data, f, indent=4)
+                    pprint.pprint(new_faction_data, stream=f, indent=4)
                 
                 # IMPORTANT: We need a way to tell the game to use this new file
                 # This will be handled by modifying the import system or game state loader

@@ -15,6 +15,7 @@ class GuardTruck(Vehicle):
             " (●)═(●) "
         ]
         super().__init__(x, y, art, durability=150, speed=0.4, acceleration=0.2, handling=0.2)
+        self.name = "Guard Truck"
         self.xp_value = 30
         self.cash_value = 50
         self.drop_item = "ammo_bullet"

@@ -84,3 +84,4 @@ class PanelWagon(PlayerCar):
         self.default_weapons = {
             "roof_rack": "wep_hmg"
         }
+        self.name = "Panel Wagon"

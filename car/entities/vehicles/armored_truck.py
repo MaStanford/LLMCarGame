@@ -17,6 +17,7 @@ class ArmoredTruck(Vehicle):
         ]
         # Upgraded stats to match its appearance
         super().__init__(x, y, art, durability=250, speed=4.5, acceleration=0.2, handling=0.05)
+        self.name = "Armored Truck"
         self.xp_value = 50
         self.cash_value = 100
         self.drop_item = "repair_kit"

@@ -76,3 +76,4 @@ class Truck(PlayerCar):
         self.default_weapons = {
             "hood_gun": "wep_hmg"
         }
+        self.name = "Truck"

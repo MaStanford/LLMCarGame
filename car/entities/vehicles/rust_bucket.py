@@ -16,6 +16,7 @@ class RustBucket(Vehicle):
             " (O)▀▀▀▀▀(X) "
         ]
         super().__init__(x, y, art, durability=45, speed=6.0, acceleration=0.4, handling=0.08)
+        self.name = "Rust Bucket"
         self.phases = [
             {"name": "Kamikaze", "duration": (10, 10), "behavior": "RAM", "next_phases": {"Kamikaze": 1.0}}
         ]

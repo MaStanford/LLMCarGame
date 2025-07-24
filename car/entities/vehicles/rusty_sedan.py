@@ -12,6 +12,7 @@ class RustySedan(Vehicle):
             "  \\____/  ",
         ]
         super().__init__(x, y, art, durability=20, speed=0.75, acceleration=0.5, handling=0.5)
+        self.name = "Rusty Sedan"
         self.xp_value = 5
         self.cash_value = 10
         self.drop_item = "ammo_bullet"

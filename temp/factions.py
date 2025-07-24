@@ -1,121 +1,57 @@
-FACTION_DATA = {
-    "the_vultures": {
-        "name": "The Vultures",
-        "hub_city_coordinates": [
-            -30,
-            30
-        ],
-        "control": 50,
-        "relationships": {
-            "desert_rats": "Hostile",
-            "corporate_guard": "Hostile",
-            "the_convoy": "Neutral",
-            "the_junction": "Neutral"
-        },
-        "units": [
-            "rust_bucket",
-            "raider_buggy",
-            "technical"
-        ],
-        "faction_boss": {
-            "name": "Scrap King Klaw",
-            "vehicle": "war_rig",
-            "hp_multiplier": 5.0,
-            "damage_multiplier": 2.5
-        }
-    },
-    "desert_rats": {
-        "name": "Desert Rats",
-        "hub_city_coordinates": [
-            40,
-            -20
-        ],
-        "control": 50,
-        "relationships": {
-            "the_vultures": "Hostile",
-            "corporate_guard": "Hostile",
-            "the_convoy": "Allied",
-            "the_junction": "Neutral"
-        },
-        "units": [
-            "motorcycle",
-            "hotrod",
-            "muscle_car"
-        ],
-        "faction_boss": {
-            "name": "Road Captain Fury",
-            "vehicle": "sports_car",
-            "hp_multiplier": 3.0,
-            "damage_multiplier": 3.5
-        }
-    },
-    "corporate_guard": {
-        "name": "Corporate Guard",
-        "hub_city_coordinates": [
-            25,
-            50
-        ],
-        "control": 50,
-        "relationships": {
-            "the_vultures": "Hostile",
-            "desert_rats": "Hostile",
-            "the_convoy": "Hostile",
-            "the_junction": "Neutral"
-        },
-        "units": [
-            "sedan",
-            "armored_truck",
-            "peacekeeper"
-        ],
-        "faction_boss": {
-            "name": "Commander Valerius",
-            "vehicle": "hatchback",
-            "hp_multiplier": 4.0,
-            "damage_multiplier": 3.0
-        }
-    },
-    "the_convoy": {
-        "name": "The Convoy",
-        "hub_city_coordinates": [
-            -40,
-            -35
-        ],
-        "control": 50,
-        "relationships": {
-            "the_vultures": "Neutral",
-            "desert_rats": "Allied",
-            "corporate_guard": "Hostile",
-            "the_junction": "Neutral"
-        },
-        "units": [
-            "truck",
-            "van",
-            "panel_wagon"
-        ],
-        "faction_boss": {
-            "name": "The Quartermaster",
-            "vehicle": "truck",
-            "hp_multiplier": 6.0,
-            "damage_multiplier": 2.0
-        }
-    },
-    "the_junction": {
-        "name": "The Junction",
-        "hub_city_coordinates": [
-            0,
-            0
-        ],
-        "control": 100,
-        "relationships": {
-            "the_vultures": "Neutral",
-            "desert_rats": "Neutral",
-            "corporate_guard": "Neutral",
-            "the_convoy": "Neutral"
-        },
-        "units": [
-            "rusty_sedan",
-            "guard_truck"
-        ],
-        "faction_boss": null
-    }
-}
+FACTION_DATA = {   'corporate_guard': {   'control': 50,
+                           'faction_boss': {   'damage_multiplier': 3.0,
+                                               'hp_multiplier': 4.0,
+                                               'name': 'Commander Valerius',
+                                               'vehicle': 'hatchback'},
+                           'hub_city_coordinates': [25, 50],
+                           'name': 'Corporate Guard',
+                           'relationships': {   'desert_rats': 'Hostile',
+                                                'the_convoy': 'Hostile',
+                                                'the_junction': 'Neutral',
+                                                'the_vultures': 'Hostile'},
+                           'units': ['sedan', 'armored_truck', 'peacekeeper']},
+    'desert_rats': {   'control': 50,
+                       'faction_boss': {   'damage_multiplier': 3.5,
+                                           'hp_multiplier': 3.0,
+                                           'name': 'Road Captain Fury',
+                                           'vehicle': 'sports_car'},
+                       'hub_city_coordinates': [40, -20],
+                       'name': 'Desert Rats',
+                       'relationships': {   'corporate_guard': 'Hostile',
+                                            'the_convoy': 'Allied',
+                                            'the_junction': 'Neutral',
+                                            'the_vultures': 'Hostile'},
+                       'units': ['motorcycle', 'hotrod', 'muscle_car']},
+    'the_convoy': {   'control': 50,
+                      'faction_boss': {   'damage_multiplier': 2.0,
+                                          'hp_multiplier': 6.0,
+                                          'name': 'The Quartermaster',
+                                          'vehicle': 'truck'},
+                      'hub_city_coordinates': [-40, -35],
+                      'name': 'The Convoy',
+                      'relationships': {   'corporate_guard': 'Hostile',
+                                           'desert_rats': 'Allied',
+                                           'the_junction': 'Neutral',
+                                           'the_vultures': 'Neutral'},
+                      'units': ['truck', 'van', 'panel_wagon']},
+    'the_junction': {   'control': 100,
+                        'faction_boss': None,
+                        'hub_city_coordinates': [0, 0],
+                        'name': 'The Junction',
+                        'relationships': {   'corporate_guard': 'Neutral',
+                                             'desert_rats': 'Neutral',
+                                             'the_convoy': 'Neutral',
+                                             'the_vultures': 'Neutral'},
+                        'units': ['rusty_sedan', 'guard_truck']},
+    'the_vultures': {   'control': 50,
+                        'faction_boss': {   'damage_multiplier': 2.5,
+                                            'hp_multiplier': 5.0,
+                                            'name': 'Scrap King Klaw',
+                                            'vehicle': 'war_rig'},
+                        'hub_city_coordinates': [-30, 30],
+                        'name': 'The Vultures',
+                        'relationships': {   'corporate_guard': 'Hostile',
+                                             'desert_rats': 'Hostile',
+                                             'the_convoy': 'Neutral',
+                                             'the_junction': 'Neutral'},
+                        'units': ['rust_bucket', 'raider_buggy', 'technical']}}
