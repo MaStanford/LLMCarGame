@@ -84,6 +84,8 @@ def generate_city(grid_x, grid_y):
                     break
             
             if not overlaps:
+                # This is the key fix: the 'type' used for interaction checks
+                # should be the building's key, e.g., "mechanic_shop".
                 building_data = {**new_building, "type": building_type, "city_id": cache_key}
                 buildings.append(building_data)
                 occupied_zones.append(new_building)

@@ -106,6 +106,9 @@ class CarApp(App):
             # Check for building interactions
             self.check_building_interaction()
 
+            # --- Reset one-time actions ---
+            gs.actions["fire"] = False
+
         # Update FPS counter
         current_time = time.time()
         self.frame_count += 1

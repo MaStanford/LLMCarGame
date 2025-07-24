@@ -3,6 +3,7 @@ from .pickups import PICKUP_REPAIR, PICKUP_GAS
 BUILDING_DATA = {
     "mechanic_shop": {
         "name": "Mechanic Shop",
+        "type": "mechanic_shop",
         "shop_type": "mechanic",
         "art": [
             "╔════════════════╗",
@@ -19,11 +20,12 @@ BUILDING_DATA = {
     },
     "gas_station": {
         "name": "Gas Station",
+        "type": "gas_station",
         "shop_type": "gas",
         "art": [
             "    .--''''--.    ",
-            "   /   G A S   \\  ",
-            "  /____________\\  ",
+            "   /   G A S   \  ",
+            "  /____________\  ",
             "       |  |       ",
             "    [#]|  | $3.59 ",
             "    [#]|  |~~~>   ",
@@ -34,6 +36,7 @@ BUILDING_DATA = {
     },
     "weapon_shop": {
         "name": "Ammo Shop",
+        "type": "weapon_shop",
         "shop_type": "weapon",
         "art": [
             "╔════════════╗",
@@ -50,10 +53,11 @@ BUILDING_DATA = {
     },
     "city_hall": {
         "name": "City Hall",
+        "type": "city_hall",
         "art": [
-            "      /▲\\      ",
-            "     /:::\\     ",
-            "    /:::::\\    ",
+            "      /▲\      ",
+            "     /:::\     ",
+            "    /:::::\    ",
             " ╔═══════════╗ ",
             " ║   CITY    ║ ",
             " ║   HALL    ║ ",

@@ -76,19 +76,35 @@ class CityHallScreen(ModalScreen):
             quest = self.app.game_state.current_quest
             self.query_one("#quest_list", Static).update("Quest Complete!")
             self.query_one("#quest_info", Static).update(quest.name)
-            self.query_one("#dialog_box", Dialog).update_text(quest.completion_dialog)
+            self.query_one(Dialog).update_text(quest.completion_dialog)
             self.query_one("#accept_quest", Button).label = "Complete Quest"
         else:
-            # (Existing display logic)
-            ...
+            quest_list_str = ""
+            if not self.available_quests:
+                quest_list_str = "No quests available."
+                self.query_one("#quest_info", Static).update("")
+                self.query_one(Dialog).update_text("Seems quiet around here...")
+                self.query_one("#accept_quest", Button).disabled = True
+            else:
+                for i, quest in enumerate(self.available_quests):
+                    if i == self.selected_index:
+                        quest_list_str += f"> {quest.name}\n"
+                    else:
+                        quest_list_str += f"  {quest.name}\n"
+                
+                selected_quest = self.available_quests[self.selected_index]
+                self.query_one("#quest_info", Static).update(selected_quest.description)
+                self.query_one(Dialog).update_text(selected_quest.dialog)
+                self.query_one("#accept_quest", Button).disabled = False
+
+            self.query_one("#quest_list", Static).update(quest_list_str)
+
 
     def action_move_selection(self, amount: int) -> None:
         """Move the selection in the quest list."""
-        if not self.is_turn_in:
-            # This needs to be updated to handle the new button
-            focusable = self.query("Button, Static#quest_list")
-            # ... (logic to cycle focus)
-            pass
+        if not self.is_turn_in and self.available_quests:
+            self.selected_index = (self.selected_index + amount + len(self.available_quests)) % len(self.available_quests)
+            self.update_quest_display()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle accept button presses."""
@@ -101,11 +117,13 @@ class CityHallScreen(ModalScreen):
             return
 
         if self.is_turn_in:
-            # (Existing turn-in logic)
-            ...
+            complete_quest(gs)
+            self.app.pop_screen()
         else:
-            # (Existing accept logic)
-            ...
+            if self.available_quests:
+                selected_quest = self.available_quests[self.selected_index]
+                handle_quest_acceptance(gs, selected_quest)
+                self.app.pop_screen()
 
     def compose(self):
         """Compose the layout of the screen."""
@@ -113,7 +131,7 @@ class CityHallScreen(ModalScreen):
         with Grid(id="city_hall_grid"):
             yield Static("Available Contracts", id="quest_list")
             yield Static("Quest Details", id="quest_info")
-            yield Dialog("", id="dialog_box")
+            yield Dialog("")
             with Vertical():
                 yield Button("Accept", id="accept_quest", variant="primary")
                 yield Button("Challenge Faction Leader", id="challenge_boss", variant="error")

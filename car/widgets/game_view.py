@@ -18,7 +18,7 @@ class GameView(Widget):
 
     def on_mount(self) -> None:
         """Called when the widget is mounted."""
-        self.set_interval(0.5, self.toggle_arrow)
+        self.set_interval(0.35, self.toggle_arrow)
 
     def toggle_arrow(self) -> None:
         """Toggle the arrow's visibility."""
@@ -76,7 +76,7 @@ class GameView(Widget):
             if 0 <= sy < h and 0 <= sx < w:
                 canvas[sy][sx] = particle_char
                 existing_style = styles[sy][sx]
-                styles[sy][sx] = Style.from_color(
+                styles[sy][sx] = Style(
                     color="yellow",
                     bgcolor=existing_style.bgcolor
                 )
