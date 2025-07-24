@@ -1,11 +1,13 @@
+from rich.style import Style
+
 CAR_COLORS = {
-    "CAR_RED": "red",
-    "CAR_GREEN": "green",
-    "CAR_YELLOW": "yellow",
-    "CAR_BLUE": "blue",
-    "CAR_MAGENTA": "magenta",
-    "CAR_CYAN": "cyan",
-    "CAR_WHITE": "white",
+    "CAR_RED": Style(color="red"),
+    "CAR_GREEN": Style(color="green"),
+    "CAR_YELLOW": Style(color="yellow"),
+    "CAR_BLUE": Style(color="blue"),
+    "CAR_MAGENTA": Style(color="magenta"),
+    "CAR_CYAN": Style(color="cyan"),
+    "CAR_WHITE": Style(color="white"),
 }
 
 ATTACHMENT_COLOR_MAP = {

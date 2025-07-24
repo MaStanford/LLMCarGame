@@ -63,7 +63,7 @@ GameView {
 }
 
 #location_hud {
-    width: 20;
+    width: 30;
     height: 1;
     background: $panel;
     text-align: center;

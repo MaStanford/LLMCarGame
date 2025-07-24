@@ -29,7 +29,7 @@ class World:
         city_center_x = grid_x * CITY_SPACING
         city_center_y = grid_y * CITY_SPACING
         if abs(x - city_center_x) < CITY_SIZE / 2 and abs(y - city_center_y) < CITY_SIZE / 2:
-            return TERRAIN_DATA["ROAD"] # Asphalt for city ground
+            return TERRAIN_DATA["CITY_GROUND"] # Asphalt for city ground
 
         # Check for roads
         if abs(x % CITY_SPACING) < ROAD_WIDTH / 2 or abs(y % CITY_SPACING) < ROAD_WIDTH / 2:

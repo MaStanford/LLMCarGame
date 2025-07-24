@@ -14,6 +14,16 @@ class GameView(Widget):
         super().__init__(*args, **kwargs)
         self.game_state = game_state
         self.world = world
+        self.show_arrow = True
+
+    def on_mount(self) -> None:
+        """Called when the widget is mounted."""
+        self.set_interval(0.5, self.toggle_arrow)
+
+    def toggle_arrow(self) -> None:
+        """Toggle the arrow's visibility."""
+        self.show_arrow = not self.show_arrow
+        self.refresh()
 
     def render(self) -> Text:
         """Render the game world."""
@@ -65,7 +75,38 @@ class GameView(Widget):
             sy = int(p_y - world_start_y)
             if 0 <= sy < h and 0 <= sx < w:
                 canvas[sy][sx] = particle_char
-                styles[sy][sx] = Style(color="yellow")
+                existing_style = styles[sy][sx]
+                styles[sy][sx] = Style.from_color(
+                    color="yellow",
+                    bgcolor=existing_style.bgcolor
+                )
+
+        # Render player direction arrow
+        if self.show_arrow:
+            arrow_length = 15
+            # Start drawing the arrow just outside the car's body
+            start_distance = max(gs.player_car.width, gs.player_car.height) // 2
+            player_screen_x = w / 2
+            player_screen_y = h / 2
+            math_angle_rad = gs.car_angle - math.pi / 2
+            
+            for i in range(start_distance, arrow_length):
+                # Calculate the point on the arrow
+                arrow_x = int(player_screen_x + i * math.cos(math_angle_rad))
+                arrow_y = int(player_screen_y + i * math.sin(math_angle_rad))
+                
+                if 0 <= arrow_y < h and 0 <= arrow_x < w:
+                    # Use '*' for the tip, '·' (middle dot) for the shaft
+                    char = "*" if i == arrow_length - 1 else "·"
+                    canvas[arrow_y][arrow_x] = char
+                    
+                    # Explicitly combine foreground color with existing background
+                    existing_style = styles[arrow_y][arrow_x]
+                    new_style = Style(
+                        color="bright_cyan",
+                        bgcolor=existing_style.bgcolor
+                    )
+                    styles[arrow_y][arrow_x] = new_style
 
         # Convert canvas to Rich Text using optimized run-length encoding
         text = Text()
@@ -172,7 +213,7 @@ class GameView(Widget):
             end_sx = start_sx + b_w
             end_sy = start_sy + b_h
             wall_style = self.world.terrain_data["BUILDING_WALL"]["style"]
-            fill_style = Style(bgcolor="rgb(50,50,50)") # Darker fill for generic
+            fill_style = Style(bgcolor="rgb(180,180,180)") # Darker fill for generic
             for sy in range(start_sy, end_sy):
                 for sx in range(start_sx, end_sx):
                     if 0 <= sy < h and 0 <= sx < w:

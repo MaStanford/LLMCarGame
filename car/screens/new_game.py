@@ -187,7 +187,9 @@ class NewGameScreen(Screen):
         car_instance = car_class(x=0, y=0)
         
         # Apply color to the art
-        color = self.selected_color_name.lower().replace("car_", "")
+        color_style = CAR_COLORS[self.selected_color_name]
+        color = color_style.color.name if color_style.color else "white"
+        
         colored_art_dict = {}
         for direction, art_lines in car_instance.art.items():
             colored_art_dict[direction] = [f"[{color}]{line}[/]" for line in art_lines]
