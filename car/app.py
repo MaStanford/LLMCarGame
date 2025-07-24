@@ -96,7 +96,7 @@ class CarApp(App):
                 spawn_obstacle(gs, self.world)
                 gs.obstacle_spawn_timer = random.randint(50, 100)
             
-            quest_notifications = update_quests(gs, self.audio_manager)
+            quest_notifications = update_quests(gs, self.audio_manager, self)
             for notification in quest_notifications:
                 self.screen.query_one("#notifications", Notifications).add_notification(notification)
 

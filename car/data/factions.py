@@ -4,6 +4,7 @@ FACTION_DATA = {
     "crimson_cartel": {
         "name": "Crimson Cartel",
         "hub_city_coordinates": (35, 35), # Moved to a remote location
+        "control": 50,
         "relationships": {
             "blue_syndicate": "Hostile",
             "salvage_core": "Hostile",
@@ -22,6 +23,7 @@ FACTION_DATA = {
     "blue_syndicate": {
         "name": "Blue Syndicate",
         "hub_city_coordinates": (10, 10),
+        "control": 50,
         "relationships": {
             "crimson_cartel": "Hostile",
             "salvage_core": "Neutral",
@@ -40,6 +42,7 @@ FACTION_DATA = {
     "salvage_core": {
         "name": "The Salvage Core",
         "hub_city_coordinates": (-15, 20),
+        "control": 50,
         "relationships": {
             "crimson_cartel": "Hostile",
             "blue_syndicate": "Neutral",
@@ -58,6 +61,7 @@ FACTION_DATA = {
     "rust_prophets": {
         "name": "The Rust Prophets",
         "hub_city_coordinates": (30, -15),
+        "control": 50,
         "relationships": {
             "crimson_cartel": "Hostile",
             "blue_syndicate": "Hostile",
@@ -76,6 +80,7 @@ FACTION_DATA = {
     "dustwind_caravans": {
         "name": "Dustwind Caravans",
         "hub_city_coordinates": (5, -25),
+        "control": 50,
         "relationships": {
             "crimson_cartel": "Hostile",
             "blue_syndicate": "Allied",
@@ -94,6 +99,7 @@ FACTION_DATA = {
     "the_junction": {
         "name": "The Junction",
         "hub_city_coordinates": (0, 0), # New neutral hub at the center
+        "control": 100, # Always stable
         "relationships": {
             "crimson_cartel": "Neutral",
             "blue_syndicate": "Neutral",

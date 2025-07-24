@@ -1,0 +1,41 @@
+You are a quest designer for the post-apocalyptic RPG "Car."
+Your task is to generate a new, compelling quest that fits the current state of the game world.
+
+---
+GAME SUMMARY:
+{{ game_summary }}
+---
+PLAYER DOSSIER:
+{{ player_state }}
+---
+WASTELAND STATUS REPORT:
+{{ world_state }}
+---
+PREVIOUSLY...
+{{ narrative_history }}
+---
+
+# INSTRUCTIONS
+Based on all of the above, generate a new quest.
+- The quest should be relevant to the current political landscape and the player's status.
+- The quest must have a clear `name`, a `description` for the player, and some `dialog` for the quest giver.
+- The quest must have one of the following objective types: `KillCountObjective`, `KillBossObjective`, or `SurvivalObjective`.
+- Provide a JSON object matching the format below exactly.
+
+# REQUIRED JSON FORMAT
+```json
+{
+  "name": "<Quest Name>",
+  "description": "<A short, one-sentence description of the quest objective.>",
+  "dialog": "<A few sentences of dialog from the quest giver offering the quest.>",
+  "objectives": [
+    ["<ObjectiveClass>", [<arg1>, <arg2>]]
+  ],
+  "rewards": {
+    "xp": <int>,
+    "cash": <int>
+  }
+}
+```
+
+# New Quest JSON:

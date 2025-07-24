@@ -2,7 +2,7 @@ import random
 import math
 from .entity_loader import ENEMY_VEHICLES, ENEMY_CHARACTERS, FAUNA, OBSTACLES
 from ..data.game_constants import CITY_SPACING, CITY_SIZE, SAFE_ZONE_RADIUS, DESPAWN_RADIUS
-from ..data.factions import FACTION_DATA
+from ..logic.data_loader import FACTION_DATA
 from ..world.generation import get_city_faction
 
 def _get_distance_to_nearest_city_center(x, y):
@@ -45,12 +45,19 @@ def spawn_enemy(game_state, world):
     # Determine current faction territory and player's reputation
     current_faction_id = get_city_faction(game_state.car_world_x, game_state.car_world_y)
     player_rep = game_state.faction_reputation.get(current_faction_id, 0)
+    faction_control = game_state.faction_control.get(current_faction_id, 50)
 
     # Determine spawn rate based on location and reputation
     dist_to_city = _get_distance_to_nearest_city_center(game_state.car_world_x, game_state.car_world_y)
     
     base_spawn_chance = min(1.0, max(0, dist_to_city - CITY_SIZE) / (CITY_SPACING / 2))
     
+    # Modify spawn chance based on faction control
+    if faction_control < 40:
+        base_spawn_chance *= 1.5 # 50% increase in chaos
+    if faction_control < 20:
+        base_spawn_chance *= 2.0 # 100% increase in chaos
+
     if dist_to_city < CITY_SIZE: # Inside a city
         if player_rep >= 50: # Friendly Hub City
             spawn_chance = 0.0

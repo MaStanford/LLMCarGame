@@ -4,6 +4,7 @@ from textual.binding import Binding
 from ..logic.save_load import save_game
 from .main_menu import MainMenuScreen
 from .quest_detail import QuestDetailScreen
+from .save_game import SaveGameScreen
 
 class PauseScreen(ModalScreen):
     """The pause menu screen."""
@@ -58,9 +59,7 @@ class PauseScreen(ModalScreen):
         elif event.button.id == "quests":
             self.app.push_screen(QuestDetailScreen())
         elif event.button.id == "save_game":
-            save_game(self.app.game_state)
-            self.app.screen.query_one("#notifications").add_notification("Game Saved!")
-            self.app.pop_screen()
+            self.app.push_screen(SaveGameScreen())
         elif event.button.id == "main_menu":
             self.app.stop_game_loop()
             self.app.switch_screen(MainMenuScreen())

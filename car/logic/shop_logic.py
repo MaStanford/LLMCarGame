@@ -1,5 +1,6 @@
 from ..data.weapons import WEAPONS_DATA
 from ..entities.weapon import Weapon
+from ..world.generation import get_city_faction
 
 def purchase_item(game_state, item):
     """Handles the logic for purchasing an item."""
@@ -14,11 +15,24 @@ def purchase_item(game_state, item):
 
 def get_shop_inventory(shop_type, game_state):
     """
-    Gets the inventory for a given shop type.
-    (This is a placeholder - will be expanded later)
+    Gets the inventory for a given shop type, influenced by faction control.
     """
     inventory = []
+    
+    # Determine the local faction and their control level
+    local_faction_id = get_city_faction(game_state.car_world_x, game_state.car_world_y)
+    faction_control = game_state.faction_control.get(local_faction_id, 50)
+    
+    # Price volatility: 0.5 means prices can vary by +/- 50%
+    price_volatility = 0.5 
+    # Price modifier is inversely proportional to control
+    price_modifier = 1 + ((50 - faction_control) / 50) * price_volatility
+
     if shop_type == "weapon_shop":
+        # If faction control is too low, the shop is empty
+        if faction_control < 20:
+            return [] 
+            
         # For now, sell all base weapons
         for weapon_id in WEAPONS_DATA:
             weapon = Weapon(weapon_id)
@@ -28,14 +42,14 @@ def get_shop_inventory(shop_type, game_state):
                 "damage": weapon.damage,
                 "range": weapon.range,
                 "fire_rate": weapon.fire_rate,
-                "price": weapon.price,
+                "price": int(weapon.price * price_modifier),
                 "item_id": weapon_id,
                 "modifiers": weapon.modifiers,
             })
     elif shop_type == "mechanic_shop":
-        inventory.append({"type": "repair", "name": "Full Repair", "price": 100})
+        inventory.append({"type": "repair", "name": "Full Repair", "price": int(100 * price_modifier)})
     elif shop_type == "gas_station":
-        inventory.append({"type": "gas", "name": "Fill Tank", "price": 50})
+        inventory.append({"type": "gas", "name": "Fill Tank", "price": int(50 * price_modifier)})
         
     return inventory
 
@@ -51,3 +65,4 @@ def calculate_sell_price(item, game_state):
     sell_price = int(base_price * 0.5 * reputation_modifier * level_modifier)
     
     return sell_price
+

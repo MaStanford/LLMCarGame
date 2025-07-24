@@ -67,3 +67,20 @@ class Weapon:
     @property
     def slots(self):
         return self.base_stats["slots"]
+
+    def to_dict(self):
+        """Serializes the weapon to a dictionary."""
+        return {
+            "weapon_type_id": self.weapon_type_id,
+            "modifiers": self.modifiers,
+            "instance_id": self.instance_id,
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        """Deserializes a dictionary back into a Weapon object."""
+        return cls(
+            weapon_type_id=data["weapon_type_id"],
+            modifiers=data.get("modifiers"),
+            instance_id=data.get("instance_id"),
+        )

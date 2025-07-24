@@ -9,7 +9,7 @@ from ..data.cosmetics import BUILDING_NAME_CHARS
 from ..data.buildings import BUILDING_DATA
 from ..data.shops import SHOP_DATA
 from ..data.terrain import TERRAIN_DATA
-from ..data.factions import FACTION_DATA
+from ..logic.data_loader import FACTION_DATA
 
 building_cache = {}
 

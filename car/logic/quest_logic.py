@@ -4,7 +4,8 @@ from ..logic.entity_loader import PLAYER_CARS
 from ..entities.base import Entity
 from ..data.game_constants import CITY_SPACING
 from ..world.generation import get_buildings_in_city, get_city_faction
-from ..data.factions import FACTION_DATA
+from ..logic.data_loader import FACTION_DATA
+from . import faction_logic
 
 def get_available_quests(game_state):
     """Generates a list of available quests for the current city."""
@@ -72,7 +73,9 @@ def handle_quest_acceptance(game_state, quest):
                 # audio_manager.stop_music()
                 # audio_manager.play_music("car/sounds/boss.mid")
 
-def update_quests(game_state, audio_manager):
+from ..screens.quest_complete import QuestCompleteScreen
+
+def update_quests(game_state, audio_manager, app):
     """
     Updates the state of the current quest.
     Returns a list of notification messages.
@@ -85,13 +88,13 @@ def update_quests(game_state, audio_manager):
         if game_state.current_quest.completed and not game_state.current_quest.ready_to_turn_in:
             if game_state.current_quest.requires_turn_in:
                 game_state.current_quest.ready_to_turn_in = True
-                notifications.append(f"Objective complete! Return to {get_city_name(*game_state.current_quest.city_id)}.")
+                notifications.append(f"Objective complete! Return to city.")
                 audio_manager.stop_music()
                 audio_manager.play_music("car/sounds/world.mid")
             else:
                 # For quests that complete immediately without turn-in
+                app.push_screen(QuestCompleteScreen(game_state.current_quest))
                 complete_quest(game_state)
-                notifications.append(f"Quest Complete: {game_state.current_quest.name}")
                 audio_manager.stop_music()
                 audio_manager.play_music("car/sounds/world.mid")
 
@@ -101,6 +104,7 @@ def update_quests(game_state, audio_manager):
                 if giver_faction_id not in game_state.faction_reputation:
                     game_state.faction_reputation[giver_faction_id] = 0
                 game_state.faction_reputation[giver_faction_id] -= 5
+                faction_logic.decrease_control(game_state, giver_faction_id, 2) # Control penalty for failure
                 notifications.append(f"Reputation with {FACTION_DATA[giver_faction_id]['name']} decreased.")
             
             notifications.append(f"Quest Failed: {game_state.current_quest.name}")
@@ -179,6 +183,9 @@ def generate_quest(game_state, quest_id):
         next_quest_id=quest_template.get("next_quest_id")
     )
 
+import json
+import os
+
 def complete_quest(game_state):
     """
     Handles the logic for completing a quest.
@@ -189,6 +196,24 @@ def complete_quest(game_state):
     if not quest:
         return
 
+    # --- Log the completed quest for the narrative engine ---
+    quest_log_path = "temp/quest_log.json"
+    try:
+        with open(quest_log_path, "r+") as f:
+            log = json.load(f)
+            log.append(quest.to_dict())
+            f.seek(0)
+            json.dump(log, f, indent=4)
+    except (FileNotFoundError, json.JSONDecodeError):
+        with open(quest_log_path, "w") as f:
+            json.dump([quest.to_dict()], f, indent=4)
+
+    # --- Handle Conquest ---
+    if quest.is_conquest_quest:
+        faction_logic.handle_faction_takeover(
+            game_state, quest.quest_giver_faction, quest.target_faction
+        )
+
     # Grant rewards
     rewards = quest.rewards
     game_state.gain_xp(rewards.get("xp", 0))
@@ -198,9 +223,11 @@ def complete_quest(game_state):
     giver_faction_id = quest.quest_giver_faction
     if giver_faction_id:
         game_state.faction_reputation[giver_faction_id] = game_state.faction_reputation.get(giver_faction_id, 0) + 10
+        faction_logic.increase_control(game_state, giver_faction_id, 5)
     target_faction_id = quest.target_faction
     if target_faction_id:
         game_state.faction_reputation[target_faction_id] = game_state.faction_reputation.get(target_faction_id, 0) - 15
+        faction_logic.decrease_control(game_state, target_faction_id, 5)
 
     # Check for next quest in the chain
     if quest.next_quest_id:

@@ -1,3 +1,7 @@
+import json
+import importlib
+import os
+import shutil
 from textual.app import ComposeResult
 from textual.containers import Vertical, Container
 from textual.screen import Screen
@@ -13,6 +17,8 @@ from ..game_state import GameState
 from ..entities.weapon import Weapon
 from ..world import World
 from ..logic.spawning import spawn_initial_entities
+from ..logic.llm_faction_generator import generate_factions_from_llm
+from .. import data as game_data
 
 
 class NewGameScreen(Screen):
@@ -233,6 +239,22 @@ class NewGameScreen(Screen):
         """Handle button press events."""
         from ..app import WorldScreen # Local import to avoid circular dependency
         if event.button.id == "start_game":
+        
+            # --- Clear temp directory and generate a new world of factions ---
+            if os.path.exists("temp"):
+                shutil.rmtree("temp")
+            os.makedirs("temp")
+            
+            new_faction_data = generate_factions_from_llm()
+            if new_faction_data:
+                # Write the new factions to a temporary file
+                with open("temp/factions.py", "w") as f:
+                    f.write("FACTION_DATA = ")
+                    json.dump(new_faction_data, f, indent=4)
+                
+                # IMPORTANT: We need a way to tell the game to use this new file
+                # This will be handled by modifying the import system or game state loader
+            
             difficulty = self.query_one("#difficulty_select", CycleWidget).options[self.query_one("#difficulty_select", CycleWidget).current_index]
             color_name = self.query_one("#color_select", CycleWidget).options[self.query_one("#color_select", CycleWidget).current_index]
             

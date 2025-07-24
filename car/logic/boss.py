@@ -1,8 +1,11 @@
 import random
-from ..data.factions import FACTION_DATA
-from ..logic.entity_loader import PLAYER_CARS
-from ..entities.base import Entity
-from ..data.quests import Quest, KillBossObjective
+from ..entities.vehicle import Vehicle
+from ..logic.data_loader import FACTION_DATA
+from ..entities.vehicles.war_rig import WarRig
+from ..entities.vehicles.armored_truck import ArmoredTruck
+from ..entities.vehicles.miner import Miner
+from ..entities.vehicles.hotrod import Hotrod
+from ..entities.vehicles.truck import Truck
 
 def check_challenge_conditions(game_state, faction_id):
     """

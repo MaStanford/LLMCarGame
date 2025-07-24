@@ -1,4 +1,4 @@
 pygame
 pyfluidsynth
 mido
-textual
+textualllama-cpp-python

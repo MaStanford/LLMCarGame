@@ -14,11 +14,11 @@ Welcome to Car, a terminal-based, open-world, automotive RPG survival game. Play
     -   **Durability:** Damage accumulates from combat and collisions, repaired at mechanic shops.
     -   **Fuel:** Consumed while driving, refilled at gas stations.
     -   **Ammo:** Required for weapons, purchased at weapon shops.
--   **Faction Warfare:** The wasteland is a dangerous place, dominated by rival factions.
+    -   **Faction Warfare:** The wasteland is a dangerous place, dominated by rival factions.
     -   **Choose Your Allegiance:** The world is controlled by different factions. You can choose to align with one, or play them against each other.
-    -   **Dynamic Reputation:** Your actions have consequences. Completing quests for a faction will earn you their trust, while attacking their patrols or working for their rivals will make you an enemy.
-    -   **Territory Control:** As you gain and lose reputation, the world will change. Help your allies take over enemy territory, or become a feared outcast hunted by all.
--   **Quests:** Accept quests from Faction Leaders in their Hub Cities. Quests will pit you against rival factions and other threats in the wasteland.
+    -   **Dynamic Reputation and Control:** Your actions have consequences. Completing quests for a faction will earn you their trust and increase their **Control** over their territory, making their shops better and their patrols stronger. Working against a faction will make you an enemy and decrease their Control, sowing chaos in their lands.
+    -   **Territory Control:** As you shift the balance of power, the world will change. Help your allies take over enemy territory by completing a "Decisive Battle" quest, or become a feared outcast hunted by all.
+-   **LLM-Powered Quests:** Accept dynamically generated quests from Faction Leaders in their Hub Cities. The game uses a local Large Language Model (LLM) to create quests on the fly, taking into account the current state of the world and your personal quest history to create an emergent, unique narrative for every playthrough.
 -   **Weapon Modifiers:** Weapons can have modifiers that affect their stats, such as damage, fire rate, and range. These can be found as loot or purchased from shops.
 
 ## How to Play
@@ -26,6 +26,7 @@ Welcome to Car, a terminal-based, open-world, automotive RPG survival game. Play
 -   **Movement:** Use the **Arrow Keys** or **WASD** to accelerate, brake, and steer your car.
 -   **Fire Weapons:** Press the **Spacebar** to fire your equipped weapons.
 -   **Inventory:** Press **Tab** to open your inventory and manage your car's attachments and items.
+-   **Factions:** Press **F** to open the Faction Command screen and view the current state of the wasteland.
 -   **Pause Menu:** Press **Esc** to open the pause menu, where you can save, load, or quit the game.
 
 ## Dependencies

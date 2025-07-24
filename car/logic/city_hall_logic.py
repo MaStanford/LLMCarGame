@@ -3,7 +3,7 @@ from ..ui.city_hall import draw_city_hall_menu, draw_quest_briefing
 from ..ui.dialog import draw_dialog_modal
 from ..data.city_info import CITY_INFO
 from .quests import QUEST_TEMPLATES
-from ..data.factions import FACTION_DATA
+from ..logic.data_loader import FACTION_DATA
 from ..world.generation import get_city_faction
 import random
 

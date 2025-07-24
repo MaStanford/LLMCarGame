@@ -169,14 +169,18 @@ The game is built around the **Textual TUI framework**, which provides an event-
     - **`car/ui/cutscene.py`:** Manages **blocking, full-screen cinematic events**. This module is responsible for scenes that take over the entire screen and pause gameplay, such as the "Game Over" sequence or future narrative events.
     - **`car/ui/entity_modal.py`:** Handles the **persistent, non-blocking entity display**. This is a core HUD element that dynamically shows information about the closest enemy or boss during live gameplay. It also contains the logic for playing entity-specific animations, like explosions, within its modal window, ensuring that all aspects of an entity's dynamic visualization are handled in one place.
 
-- **Faction and Reputation System:** The game features a dynamic faction and reputation system that influences gameplay and world state.
-    - **Faction Bosses:** Each major faction has a unique and powerful Faction Boss. Players can challenge these bosses under specific conditions (e.g., extremely low reputation with that faction, or extremely high reputation with a rival). Defeating a Faction Boss is a prerequisite for a hostile takeover of that faction's territory and results in a massive shift in inter-faction reputation.
-    - **Hub Cities and Factions:** The world is anchored by a few non-procedural **Hub Cities**, each serving as the capital for a specific **Faction**. The rest of the world is procedurally generated, with territory control determined by proximity to the nearest Hub City.
-    - **Reputation:** The player's reputation with each faction is tracked in the `GameState`. Reputation is gained by completing quests for a faction and lost by completing quests against them or attacking their units.
-    - **Dynamic Quests:** Quests are dynamically generated based on faction relationships. Faction leaders in Hub Cities offer quests that target their rivals, creating a system of conflict and consequence.
-    - **Faction-Based Spawning:** Enemy spawn rates and types are determined by the player's location and their reputation with the controlling faction. Allied territory is safer, while hostile territory is more dangerous and populated with that faction's specific units.
-    - **Territory Control:** If a player's actions cause a faction's reputation to drop to zero, the faction with the highest player reputation will take over the defeated faction's Hub City, altering the game world.
-    - **Win/Loss Conditions:** The game has clear win/loss states based on the faction system. A player can win by helping their chosen faction achieve total domination or lose by becoming an enemy to all factions.
+- **LLM-Powered World Generation:** The game uses a local Large Language Model (LLM) to generate the entire political landscape and narrative on the fly.
+    - **Genesis Engine:** At the start of a new game, the LLM is called to create a unique set of factions, including their names, ideologies, relationships, and powerful faction bosses. This ensures no two playthroughs are the same.
+    - **Dynamic Save System:** Each new game generates a unique world. This world state (including the generated `factions.py` and `quest_log.json`) is stored in a temporary `temp/` directory during play. When the game is saved, the contents of `temp/` are copied into a dedicated save slot in the `saves/` directory, creating a persistent, unique world for each playthrough.
+    - **Dynamic Data Loading:** A dedicated module, `car/logic/data_loader.py`, intelligently loads game data. It checks for session-specific data in the `temp/` directory first, and falls back to the default data if none is found. This ensures the game always uses the correct data for the current session.
+    - **Living Context Engine:** A dedicated `prompt_builder.py` module dynamically assembles a rich "dossier" for the LLM before any content generation. This dossier includes static lore, the player's current status, the world's political state, and a log of completed quests, ensuring that all generated content is deeply contextual and contributes to an emergent narrative.
+    - **Emergent Narrative:** The system maintains a `quest_log.json` of completed quests. This history is fed back into the prompt, allowing the LLM to generate new quests that form a cohesive, evolving narrative unique to each playthrough.
+    - **Dynamic Content:** This approach provides a virtually endless stream of unique, context-aware factions and quests, making each game a different story.
+
+- **Wasteland Warfare & Conquest:** The core gameplay loop is built around a dynamic power struggle between factions.
+    - **Faction Control:** Player actions directly impact the "Control" score of factions, affecting their economic and military strength.
+    - **Decisive Battles:** When a faction's control drops to a critical level, a rival can offer the player a high-stakes "Decisive Battle" quest to eliminate the faction's leader.
+    - **Conquest:** Winning a Decisive Battle results in a permanent conquest, altering the world map, faction relationships, and the units that spawn in the conquered territory.
 
 - **Coordinate System and Entity Physics:** To ensure consistent and predictable behavior for all in-game objects, the following conventions are strictly followed:
     - **Game World Orientation:** The game operates on a "North-is-Up" principle. An angle of `0` radians corresponds to North. This is in contrast to the standard mathematical convention where `0` radians is East. All physics and rendering calculations must account for this by subtracting `math.pi / 2` from the game angle before using it in standard trigonometric functions (`cos`, `sin`).
@@ -191,16 +195,70 @@ The game is built around the **Textual TUI framework**, which provides an event-
 
 ## Tasks
 
+### **Project: The Ghost in the Machine - A Dynamic, LLM-Powered World**
+
+**Goal:** To overhaul the game's core progression by integrating a local LLM to generate quests and a new "Faction Control" system to make the world react to the player's choices.
+
+**Phase 1: Foundational Architecture & Data**
+- [x] **Create Directory Structure:** Create a new top-level directory named `prompts/` to store all our LLM-related templates and context files.
+- [x] **Create Prompt Context:** Inside `prompts/`, create a new file, `game_context.txt`. This file will contain a concise, LLM-friendly summary of the game's world, mechanics, and factions, distilled from `GEMINI.md`.
+- [x] **Create Quest Prompt Template:** Create `prompts/quest_prompt.txt`. This will be the master template for generating quests.
+- [x] **Update `GameState`:** Add the `faction_control` dictionary to `car/game_state.py`.
+- [x] **Update `FACTION_DATA`:** Add a default `control` value to each faction in `car/data/factions.py`.
+- [x] **Install LLM Library:** Add `llama-cpp-python` to `requirements.txt`.
+
+**Phase 2: Logic Implementation**
+- [x] **Create `faction_logic.py`:** This new module will house the functions for increasing and decreasing Faction Control.
+- [x] **Create `llm_quest_generator.py`:** This new module will contain the core `generate_quest_from_llm` function.
+- [x] **Integrate Control with Quests:** Modify `car/logic/quest_logic.py` to call the new Faction Control functions upon quest completion or failure.
+- [x] **Implement Quest Log:** Update `car/logic/save_load.py` to manage the new `quest_log.json` file.
+
+**Phase 3: Making it All Matter (World Impact)**
+- [x] **Dynamic Shops & Spawning:** Modify `car/logic/shop_logic.py` and `car/logic/spawning.py` to read the Faction Control scores and adjust their behavior accordingly.
+- [x] **Implement Conquest:** Implement the "Decisive Battle" quest and the `handle_faction_takeover` logic.
+
+**Phase 4: UI, Documentation, and Final Integration**
+- [x] **Integrate LLM into City Hall:** Replace the old quest generation in `car/screens/city_hall.py` with a call to our new LLM-powered generator.
+- [x] **Update UI:** Update the Factions UI and the Quest Briefing screen to display the new Faction Control information.
+- [x] **Update Documentation:** Thoroughly update `README.md` and `GEMINI.md` to document this groundbreaking new system.
+
+### **Project: The Genesis Engine - LLM-Powered Faction Generation**
+
+**Goal:** To extend the "Ghost in the Machine" system to allow the LLM to generate the factions themselves at the start of a new game, with a robust save/load system to manage these unique worlds.
+
+**Phase 1: The "Live Session" Architecture**
+- [x] **Create Temporary Directory:** Create a `temp/` directory for live session data and add it to `.gitignore`.
+- [x] **Modify New Game Flow:** Update the `NewGameScreen` to generate factions and write them to `temp/factions.py`.
+- [x] **Create Dynamic Data Loader:** Create `car/logic/data_loader.py` to intelligently load session-specific data from `temp/`.
+- [x] **Refactor Imports:** Update all modules to use the new data loader instead of direct imports.
+
+**Phase 2: The "Save Slot" Architecture**
+- [x] **Create Save Game Directory:** Create a `saves/` directory to store all save game slots.
+- [x] **Implement "Save Game" Logic:** Overhaul `save_load.py` to save all session files from `temp/` into a named save slot directory.
+- [x] **Implement "Load Game" Logic:** Overhaul `save_load.py` to copy files from a named save slot into `temp/` and then load the game.
+- [x] **Update UI:** Refactor the `LoadGameScreen` and `PauseMenuScreen` to use the new save slot system.
+
+### **Project: The Living Context Engine**
+
+**Goal:** To create a system that dynamically builds a rich, stateful context prompt every time we need to generate content from the LLM.
+
+**Phase 1: Implementation**
+- [x] **Create `prompt_builder.py`:** Create a central module to assemble dynamic contexts.
+- [x] **Create `quest_log.json`:** Create the initial temporary quest log.
+- [x] **Update Prompt Templates:** Refactor prompt templates to use dynamic placeholders.
+- [x] **Integrate Prompt Builder:** Refactor the LLM generator modules to use the new builder.
+
+### **Project: The Commander's Dashboard - Polishing the Player Experience**
+
+**Goal:** To create all the necessary UI elements and feedback loops for the player to understand, track, and influence the dynamic faction and quest systems.
+
+**Phase 1: UI Implementation**
+- [x] **Create Faction Command Screen:** Build a dedicated modal screen, bound to the 'f' key, for viewing detailed faction intelligence.
+- [x] **Enhance HUD:** Integrate a territory display, boss compass, and quest objective tracker into the existing HUD elements.
+- [x] **Implement Immersive Quest Flow:** Create a quest briefing screen and a quest completion summary screen.
+- [x] **Build Save/Load UI:** Create a modal for naming save games.
 
 ### General Tasks
-- [ ] **Combat system** 
-    - [ ] For minor enemies open world combat. Running away just means getting out of aggro range. 
-    - [ ] For major enemioes, combat system modal when in range, short range like pokemon battles. 
-        - [ ] Phase based combat
-        - [ ] Enemy dialog in phases
-        - [ ] Enemy tactic and weapon changes in phases
-        - [ ] Phases based off enemy health, or player health, or time or other factors
-        - [ ] You can try to run, failing quest if in a quest, but otherwise surviving. 
 - [ ] **Neutral city**
     - [ ] 0,0 is a neutral hub city. Quests help no faction. Shops don't have faction bonuses. This city will always be neutral and always have 0 spawn chance. 
 - [ ] **Add shop keeper dialog:**, they will say something when we get in the shop. This is shop and faction specific and dynamically generated. 
@@ -234,194 +292,16 @@ The game is built around the **Textual TUI framework**, which provides an event-
     - [ ] Swamp
     - [ ] Factions will determine the terrain type. It is immersive so the deserts rats always have a lot fo desert and sand
     - [ ] Add Faction property that is terrain and percent chance
+- [ ] **Combat system** 
+    - [ ] For minor enemies open world combat. Running away just means getting out of aggro range. 
+    - [ ] For major enemioes, combat system modal when in range, short range like pokemon battles. 
+        - [ ] Phase based combat
+        - [ ] Enemy dialog in phases
+        - [ ] Enemy tactic and weapon changes in phases
+        - [ ] Phases based off enemy health, or player health, or time or other factors
+        - [ ] You can try to run, failing quest if in a quest, but otherwise surviving. 
 
 ## Completed Tasks
-
-- [x] Implement Main Menu UI.
-- [x] Design and implement the save/load system.
-- [x] Create the "New Game" setup flow.
-- [x] Develop the initial car and weapon selection system.
-- [x] Build the foundational procedural world generator.
-- [x] Implement the in-game Inventory Menu (Tab).
-- [x] Implement the in-game Pause Menu (Esc).
-- [x] Implement a cutscene system for events like explosions, deaths, and NPC interactions.
-- [x] Use the cutscene system for NPC dialog and quest interactions.
-- [x] Implement a boss system with a compass pointer and on-screen health bar.
-- [x] Use the cutscene system to display boss encounters.
-- [x] Use the cutscene system for item pickups, level-ups, and entering new areas.
-- [x] Implement the Quest system.
-- [x] Implement NPCs and Fauna.
-- [x] Implement advanced car customization.
-- [x] Implement the economy system.
-- [x] Add pickable colors to player car.
-- [x] Make entity unicode character have the same background color as the environment they are on.
-- [x] Add music and sound effects.
-- [x] Add 8-directional art for weapons and render them on the car.
-- [x] Create a launch script for all operating systems.
-- [x] Fix all known bugs.
-- [x] **Refine City Generation:**
-    - [x] Ensure required buildings (Gas, Ammo, Repair, City Hall) are present in every city.
-    - [x] Reduce the overall size of cities.
-    - [x] Make the ground in cities asphalt instead of grass.
-- [x] **Improve Roads:**
-    - [x] Make roads wider.
-    - [x] Verify that roads correctly increase speed and decrease fuel consumption.
-- [x] **Enhance Cutscenes:**
-    - [x] Change the explosion cutscene to a non-blocking overlay in the bottom-left of the screen.
-    - [x] Ensure the boss encounter cutscene is a non-blocking overlay in the bottom-right.
-    - [x] Implement a dynamic entity display modal that shows the name and hit points of the nearest entity within a "cutscene radius".
-    - [x] Prioritize bosses in the cutscene modal, showing them even if other entities are closer.
-- [x] **Refine weapons:**
-    - [x] Add Car stat for max attachments
-    - [x] Add car stat that is list of attachment points
-    - [x] Initial state is defined that shows a list of attachment points, and the level of attachment at that point
-    - [x] Allow attachments to be modified for a price at repair stores. 
-- [x] **Implement Weapon Scaling and Modifier System:**
-    - [x] Shops will carry weapons with modifiers based on player level and town reputation.
-    - [x] Enemies and bosses will have a chance to drop weapons with randomly generated modifiers.
-- [x] **Show game over dialog with qoute when you die and prompt for new game, load, or quit**
-- [x] **Add map modal:**
-    - [x] Create a map modal that can be opened with a key press.
-    - [x] The map should show the player's current location, as well as the locations of known towns and hubs.
-    - [x] The player should be able to select a town or hub from the map to set the compass to that location.
-- [x] **Introduce story elements to quests:**
-    - [x] Add dialog story to quest when we first are offered quest
-    - [x] Add quest story modal when we select the quest in menu
-    - [x] Add complete quest dialog when we return to the quest giver.
-    - [x] After completing the quest, give compass arrow to the quest giver to get reward and complete dialog.
-    - [x] Allow quit quest option from quest giver or menu quest modal before the quest is finished
-- [x] **Introduce multipart quests:**
-    - [x] Quests can point to another quest for multi part quests, add next quest field, if empty this is final quest and complete reward can be given
-    - [x] When returning to quest giver after completing a quest, another quest will automatically start if multipart. 
-    - [x] Cancelling one quest, cancells the whole chain. 
-- [x] **The Grand Inventory UX Refactor**
-    - [x] **Display Attachment Size:** The "Current Loadout" list will be modified to display the size of an attachment point (e.g., "Light", "Medium") if the slot is empty.
-    - [x] **Scrolling Inventory:** The player's inventory list will be made vertically scrollable to accommodate a large number of items.
-    - [x] **Weapon Info Modifiers:** The `WeaponInfo` panel will be enhanced to display a weapon's modifiers, if any exist.
-    - [x] **Comprehensive Stats Panel:** The stats panel will be expanded to include the current quest, player level, XP, and a detailed breakdown of all ammo counts.
-    - [x] **Refined Input:** The key bindings will be updated. 'A' and 'D' will rotate the car preview, while 'Left' and 'Right' will switch focus between the loadout and inventory lists.
-    - [x] **State Machine for Equipping:** The core logic will be rebuilt as a simple state machine to handle all equipping and unequipping actions in an intuitive way.
-    - [x] **Flashing Attachment Markers:** The car preview will be enhanced with a new visual system.
-- [x] **Finish unfinished AI behaviors:**
-    - [x] _execute_patrol_behavior
-    - [x] _execute_deploy_mine_behavior
-- [x] **Faction boss**
-    - [x] You can fight the faction leader for massive faction score for winning or losing. This is an epic boss and is actually needed to take over a faction once it's at 0 rep. Each faction has a different faction boss with immense stats. 
-    - [x] If you challenge them before their rep is 0, it's stats will be even more increased. But it will have a massive rep gain or loss, and if it brings it to 0 you still need to fight him he will just have less stats for the final fight like normal.  
-
-
-### **Project: Migration to Textual TUI Framework**
-
-**Goal:** To perform a complete architectural migration from `curses` to the Textual framework. All UI elements, including menus, modals, and HUDs, will be rebuilt as interactive Textual widgets with a consistent, mouse-aware design. The result will be a stable, cross-platform, and modern application.
-
-
-**Phase 1: Core Application & Game World**
-
-- [ ] **Task 1: Foundational Setup**
-    - [x] Add `textual` to `requirements.txt`.
-    - [x] Create `car/app.py` to define the main `CarApp(App)` class. This will be our new entry point.
-    - [x] Modify `car/__main__.py` to launch `CarApp`.
-
-- [x] **Task 2: The `GameView` Widget**
-    - [x] Create `car/widgets/game_view.py` and define a `GameView(Widget)`.
-    - [x] This widget's sole responsibility is to render the game world (terrain, entities, particles) based on the `GameState`. It will replace the old `render_game` function.
-
-- [x] **Task 3: Game Loop Integration**
-    - [x] In `CarApp`, use `set_interval` to call a new `update_game` method at a fixed rate (e.g., 30 FPS).
-    - [x] This `update_game` method will contain all our existing game logic calls: `update_physics_and_collisions`, `spawn_enemy`, `update_quests`, etc. After updating the state, it will trigger a refresh of all visible widgets.
-
-- [x] **Task 4: Initial Layout & Styling**
-    - [x] Create `car/app.css` to define the application's visual style.
-    - [x] Create a `DefaultScreen(Screen)` that uses a `Grid` layout to hold the main game interface.
-    - [x] Compose the `GameView` as the base layer of this grid.
-
-**Phase 2: HUD, Modals, and Overlays**
-
-- [x] **Task 5: The `HUD` Widget**
-    - [x] Create `car/widgets/hud.py` and define a `HUD(Widget)`.
-    - [x] This widget will display all the player's stats (Durability, Gas, Speed, Cash, Ammo, etc.). It will be a reactive widget that automatically updates when the corresponding values in `GameState` change.
-
-- [x] **Task 6: The `Controls` Widget**
-    - [x] Create `car/widgets/controls.py` and define a `Controls(Widget)`.
-    - [x] This will display the game controls ("WASD: Steer", "SPACE: Fire") in the top-left corner. Each control will be a styled, non-functional `Button` to provide a clear, interactive look.
-
-- [x] **Task 7: The `EntityModal` Widget**
-    - [x] Create `car/widgets/entity_modal.py` and define an `EntityModal(Widget)`.
-    - [x] This widget will replace the old `draw_entity_modal` logic. It will be positioned in the bottom-right and will reactively display the name, art, and health bar of the closest enemy or boss.
-
-- [x] **Task 8: The `Explosion` Widget**
-    - [x] Create `car/widgets/explosion.py` and define an `Explosion(Widget)`.
-    - [x] When an enemy is destroyed, the game will now mount a new `Explosion` widget at the entity's last position.
-    - [x] The widget's `on_mount` event will use a series of `set_timer` calls to animate the explosion frames and then remove itself (`self.remove()`) when the animation is complete. This replaces the old `play_explosion_in_modal` logic.
-
-- [x] **Task 9: Update `DefaultScreen` Layout**
-    - [x] Add the `HUD`, `Controls`, and `EntityModal` widgets to the `DefaultScreen`'s grid layout, ensuring they are correctly positioned as overlays on top of the `GameView`.
-
-**Phase 3: Menus and Interactive Screens**
-
-- [x] **Task 10: The `WeaponInfo` Widget**
-    - [x] Create `car/widgets/weapon_info.py` and define a `WeaponInfo(Widget)`.
-    - [x] This will be a reusable component that displays the stats of a given weapon. It will be used in the Inventory, Shop, and New Game screens.
-
-- [x] **Task 11: The Main Menu Screen**
-    - [x] Create `car/screens/main_menu.py` and define a `MainMenuScreen(Screen)`.
-    - [x] Re-implement the "New Game," "Load Game," and "Quit" options as large, centered, mouse-clickable `Button`s.
-    - [x] The `on_button_pressed` event handlers will trigger the appropriate app-level actions (e.g., `self.app.push_screen(NewGameScreen())`).
-
-- [x] **Task 12: The New Game & Load Game Screens**
-    - [x] Create `car/screens/new_game.py` and `car/screens/load_game.py`.
-    - [x] Rebuild these interfaces using Textual widgets (`Select`, `Button`, etc.) and integrate the `WeaponInfo` widget into the new game screen.
-
-- [x] **Task 13: The Pause Menu Screen**
-    - [x] Create `car/screens/pause_menu.py` and define a `PauseScreen(ModalScreen)`.
-    - [x] Rebuild the pause options as `Button`s. The `on_button_pressed` handlers will resume the game (`self.app.pop_screen()`), save, or quit.
-
-- [x] **Task 14: The Inventory Screen**
-    - [x] Create `car/screens/inventory.py` and define an `InventoryScreen(ModalScreen)`.
-    - [x] This will be a complex, multi-pane layout using Textual's grid system to display the car preview, attachment list, inventory, and stats. The `WeaponInfo` widget will be used here.
-
-- [x] **Task 15: The Shop & City Hall Screens**
-    - [x] Create `car/screens/shop.py` and `car/screens/city_hall.py`.
-    - [x] Rebuild these interfaces with a consistent two-panel layout: one for the list of items/quests, and one for the detailed view (using the `WeaponInfo` widget for the shop). Both will feature a dialog box at the bottom for NPC text.
-
-**Phase 4: Finalization & Cleanup**
-
-- [x] **Task 16: Input & Event Binding**
-    - [x] Replace all remaining logic from `car/logic/input.py` with Textual's event bindings (`on_key`, `on_button_pressed`).
-    - [x] Delete `car/logic/input.py`.
-
-- [x] **Task 17: Code Removal & Refactoring**
-    - [x] Systematically delete the entire `car/rendering` directory.
-    - [x] Delete all files in `car/ui` as they are replaced by their `widget` or `screen` counterparts.
-    - [x] Remove `curses` and `windows-curses` from all `requirements` files.
-
-- [x] **Task 18: Documentation Update**
-    - [x] Thoroughly update `GEMINI.md` to reflect the new Textual-based architecture, including the widget hierarchy, event flow, and CSS styling approach.
-
-### Stage 1: Faction and Reputation Foundation (Completed)
-- [x] **Create `FACTION_DATA`:** Create a new file, `car/data/factions.py`, to define factions, their Hub City coordinates, and their relationships.
-- [x] **Update `GameState`:** Replace `town_reputation` with `faction_reputation` in `car/game_state.py`.
-- [x] **Update World Generation:** Modify `car/world/generation.py` to include a `get_city_faction` function that determines a city's faction based on proximity to a Hub City.
-- [x] **Update Quest Logic:** Modify the `Quest` class in `car/logic/quests.py` to include `quest_giver_faction` and `target_faction`.
-- [x] **Update Reputation Gain:** Modify the quest completion logic in `car/logic/quest_logic.py` to correctly increase reputation with the `quest_giver_faction`.
-
-### Stage 2: Conflict and Consequences (Completed)
-- [x] **Implement Opposed Quests:** Generate quests that target rival factions based on the `FACTION_DATA` relationships.
-- [x] **Implement Reputation Loss:** Add logic to handle losing reputation by completing opposed quests or attacking allied units.
-- [x] **Implement Quest Failure:** Add timers and escape conditions to quests, and apply reputation penalties on failure.
-
-### Stage 3: Dynamic World and Territory Control (Completed)
-- [x] **Implement Faction-Based Spawning:** Refactor the `spawn_enemy` logic to change spawn rates and enemy types based on the player's location and faction alignment.
-- [x] **Implement Territory Takeover:** Create the logic for a faction to take over a rival's Hub City when their reputation with the player drops to zero.
-- [x] **Implement Win/Lose Conditions:** Define the final win state (chosen faction dominates) and lose state (player is hostile with all factions).
-
-### Stage 4: Immersive Faction & Quest UX (Completed)
-- [x] **Create Data Structures:** Create `car/data/city_info.py` to store descriptive text for towns and hubs, preparing for future API integration.
-- [x] **Implement Faction Status UI:** Add a "Factions" tab to the inventory menu to display player reputation with all known factions.
-- [x] **Create City Hall Interaction Logic:** Develop a new, dedicated module (`car/logic/city_hall_logic.py`) to manage the multi-step interaction flow within City Halls.
-- [x] **Create City Hall UI:** Develop a new UI module (`car/ui/city_hall.py`) with functions to draw the main dialog, the town info box, and the detailed quest briefing screen.
-- [x] **Integrate Quest Briefing:** Connect the dynamic quest generation to the new briefing screen, allowing players to see rewards and consequences before accepting a contract.
-- [x] **Update Main Game Loop:** Replace the old quest interaction call with the new, more comprehensive City Hall interaction system.
 
 ## Roadmap
 

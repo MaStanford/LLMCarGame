@@ -6,6 +6,7 @@ from ..widgets.item_list import ItemListWidget
 from ..widgets.item_info import ItemInfoWidget
 from ..widgets.menu_stats_hud import MenuStatsHUD
 from ..logic.entity_loader import PLAYER_CARS
+from ..logic.data_loader import FACTION_DATA
 
 class InventoryScreen(ModalScreen):
     """The inventory screen."""
@@ -78,6 +79,13 @@ class InventoryScreen(ModalScreen):
         
         # Stats
         self.query_one(MenuStatsHUD).update_stats(gs)
+        
+        # Factions
+        faction_info_str = "[bold]Faction Standings[/bold]\n\n"
+        for faction_id, control in gs.faction_control.items():
+            faction_name = FACTION_DATA.get(faction_id, {}).get("name", "Unknown")
+            faction_info_str += f"{faction_name}: {control}% Control\n"
+        self.query_one("#faction_info", Static).update(faction_info_str)
 
     def get_art_for_angle(self, car_instance, angle):
         """Gets the correct vehicle art for a given angle."""
@@ -247,4 +255,5 @@ class InventoryScreen(ModalScreen):
                     yield ItemListWidget(id="inventory")
                 yield ItemInfoWidget(id="item_info")
                 yield MenuStatsHUD(id="stats")
+                yield Static(id="faction_info", classes="panel")
         yield Footer()

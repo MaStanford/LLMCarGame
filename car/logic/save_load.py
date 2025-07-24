@@ -1,34 +1,78 @@
-import pickle
 import os
+import shutil
+import json
+from ..game_state import GameState
 
-SAVE_DIR = "saves"
+SAVES_DIR = "saves"
+TEMP_DIR = "temp"
+GAME_STATE_FILE = "save_game.json"
+FACTIONS_FILE = "factions.py"
+QUEST_LOG_FILE = "quest_log.json"
 
-def save_game(game_state):
-    """Saves the game state to a file."""
-    if not os.path.exists(SAVE_DIR):
-        os.makedirs(SAVE_DIR)
-    
-    save_files = sorted([f for f in os.listdir(SAVE_DIR) if f.endswith(".sav")], reverse=True)
-    next_save_num = 1
-    if save_files:
-        try:
-            next_save_num = int(save_files[0].replace("save", "").replace(".sav", "")) + 1
-        except ValueError:
-            pass # If the latest save file is not a number, we'll just use 1
-            
-    save_path = os.path.join(SAVE_DIR, f"save{next_save_num}.sav")
-    
-    with open(save_path, "wb") as f:
-        pickle.dump(game_state, f)
-
-def load_game(save_file):
-    """Loads a game state from a file."""
-    save_path = os.path.join(SAVE_DIR, save_file)
-    with open(save_path, "rb") as f:
-        return pickle.load(f)
-
-def get_save_files():
-    """Returns a list of save files."""
-    if not os.path.exists(SAVE_DIR):
+def get_save_slots():
+    """Returns a list of available save slot names."""
+    if not os.path.exists(SAVES_DIR):
         return []
-    return sorted([f for f in os.listdir(SAVE_DIR) if f.endswith(".sav")])
+    return sorted([d for d in os.listdir(SAVES_DIR) if os.path.isdir(os.path.join(SAVES_DIR, d))])
+
+def save_game(game_state, save_name):
+    """
+    Saves the current game session to a named save slot.
+    
+    This involves creating a new directory for the save slot and copying all
+    dynamically generated session files from the 'temp/' directory into it.
+    """
+    if not save_name:
+        return # Can't save without a name
+
+    save_slot_dir = os.path.join(SAVES_DIR, save_name)
+    
+    # Create the save slot directory, overwriting if it exists
+    if os.path.exists(save_slot_dir):
+        shutil.rmtree(save_slot_dir)
+    os.makedirs(save_slot_dir)
+
+    # --- 1. Save the core GameState object ---
+    # We need a custom serializer for the GameState
+    game_state_dict = game_state.to_dict()
+    with open(os.path.join(save_slot_dir, GAME_STATE_FILE), "w") as f:
+        json.dump(game_state_dict, f, indent=4)
+
+    # --- 2. Copy dynamic world files from temp to the save slot ---
+    for filename in [FACTIONS_FILE, QUEST_LOG_FILE]:
+        temp_path = os.path.join(TEMP_DIR, filename)
+        if os.path.exists(temp_path):
+            shutil.copy(temp_path, save_slot_dir)
+
+def load_game(save_name):
+    """
+    Loads a game session from a named save slot.
+
+    This involves clearing the 'temp/' directory and copying all files
+    from the save slot into it, ensuring the session runs on the correct
+    world data.
+    """
+    save_slot_dir = os.path.join(SAVES_DIR, save_name)
+    if not os.path.exists(save_slot_dir):
+        return None # Save not found
+
+    # --- 1. Clear the temp directory ---
+    if os.path.exists(TEMP_DIR):
+        shutil.rmtree(TEMP_DIR)
+    os.makedirs(TEMP_DIR)
+
+    # --- 2. Copy all files from the save slot to temp ---
+    for item in os.listdir(save_slot_dir):
+        s = os.path.join(save_slot_dir, item)
+        d = os.path.join(TEMP_DIR, item)
+        if os.path.isdir(s):
+            shutil.copytree(s, d, symlinks=True)
+        else:
+            shutil.copy2(s, d)
+            
+    # --- 3. Load the GameState object ---
+    game_state_path = os.path.join(TEMP_DIR, GAME_STATE_FILE)
+    with open(game_state_path, "r") as f:
+        game_state_dict = json.load(f)
+    
+    return GameState.from_dict(game_state_dict)

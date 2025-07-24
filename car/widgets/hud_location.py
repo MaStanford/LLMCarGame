@@ -1,27 +1,21 @@
 from textual.widgets import Static
-from textual.reactive import reactive
+from ..world.generation import get_city_faction
+from ..logic.data_loader import FACTION_DATA
 
-class LocationHUD(Static):
-    can_focus = False
-    """A widget to display the player's current location."""
+class HudLocation(Static):
+    """A widget to display the player's current location and faction territory."""
 
-    x = reactive(0)
-    y = reactive(0)
-    city_name = reactive("")
-
-    def watch_x(self, value: int) -> None:
-        self.update_location()
-
-    def watch_y(self, value: int) -> None:
-        self.update_location()
-    
-    def watch_city_name(self, value: str) -> None:
-        self.update_location()
+    def on_mount(self) -> None:
+        """Event handler called when widget is added to the app."""
+        self.update_timer = self.set_interval(1, self.update_location)
 
     def update_location(self) -> None:
-        """Update the location text."""
-        if self.city_name:
-            self.update(f"{self.city_name} ({self.x}, {self.y})")
-        else:
-            self.update(f"Location: ({self.x}, {self.y})")
-
+        """Update the displayed location."""
+        if not self.app.game_state:
+            return
+            
+        gs = self.app.game_state
+        faction_id = get_city_faction(gs.car_world_x, gs.car_world_y)
+        faction_name = FACTION_DATA.get(faction_id, {}).get("name", "The Wasteland")
+        
+        self.update(f"Location: [bold]{faction_name}[/bold]")

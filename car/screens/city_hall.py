@@ -4,7 +4,9 @@ from textual.widgets import Header, Footer, Static, Button
 from textual.containers import Grid, Vertical
 from textual.binding import Binding
 from ..widgets.dialog import Dialog
-from ..logic.quest_logic import get_available_quests, handle_quest_acceptance, complete_quest
+from ..logic.quest_logic import handle_quest_acceptance, complete_quest
+from ..logic.llm_quest_generator import generate_quest_from_llm
+from ..logic.faction_logic import get_conquest_quest
 from ..logic.boss import check_challenge_conditions, spawn_faction_boss
 from ..data.game_constants import CITY_SPACING
 from ..world.generation import get_city_faction, get_buildings_in_city
@@ -36,7 +38,15 @@ class CityHallScreen(ModalScreen):
             self.is_turn_in = True
         else:
             self.is_turn_in = False
-            self.available_quests = get_available_quests(gs)
+            
+            # Check for a high-stakes conquest quest first
+            conquest_quest = get_conquest_quest(gs)
+            if conquest_quest and conquest_quest.quest_giver_faction == self.current_city_faction:
+                self.available_quests = [conquest_quest]
+            else:
+                # Generate 3 normal quests using the LLM
+                self.available_quests = [generate_quest_from_llm(gs, self.current_city_faction) for _ in range(3)]
+
             self.can_challenge = check_challenge_conditions(gs, self.current_city_faction)
         
         self.update_quest_display()
