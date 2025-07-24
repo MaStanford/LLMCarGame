@@ -2,8 +2,9 @@ from textual.screen import ModalScreen
 from textual.widgets import Header, Footer, Static
 from textual.containers import Grid, Vertical, ScrollableContainer
 from textual.binding import Binding
-from ..widgets.weapon_list import WeaponListWidget
-from ..widgets.weapon_info import WeaponInfo
+from ..widgets.item_list import ItemListWidget
+from ..widgets.item_info import ItemInfoWidget
+from ..widgets.menu_stats_hud import MenuStatsHUD
 from ..logic.entity_loader import PLAYER_CARS
 
 class InventoryScreen(ModalScreen):
@@ -65,31 +66,18 @@ class InventoryScreen(ModalScreen):
         car_preview.update(art)
         
         # Attachments
-        attachments_widget = self.query_one("#attachments", WeaponListWidget)
-        attachments_widget.weapons = [
+        attachments_widget = self.query_one("#attachments", ItemListWidget)
+        attachments_widget.items = [
             {"name": f"{i+1}. {point_data['name']}: {weapon.name if weapon else '(' + point_data['level'] + ')'}"}
             for i, (point_data, weapon) in enumerate(zip(gs.attachment_points.values(), gs.mounted_weapons.values()))
         ]
         
         # Inventory
-        inventory_widget = self.query_one("#inventory", WeaponListWidget)
-        inventory_widget.weapons = gs.player_inventory
+        inventory_widget = self.query_one("#inventory", ItemListWidget)
+        inventory_widget.items = gs.player_inventory
         
         # Stats
-        stats = self.query_one("#stats", Static)
-        ammo_str = "\n".join([f"- {ammo_type}: {count}" for ammo_type, count in gs.ammo_counts.items()])
-        stats_str = f"""
-        Quest: {gs.current_quest.name if gs.current_quest else 'None'}
-        Level: {gs.player_level}
-        XP: {gs.current_xp}/{gs.xp_to_next_level}
-
-        Durability: {gs.current_durability}/{gs.max_durability}
-        Gas: {gs.current_gas:.0f}/{gs.gas_capacity}
-        
-        Ammo:
-        {ammo_str}
-        """
-        stats.update(stats_str)
+        self.query_one(MenuStatsHUD).update_stats(gs)
 
     def get_art_for_angle(self, car_instance, angle):
         """Gets the correct vehicle art for a given angle."""
@@ -113,7 +101,7 @@ class InventoryScreen(ModalScreen):
         # Create a mutable grid of characters
         grid = [list(line) for line in art_lines]
 
-        attachments_widget = self.query_one("#attachments", WeaponListWidget)
+        attachments_widget = self.query_one("#attachments", ItemListWidget)
         selected_slot_index = attachments_widget.selected_index
 
         for i, (point_name, point_data) in enumerate(car_instance.attachment_points.items()):
@@ -133,8 +121,8 @@ class InventoryScreen(ModalScreen):
 
     def update_focus(self) -> None:
         """Update the visual focus indicator."""
-        inv_widget = self.query_one("#inventory", WeaponListWidget)
-        att_widget = self.query_one("#attachments", WeaponListWidget)
+        inv_widget = self.query_one("#inventory", ItemListWidget)
+        att_widget = self.query_one("#attachments", ItemListWidget)
         
         if self.focused_list == "inventory":
             inv_widget.border_title = "Inventory (Selected)"
@@ -147,43 +135,28 @@ class InventoryScreen(ModalScreen):
         """Move the selection in the currently focused list."""
         self.unequip_confirmation_slot = None # Cancel unequip on move
         if self.focused_list == "inventory":
-            widget = self.query_one("#inventory", WeaponListWidget)
+            widget = self.query_one("#inventory", ItemListWidget)
         else:
-            widget = self.query_one("#attachments", WeaponListWidget)
+            widget = self.query_one("#attachments", ItemListWidget)
         
-        if widget.weapons:
-            widget.selected_index = (widget.selected_index + amount + len(widget.weapons)) % len(widget.weapons)
-            self.update_weapon_info()
+        if widget.items:
+            widget.selected_index = (widget.selected_index + amount + len(widget.items)) % len(widget.items)
+            self.update_item_info()
 
-    def update_weapon_info(self) -> None:
+    def update_item_info(self) -> None:
         """Update the weapon info panel based on the current selection."""
-        weapon_to_display = None
+        item_to_display = None
         
         if self.focused_list == "inventory":
-            widget = self.query_one("#inventory", WeaponListWidget)
-            if widget.weapons:
-                weapon_to_display = widget.weapons[widget.selected_index]
+            widget = self.query_one("#inventory", ItemListWidget)
+            item_to_display = widget.selected_item
         else: # attachments
-            widget = self.query_one("#attachments", WeaponListWidget)
-            if widget.weapons:
+            widget = self.query_one("#attachments", ItemListWidget)
+            if widget.items:
                 slot_name = list(self.app.game_state.mounted_weapons.keys())[widget.selected_index]
-                weapon_to_display = self.app.game_state.mounted_weapons[slot_name]
+                item_to_display = self.app.game_state.mounted_weapons[slot_name]
 
-        weapon_info = self.query_one("#weapon_info", WeaponInfo)
-        if weapon_to_display:
-            weapon_info.name = weapon_to_display.name
-            weapon_info.damage = weapon_to_display.damage
-            weapon_info.range = weapon_to_display.range
-            weapon_info.fire_rate = weapon_to_display.fire_rate
-            
-            modifier_str = "\n".join([f"- {mod}: {val}" for mod, val in weapon_to_display.modifiers.items()])
-            weapon_info.modifiers = f"Modifiers:\n{modifier_str}"
-        else:
-            weapon_info.name = "N/A"
-            weapon_info.damage = 0
-            weapon_info.range = 0
-            weapon_info.fire_rate = 0
-            weapon_info.modifiers = ""
+        self.query_one(ItemInfoWidget).display_item(item_to_display)
 
     def action_rotate_preview(self, direction: int) -> None:
         """Rotate the car preview."""
@@ -204,10 +177,10 @@ class InventoryScreen(ModalScreen):
         
         if self.focused_list == "inventory":
             # --- INVENTORY focused ---
-            inv_widget = self.query_one("#inventory", WeaponListWidget)
-            if not inv_widget.weapons: return
+            inv_widget = self.query_one("#inventory", ItemListWidget)
+            if not inv_widget.items: return
 
-            selected_weapon = inv_widget.weapons[inv_widget.selected_index]
+            selected_weapon = inv_widget.selected_item
 
             if self.selected_slot_to_fill:
                 # Equip selected weapon to staged slot
@@ -227,7 +200,7 @@ class InventoryScreen(ModalScreen):
 
         else:
             # --- ATTACHMENTS focused ---
-            att_widget = self.query_one("#attachments", WeaponListWidget)
+            att_widget = self.query_one("#attachments", ItemListWidget)
             slot_index = att_widget.selected_index
             slot_name = list(gs.mounted_weapons.keys())[slot_index]
             
@@ -268,10 +241,10 @@ class InventoryScreen(ModalScreen):
         with Grid(id="inventory_grid"):
             with Vertical():
                 yield Static("Car Preview", id="car_preview")
-                yield WeaponListWidget(id="attachments")
+                yield ItemListWidget(id="attachments")
             with Vertical():
                 with ScrollableContainer():
-                    yield WeaponListWidget(id="inventory")
-                yield WeaponInfo(id="weapon_info")
-                yield Static("Stats", id="stats")
+                    yield ItemListWidget(id="inventory")
+                yield ItemInfoWidget(id="item_info")
+                yield MenuStatsHUD(id="stats")
         yield Footer()

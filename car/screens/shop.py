@@ -1,80 +1,222 @@
-from textual.screen import ModalScreen
+import math
+from textual.screen import Screen
 from textual.widgets import Header, Footer, Static, Button
-from textual.containers import Grid
+from textual.containers import Grid, Vertical, ScrollableContainer
 from textual.binding import Binding
-from ..widgets.weapon_info import WeaponInfo
-from ..logic.shop_logic import get_shop_inventory, purchase_item
+from ..widgets.item_list import ItemListWidget
+from ..widgets.item_info import ItemInfoWidget
+from ..widgets.menu_stats_hud import MenuStatsHUD
+from ..logic.shop_logic import get_shop_inventory, purchase_item, calculate_sell_price
+from ..screens.world import WorldScreen
+from ..widgets.notifications import Notifications
+from ..world.generation import get_buildings_in_city
+from ..data.game_constants import CITY_SPACING
 
-class ShopScreen(ModalScreen):
+class ShopScreen(Screen):
     """The shop screen."""
 
     BINDINGS = [
         Binding("escape", "app.pop_screen", "Back"),
         Binding("up", "move_selection(-1)", "Up"),
         Binding("down", "move_selection(1)", "Down"),
+        Binding("left", "switch_focus", "Switch"),
+        Binding("right", "switch_focus", "Switch"),
+        Binding("enter", "select_item", "Select"),
     ]
 
     def __init__(self, shop_type: str, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.shop_type = shop_type
-        self.inventory = []
-        self.selected_index = 0
+        self.shop_inventory = []
+        self.focused_list = "shop"  # "shop" or "player"
+        self.sell_confirmation_item = None
+
+    def _notify(self, message: str):
+        """Post a notification to the WorldScreen."""
+        # Simplified: assumes WorldScreen is always the one below this one.
+        try:
+            self.app.screen_stack[-2].query_one(Notifications).add_notification(message)
+        except Exception:
+            pass # Fail silently if we can't find it
 
     def on_mount(self) -> None:
         """Called when the screen is mounted."""
-        self.inventory = get_shop_inventory(self.shop_type, self.app.game_state)
-        self.update_shop_display()
+        self.update_displays()
+        self.update_focus()
 
-    def update_shop_display(self) -> None:
-        """Update the shop's display."""
-        # Item List
-        item_list = self.query_one("#item_list", Static)
-        list_str = ""
-        for i, item in enumerate(self.inventory):
-            price = item.get('price', 'N/A')
-            name = item.get('name', 'Unknown Item')
-            if i == self.selected_index:
-                list_str += f"> {name} (${price})\n"
+    def on_unmount(self) -> None:
+        """Called when the screen is unmounted."""
+        gs = self.app.game_state
+        gs.menu_open = False
+
+        # Find the building the player is in
+        grid_x = round(gs.car_world_x / CITY_SPACING)
+        grid_y = round(gs.car_world_y / CITY_SPACING)
+        buildings = get_buildings_in_city(grid_x, grid_y)
+        
+        current_building = None
+        for building in buildings:
+            if (building['x'] <= gs.car_world_x < building['x'] + building['w'] and
+                building['y'] <= gs.car_world_y < building['y'] + building['h']):
+                current_building = building
+                break
+        
+        # If found, move the player just outside of it
+        if current_building:
+            gs.car_world_x = current_building['x'] + current_building['w'] / 2
+            gs.car_world_y = current_building['y'] + current_building['h'] + 2 # Place below
+            gs.car_angle = math.pi * 1.5 # Face down (South)
+            gs.player_car.x = gs.car_world_x
+            gs.player_car.y = gs.car_world_y
+            gs.player_car.angle = gs.car_angle
+
+    def update_displays(self) -> None:
+        """Update all display widgets."""
+        gs = self.app.game_state
+        
+        # Shop Inventory
+        self.shop_inventory = get_shop_inventory(self.shop_type, gs)
+        shop_widget = self.query_one("#shop_inventory", ItemListWidget)
+        shop_widget.items = self.shop_inventory
+        
+        # Player Inventory
+        player_widget = self.query_one("#player_inventory", ItemListWidget)
+        player_widget.items = gs.player_inventory
+        
+        # Stats
+        self.query_one(MenuStatsHUD).update_stats(gs)
+        
+        self.update_item_info()
+        self.update_action_button()
+
+    def update_focus(self) -> None:
+        """Update the visual focus indicator."""
+        shop_widget = self.query_one("#shop_inventory", ItemListWidget)
+        player_widget = self.query_one("#player_inventory", ItemListWidget)
+        
+        if self.focused_list == "shop":
+            shop_widget.border_title = "Shop (Selected)"
+            player_widget.border_title = "Your Inventory"
+        else:
+            shop_widget.border_title = "Shop"
+            player_widget.border_title = "Your Inventory (Selected)"
+
+    def update_action_button(self) -> None:
+        """Update the main action button's label and state."""
+        button = self.query_one("#action_button", Button)
+        can_sell = self.shop_type == "weapon_shop"
+
+        if self.focused_list == "shop":
+            button.label = "Buy"
+            button.disabled = not self.shop_inventory
+        elif can_sell:
+            player_widget = self.query_one("#player_inventory", ItemListWidget)
+            selected_item = player_widget.selected_item
+            if self.sell_confirmation_item == selected_item and selected_item is not None:
+                price = calculate_sell_price(selected_item, self.app.game_state)
+                button.label = f"Confirm Sell (${price})?"
             else:
-                list_str += f"  {name} (${price})\n"
-        item_list.update(list_str)
+                button.label = "Sell"
+            button.disabled = not player_widget.items
+        else: # Player focus, but can't sell
+            button.label = "Sell"
+            button.disabled = True
 
-        # Item Info
-        if self.inventory:
-            selected_item = self.inventory[self.selected_index]
-            if selected_item.get("type") == "weapon":
-                weapon_info = self.query_one("#item_info", WeaponInfo)
-                weapon_info.name = selected_item["name"]
-                weapon_info.damage = selected_item["damage"]
-                weapon_info.range = selected_item["range"]
-                weapon_info.fire_rate = selected_item["fire_rate"]
-    
     def action_move_selection(self, amount: int) -> None:
-        """Move the selection in the item list."""
-        self.selected_index = (self.selected_index + amount + len(self.inventory)) % len(self.inventory)
-        self.update_shop_display()
+        """Move the selection in the currently focused list."""
+        self.sell_confirmation_item = None # Reset confirmation on move
+        if self.focused_list == "shop":
+            widget = self.query_one("#shop_inventory", ItemListWidget)
+        else:
+            widget = self.query_one("#player_inventory", ItemListWidget)
+        
+        if widget.items:
+            widget.selected_index = (widget.selected_index + amount + len(widget.items)) % len(widget.items)
+            self.update_item_info()
+            self.update_action_button()
 
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Handle buy button presses."""
-        if event.button.id == "buy_item":
-            if self.inventory:
-                selected_item = self.inventory[self.selected_index]
-                price = selected_item.get("price", 0)
-                if self.app.game_state.player_cash >= price:
-                    self.app.game_state.player_cash -= price
-                    purchase_item(self.app.game_state, selected_item)
-                    self.app.screen.query_one("#notifications").add_notification(f"Purchased {selected_item['name']}!")
-                    # Refresh the inventory in case it's dynamic
-                    self.inventory = get_shop_inventory(self.shop_type, self.app.game_state)
-                    self.update_shop_display()
-                else:
-                    self.app.screen.query_one("#notifications").add_notification("Not enough cash!")
+    def update_item_info(self) -> None:
+        """Update the item info panel based on the current selection."""
+        if self.focused_list == "shop":
+            widget = self.query_one("#shop_inventory", ItemListWidget)
+            item_to_display = widget.selected_item
+        else:
+            widget = self.query_one("#player_inventory", ItemListWidget)
+            item_to_display = widget.selected_item
+
+        self.query_one(ItemInfoWidget).display_item(item_to_display)
+
+    def action_switch_focus(self) -> None:
+        """Switch focus between the shop and player inventory lists."""
+        self.sell_confirmation_item = None # Reset confirmation on switch
+        self.focused_list = "player" if self.focused_list == "shop" else "shop"
+        self.update_focus()
+        self.update_item_info()
+        self.update_action_button()
+
+    def action_select_item(self) -> None:
+        """Handle buying or selling the selected item."""
+        if self.focused_list == "shop":
+            self._buy_item()
+        else:
+            self._sell_item()
+        self.update_action_button()
+
+    def _buy_item(self):
+        """Logic for purchasing an item."""
+        gs = self.app.game_state
+        shop_widget = self.query_one("#shop_inventory", ItemListWidget)
+        selected_item = shop_widget.selected_item
+        if not selected_item: return
+
+        price = selected_item.get("price", 0)
+        if gs.player_cash >= price:
+            gs.player_cash -= price
+            purchase_item(gs, selected_item)
+            self._notify(f"Purchased {selected_item['name']}!")
+            self.update_displays()
+        else:
+            self._notify("Not enough cash!")
+
+    def _sell_item(self):
+        """Logic for selling an item."""
+        if self.shop_type != "weapon_shop":
+            self._notify("You cannot sell items at this shop.")
+            return
+
+        gs = self.app.game_state
+        player_widget = self.query_one("#player_inventory", ItemListWidget)
+        selected_item = player_widget.selected_item
+        if not selected_item: return
+
+        if self.sell_confirmation_item == selected_item:
+            # Second press: confirm sell
+            price = calculate_sell_price(selected_item, gs)
+            gs.player_cash += price
+            gs.player_inventory.remove(selected_item)
+            self._notify(f"Sold {selected_item.name} for ${price}!")
+            self.sell_confirmation_item = None
+            self.update_displays()
+        else:
+            # First press: stage for confirmation
+            self.sell_confirmation_item = selected_item
 
     def compose(self):
         """Compose the layout of the screen."""
         yield Header(show_clock=True)
         with Grid(id="shop_grid"):
-            yield Static("For Sale", id="item_list")
-            yield WeaponInfo(id="item_info")
-            yield Button("Buy", id="buy_item", variant="primary")
+            # Top-Left: Shop Inventory
+            yield ItemListWidget(id="shop_inventory")
+            
+            # Top-Right: Player Inventory
+            yield ItemListWidget(id="player_inventory")
+
+            # Bottom-Left: Shopkeeper Dialog
+            yield Static("Welcome, traveler!", id="shop_dialog")
+
+            # Bottom-Right: Player Info & Actions
+            with Vertical():
+                yield ItemInfoWidget()
+                yield MenuStatsHUD()
+                yield Button("Buy/Sell", id="action_button", variant="primary")
         yield Footer()

@@ -1,85 +1,76 @@
-from textual.widgets import Static, ProgressBar
-from textual.containers import Vertical, Horizontal
+from textual.widgets import Static
 from textual.reactive import reactive
+from rich.panel import Panel
+from rich.text import Text
+from rich.progress_bar import ProgressBar
+from rich.table import Table
+from rich.console import Group
+from rich.align import Align
 
 class StatsHUD(Static):
-    can_focus = False
-    """A widget to display game statistics."""
+    """A widget to display the player's current stats in the main game view."""
 
     cash = reactive(0)
     durability = reactive(0)
     max_durability = reactive(100)
     gas = reactive(0.0)
     gas_capacity = reactive(100)
-    speed = reactive(0.0)
+    speed = reactive(0)
     level = reactive(1)
     xp = reactive(0)
     xp_to_next_level = reactive(100)
-    pedal_position = reactive(0.0)
     ammo = reactive(0)
-    max_ammo = reactive(0)
+    max_ammo = reactive(100)
+    pedal_position = reactive(0.0)
 
-    def on_mount(self) -> None:
-        """Called when the widget is mounted."""
-        self.update_hud()
+    def render(self) -> Panel:
+        """Render the stats display."""
 
-    def compose(self):
-        with Horizontal(classes="hud-container"):
-            with Vertical(classes="hud-column"):
-                yield Static(id="cash")
-                yield Static(id="durability_label")
-                yield ProgressBar(id="durability", total=100, show_eta=False)
-                yield Static(id="gas_label")
-                yield ProgressBar(id="gas", total=100, show_eta=False)
-                yield Static(id="ammo_label")
-            with Vertical(classes="hud-column"):
-                yield Static(id="xp_label")
-                yield ProgressBar(id="xp", total=100, show_eta=False)
-                yield Static("Pedal")
-                yield ProgressBar(id="pedal", total=200, show_eta=False)
-                yield Static(id="speed")
-                yield Static(id="level")
+        top_stats = Text.from_markup(
+            f"[b]Cash:[/b] ${self.cash} | [b]Speed:[/b] {int(self.speed)} mph | [b]Level:[/b] {self.level}"
+        )
 
-    def watch_cash(self, value: int) -> None: self.update_hud()
-    def watch_durability(self, value: int) -> None: self.update_hud()
-    def watch_max_durability(self, value: int) -> None: self.update_hud()
-    def watch_gas(self, value: float) -> None: self.update_hud()
-    def watch_gas_capacity(self, value: int) -> None: self.update_hud()
-    def watch_speed(self, value: float) -> None: self.update_hud()
-    def watch_level(self, value: int) -> None: self.update_hud()
-    def watch_xp(self, value: int) -> None: self.update_hud()
-    def watch_xp_to_next_level(self, value: int) -> None: self.update_hud()
-    def watch_pedal_position(self, value: float) -> None: self.update_hud()
-    def watch_ammo(self, value: int) -> None: self.update_hud()
-    def watch_max_ammo(self, value: int) -> None: self.update_hud()
+        progress_table = Table.grid(padding=(0, 1), expand=True)
+        progress_table.add_column(style="bold", width=4)  # Label
+        progress_table.add_column(width=12)  # Bar
+        progress_table.add_column(justify="left")  # Value
 
-    def update_hud(self) -> None:
-        """Update all HUD elements."""
-        if not self.is_mounted:
-            return
+        progress_table.add_row(
+            "DUR:",
+            ProgressBar(total=self.max_durability, completed=self.durability, width=10, complete_style="bright_red", finished_style="red"),
+            f"{self.durability}/{self.max_durability}"
+        )
+        progress_table.add_row(
+            "GAS:",
+            ProgressBar(total=self.gas_capacity, completed=self.gas, width=10, complete_style="bright_green", finished_style="green"),
+            f"{int(self.gas)}/{self.gas_capacity}"
+        )
+        progress_table.add_row(
+            "XP:",
+            ProgressBar(total=self.xp_to_next_level, completed=self.xp, width=10, complete_style="bright_yellow", finished_style="yellow"),
+            f"{self.xp}/{self.xp_to_next_level}"
+        )
 
-        self.query_one("#cash", Static).update(f"Cash: ${self.cash}")
-        
-        self.query_one("#durability_label", Static).update(f"Durability: {self.durability}/{self.max_durability}")
-        durability_bar = self.query_one("#durability", ProgressBar)
-        durability_bar.total = self.max_durability
-        durability_bar.progress = self.durability
-        
-        self.query_one("#gas_label", Static).update(f"Gas: {self.gas:.0f}/{self.gas_capacity}")
-        gas_bar = self.query_one("#gas", ProgressBar)
-        gas_bar.total = self.gas_capacity
-        gas_bar.progress = self.gas
+        pedal_display = ""
+        if self.pedal_position > 0:
+            pedal_display = f"Accel: [green]{'⬆' * int(self.pedal_position * 5)}[/]"
+        elif self.pedal_position < 0:
+            pedal_display = f"Brake: [red]{'⬇' * int(abs(self.pedal_position) * 5)}[/]"
+        else:
+            pedal_display = "     "
+            
+        bottom_stats = Text.from_markup(
+            f"[b]Ammo:[/b] {self.ammo}/{self.max_ammo} | {pedal_display}"
+        )
 
-        self.query_one("#ammo_label", Static).update(f"Ammo: {self.ammo}/{self.max_ammo}")
+        render_group = Group(
+            Align.center(top_stats),
+            progress_table,
+            Align.center(bottom_stats)
+        )
 
-        self.query_one("#xp_label", Static).update(f"XP: {self.xp}/{self.xp_to_next_level}")
-        xp_bar = self.query_one("#xp", ProgressBar)
-        xp_bar.total = self.xp_to_next_level
-        xp_bar.progress = self.xp
-
-        pedal_bar = self.query_one("#pedal", ProgressBar)
-        pedal_bar.progress = (self.pedal_position + 1.0) * 100
-
-        self.query_one("#speed", Static).update(f"Speed: {abs(self.speed):.1f}")
-        self.query_one("#level", Static).update(f"Level: {self.level}")
-
+        return Panel(
+            render_group,
+            title="Stats",
+            border_style="white"
+        )

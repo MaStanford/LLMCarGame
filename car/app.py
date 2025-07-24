@@ -100,11 +100,11 @@ class CarApp(App):
             for notification in quest_notifications:
                 self.screen.query_one("#notifications", Notifications).add_notification(notification)
 
-            # Check for building interactions
-            self.check_building_interaction()
-
             # --- Update UI Widgets ---
             self.screen.update_widgets()
+
+            # Check for building interactions
+            self.check_building_interaction()
 
         # Update FPS counter
         current_time = time.time()

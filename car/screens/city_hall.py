@@ -1,3 +1,4 @@
+import math
 from textual.screen import ModalScreen
 from textual.widgets import Header, Footer, Static, Button
 from textual.containers import Grid, Vertical
@@ -6,7 +7,7 @@ from ..widgets.dialog import Dialog
 from ..logic.quest_logic import get_available_quests, handle_quest_acceptance, complete_quest
 from ..logic.boss import check_challenge_conditions, spawn_faction_boss
 from ..data.game_constants import CITY_SPACING
-from ..world.generation import get_city_faction
+from ..world.generation import get_city_faction, get_buildings_in_city
 
 class CityHallScreen(ModalScreen):
     """The city hall screen for accepting quests."""
@@ -39,6 +40,32 @@ class CityHallScreen(ModalScreen):
             self.can_challenge = check_challenge_conditions(gs, self.current_city_faction)
         
         self.update_quest_display()
+
+    def on_unmount(self) -> None:
+        """Called when the screen is unmounted."""
+        gs = self.app.game_state
+        gs.menu_open = False
+
+        # Find the building the player is in
+        grid_x = round(gs.car_world_x / CITY_SPACING)
+        grid_y = round(gs.car_world_y / CITY_SPACING)
+        buildings = get_buildings_in_city(grid_x, grid_y)
+        
+        current_building = None
+        for building in buildings:
+            if (building['x'] <= gs.car_world_x < building['x'] + building['w'] and
+                building['y'] <= gs.car_world_y < building['y'] + building['h']):
+                current_building = building
+                break
+        
+        # If found, move the player just outside of it
+        if current_building:
+            gs.car_world_x = current_building['x'] + current_building['w'] / 2
+            gs.car_world_y = current_building['y'] + current_building['h'] + 2 # Place below
+            gs.car_angle = math.pi * 1.5 # Face down (South)
+            gs.player_car.x = gs.car_world_x
+            gs.player_car.y = gs.car_world_y
+            gs.player_car.angle = gs.car_angle
 
     def update_quest_display(self) -> None:
         """Update the quest display."""

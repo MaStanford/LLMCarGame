@@ -9,6 +9,10 @@ class Weapon:
         self.instance_id = instance_id if instance_id else str(uuid.uuid4())
 
     @property
+    def type(self):
+        return "weapon"
+
+    @property
     def name(self):
         return self.base_stats["name"]
 

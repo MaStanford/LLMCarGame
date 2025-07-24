@@ -4,7 +4,7 @@ from textual.screen import Screen
 from textual.widgets import Button, Static, Header, Footer
 from textual.binding import Binding
 
-from ..widgets.weapon_info import WeaponInfo
+from ..widgets.item_info import ItemInfoWidget
 from ..widgets.cycle_widget import CycleWidget
 from ..logic.entity_loader import PLAYER_CARS
 from ..data.difficulty import DIFFICULTY_LEVELS, DIFFICULTY_MODIFIERS
@@ -58,7 +58,7 @@ class NewGameScreen(Screen):
                 yield Static("Weapons", classes="panel-title")
                 with Vertical(id="weapon-list-container", classes="focusable"):
                     yield Static(id="weapon_list")
-                yield WeaponInfo(id="weapon_info")
+                yield ItemInfoWidget(id="item_info")
                 yield Button("Start Game", id="start_game", variant="primary")
         yield Footer()
 
@@ -93,7 +93,7 @@ class NewGameScreen(Screen):
         
         self.current_focus_index = 0
         self.update_focus()
-        self.update_car_info()
+        self.update_car_and_weapon_info()
 
     def update_focus(self) -> None:
         """Update the visual and native focus state."""
@@ -124,7 +124,7 @@ class NewGameScreen(Screen):
             focused_widget.query_one("#previous", Button).press()
         elif focused_widget.id == "weapon-list-container":
             self.selected_weapon_index -=1
-            self.update_car_info()
+            self.update_car_and_weapon_info()
 
 
     def action_cycle_right(self) -> None:
@@ -134,7 +134,7 @@ class NewGameScreen(Screen):
             focused_widget.query_one("#next", Button).press()
         elif focused_widget.id == "weapon-list-container":
             self.selected_weapon_index +=1
-            self.update_car_info()
+            self.update_car_and_weapon_info()
     
     def update_weapon_focus(self):
         """Visual update for weapon list focus."""
@@ -143,17 +143,17 @@ class NewGameScreen(Screen):
             weapon_container.border_title = "Weapons (Selected)"
         else:
             weapon_container.border_title = ""
-        self.update_car_info()
+        self.update_car_and_weapon_info()
 
     def on_cycle_widget_changed(self, event: CycleWidget.Changed) -> None:
         """Handle changes from the cycle widgets."""
         if event.control_id == "car_select":
             self.selected_car_index = self.query_one("#car_select", CycleWidget).current_index
             self.selected_weapon_index = 0
-            self.update_car_info()
+            self.update_car_and_weapon_info()
         elif event.control_id == "color_select":
             self.selected_color_name = event.value
-            self.update_car_info()
+            self.update_car_and_weapon_info()
 
 
     def get_art_for_angle(self, car_instance, angle):
@@ -181,7 +181,7 @@ class NewGameScreen(Screen):
             art = car_instance.art
         return "\n".join(art)
 
-    def update_car_info(self) -> None:
+    def update_car_and_weapon_info(self) -> None:
         """Update the car preview and weapon list."""
         car_class = PLAYER_CARS[self.selected_car_index]
         car_instance = car_class(x=0, y=0)
@@ -203,7 +203,7 @@ class NewGameScreen(Screen):
         color_widget.query_one(".cycle-value").styles.color = color
 
         weapon_list = self.query_one("#weapon_list", Static)
-        weapon_info = self.query_one("#weapon_info", WeaponInfo)
+        item_info = self.query_one("#item_info", ItemInfoWidget)
 
         if hasattr(car_instance, "default_weapons"):
             weapons = [
@@ -211,10 +211,7 @@ class NewGameScreen(Screen):
             ]
             if not weapons:
                 weapon_list.update("No weapons.")
-                weapon_info.name = "N/A"
-                weapon_info.damage = 0
-                weapon_info.range = 0
-                weapon_info.fire_rate = 0
+                item_info.display_item(None)
                 return
 
             self.selected_weapon_index = self.selected_weapon_index % len(weapons)
@@ -222,19 +219,13 @@ class NewGameScreen(Screen):
             for i, weapon in enumerate(weapons):
                 if i == self.selected_weapon_index:
                     weapon_list_str += f"> {weapon.name}\n"
-                    weapon_info.name = weapon.name
-                    weapon_info.damage = weapon.damage
-                    weapon_info.range = weapon.range
-                    weapon_info.fire_rate = weapon.fire_rate
+                    item_info.display_item(weapon)
                 else:
                     weapon_list_str += f"  {weapon.name}\n"
             weapon_list.update(weapon_list_str)
         else:
             weapon_list.update("No weapons.")
-            weapon_info.name = "N/A"
-            weapon_info.damage = 0
-            weapon_info.range = 0
-            weapon_info.fire_rate = 0
+            item_info.display_item(None)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press events."""

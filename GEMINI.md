@@ -12,6 +12,10 @@ This project is a collaboration between two super-developers with a shared passi
 5.  **Verify:** Verify the changes or fix or feature is working. 
 6.  **Commit Changes:** After the changes are made, and verified, Gemini will keep track of the modified files and prompt to either commit the changes or wait for more changes.
 
+**Preferred tools:**
+1. Git tools for reading files
+2. Always grab the latest version of the file, it's very possible we have changes outside this session.
+
 ## Summary
 
 This project is a terminal-based, open-world, automotive RPG survival game. Players select a starting vehicle and embark on an adventure in an infinitely-generated, random world. The map features roads connecting cities, surrounded by various types of wilderness.
@@ -109,6 +113,9 @@ The game is built around the **Textual TUI framework**, which provides an event-
         -   **Interactive Preview:** The car preview can be rotated 360 degrees. When the "Loadout" list is focused, the currently selected attachment point flashes on the car preview, alternating between its index number and a circle icon.
         -   **Equip/Unequip Logic:** The screen uses a simple state machine to provide an intuitive workflow for equipping, unequipping, and swapping weapons between the inventory and the loadout.
         -   **Dynamic Info:** The `WeaponInfo` panel automatically updates to show the stats and modifiers of the currently selected weapon in either list.
+    -   **The Grand Shop Overhaul (`ShopScreen`)**:
+        -   **Layout:** The shop is a full-screen, four-quadrant grid. The top-left displays the shop's inventory, and the top-right displays the player's inventory. The bottom-left contains a dialog box for future shopkeeper interactions, and the bottom-right contains the detailed `WeaponInfo` panel, the `MenuStatsHUD` for player stats, and the main action button.
+        -   **Buy/Sell Logic:** An action button dynamically changes between "Buy" and "Sell" depending on which inventory list is focused. Weapon shops allow selling items, with the price being calculated based on the item's base value, player level, and faction reputation. A two-press confirmation system prevents accidental sales.
 
 - **Performance Optimizations:**
     -   **Pre-parsing Styles:** All style strings (e.g., `"white on blue"`) in the game's data files are parsed into `rich.style.Style` objects once at startup. The rendering loop then uses these pre-compiled objects, avoiding thousands of costly string-parsing operations every frame.
@@ -419,5 +426,3 @@ The game is built around the **Textual TUI framework**, which provides an event-
 ## Roadmap
 
 ## Known Issues
-
-- **Curses/Terminal Errors:** The game may crash on startup with a `curses` error (e.g., `nocbreak() returned ERR`). This is often due to an incompatible terminal environment or the terminal window being too small. This is a known issue with the `curses` library and the environment in which the game is being run. **Gemini, do not attempt to fix this error.** It is an environmental issue, not a code issue.

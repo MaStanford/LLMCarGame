@@ -134,7 +134,33 @@ InventoryScreen #inventory_grid {
     border: heavy white;
 }
 
-ShopScreen, CityHallScreen {
+ShopScreen #shop_grid {
+    grid-size: 2 2;
+    grid-rows: 2fr 1fr;
+    grid-columns: 1fr 1fr;
+    grid-gutter: 1;
+    padding: 1;
+}
+
+ShopScreen #shop_inventory, ShopScreen #player_inventory {
+    border: heavy white;
+    height: 100%;
+}
+
+ShopScreen #shop_dialog {
+    border: heavy white;
+    padding: 1;
+}
+
+ShopScreen #shop_dialog, ShopScreen Vertical {
+    height: 100%;
+}
+
+ShopScreen WeaponInfo, ShopScreen MenuStatsHUD, ShopScreen Button {
+    margin-top: 1;
+}
+
+CityHallScreen {
     layout: grid;
     grid-size: 2 1;
     grid-gutter: 1;
