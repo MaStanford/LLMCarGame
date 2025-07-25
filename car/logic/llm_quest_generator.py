@@ -1,43 +1,32 @@
 import json
-# from llama_cpp import Llama
-
-from ..logic.data_loader import FACTION_DATA
-from ..data.quests import Quest
+import logging
 from .prompt_builder import build_quest_prompt
+from ..data.quests import Quest
 
-def generate_quest_from_llm(game_state, quest_giver_faction_id):
+def generate_quest_from_llm(game_state, quest_giver_faction_id, pipeline):
     """
-    Generates a new quest by calling a local LLM with a dynamically built prompt.
+    Generates a new quest by calling the language model.
     """
-    
-    # --- 1. Assemble the Prompt ---
+    if pipeline is None or pipeline == "unavailable":
+        logging.warning("LLM pipeline not available. Using fallback quest.")
+        return _get_fallback_quest(quest_giver_faction_id)
+
     prompt = build_quest_prompt(game_state)
+    messages = [{"role": "user", "content": prompt}]
 
-    # --- 2. Call the LLM (Placeholder) ---
-    # llm = Llama(model_path="./path/to/your/model.gguf")
-    # response = llm(prompt, max_tokens=1024, stop=["```"], echo=False)
-    # quest_json_str = response["choices"][0]["text"]
-    
-    # For now, use a hardcoded fallback response for testing
-    quest_json_str = """
-{
-  "name": "Scrap Metal Mayhem",
-  "description": "Raid the Vultures' scrap yard and destroy their prized war rig.",
-  "dialog": "The Vultures are getting too bold. We need to send them a message. Go to their main scrap yard and turn their 'invincible' war rig into a pile of junk. That should get their attention.",
-  "objectives": [
-    ["KillBossObjective", ["Scrap King Klaw"]]
-  ],
-  "rewards": {
-    "xp": 500,
-    "cash": 1000
-  }
-}
-    """
-
-    # --- 3. Parse and Return ---
     try:
-        quest_data = json.loads(quest_json_str)
-        # TODO: Add validation and dynamically select target faction
+        outputs = pipeline(
+            messages,
+            max_new_tokens=1024,
+            do_sample=True,
+            temperature=0.8,
+        )
+        quest_json_str = outputs[0]["generated_text"][-1]["content"]
+        
+        cleaned_json = quest_json_str.strip().replace("```json", "").replace("```", "")
+        quest_data = json.loads(cleaned_json)
+        
+        # TODO: Dynamically select target faction based on context
         target_faction_id = "the_vultures" 
         
         return Quest(
@@ -49,7 +38,21 @@ def generate_quest_from_llm(game_state, quest_giver_faction_id):
             quest_giver_faction=quest_giver_faction_id,
             target_faction=target_faction_id,
         )
-    except (json.JSONDecodeError, KeyError) as e:
-        print(f"Error parsing LLM output for quests: {e}")
-        return None # Return None on failure
+    except (json.JSONDecodeError, KeyError, IndexError) as e:
+        logging.error(f"Error parsing LLM output for quests: {e}")
+        return _get_fallback_quest(quest_giver_faction_id)
+    except Exception as e:
+        logging.error(f"Error during LLM generation: {e}", exc_info=True)
+        return _get_fallback_quest(quest_giver_faction_id)
 
+def _get_fallback_quest(quest_giver_faction_id):
+    """Returns a hardcoded fallback quest for testing."""
+    return Quest(
+        name="Fallback: Scrap Metal Mayhem",
+        description="Raid a scrap yard and destroy a war rig.",
+        dialog="The Vultures are getting too bold. Go destroy their war rig.",
+        objectives=[["KillBossObjective", ["Scrap King Klaw"]]],
+        rewards={"xp": 500, "cash": 1000},
+        quest_giver_faction=quest_giver_faction_id,
+        target_faction="the_vultures",
+    )

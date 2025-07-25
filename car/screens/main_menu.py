@@ -1,12 +1,14 @@
+import logging
 from textual.app import ComposeResult
 from textual.containers import Vertical
 from textual.screen import Screen
-from textual.widgets import Button, Header, Footer
+from textual.widgets import Button, Header, Footer, ProgressBar, Static
 from textual.binding import Binding
+from textual.worker import Worker, WorkerState
 
 from .new_game import NewGameScreen
 from .load_game import LoadGameScreen
-
+from ..workers.model_loader import load_pipeline
 
 class MainMenuScreen(Screen):
     """The main menu screen."""
@@ -25,17 +27,48 @@ class MainMenuScreen(Screen):
     def compose(self) -> ComposeResult:
         """Compose the layout of the screen."""
         yield Header(show_clock=True)
-        with Vertical(id="main-menu-buttons"):
-            yield Button("New Game", id="new_game", variant="primary")
-            yield Button("Load Game", id="load_game", variant="default")
-            yield Button("Settings", id="settings", variant="default")
-            yield Button("Quit", id="quit", variant="error")
+        with Vertical(id="main-menu-container"):
+            with Vertical(id="main-menu-buttons"):
+                yield Button("New Game", id="new_game", variant="primary", disabled=True)
+                yield Button("Load Game", id="load_game", variant="default", disabled=True)
+                yield Button("Settings", id="settings", variant="default")
+                yield Button("Quit", id="quit", variant="error")
+            with Vertical(id="model-loader-container"):
+                yield Static("Loading LLM Model...", id="model_status")
+                yield ProgressBar(id="model_progress", show_eta=False)
         yield Footer()
 
     def on_mount(self) -> None:
         """Set up the initial state of the screen."""
-        self.focusable_widgets = list(self.query(Button))
+        logging.info("MainMenuScreen mounted.")
+        self.focusable_widgets = list(self.query("Button"))
         self.focusable_widgets[self.current_focus_index].focus()
+        
+        logging.info("Starting model loader worker...")
+        self.run_worker(load_pipeline, exclusive=True, thread=True)
+        logging.info("Model loader worker started.")
+
+    def on_worker_state_changed(self, event: Worker.StateChanged) -> None:
+        """Called when the worker state changes."""
+        logging.info(f"Worker {event.worker.name} changed state to {event.worker.state}")
+        if event.worker.state == WorkerState.SUCCESS:
+            pipeline = event.worker.result
+            if pipeline:
+                logging.info("Model loaded successfully! Hiding loader and enabling buttons.")
+                self.app.llm_pipeline = pipeline
+                self.query_one("#model-loader-container").display = False
+                self.query_one("#new_game").disabled = False
+                self.query_one("#load_game").disabled = False
+                self.focusable_widgets[self.current_focus_index].focus()
+            else:
+                logging.error("Model loading failed in worker.")
+                self.query_one("#model_status", Static).update("Error: Model failed to load.")
+                self.query_one(ProgressBar).display = False
+        elif event.worker.state == WorkerState.ERROR:
+            logging.error(f"Worker failed with state {event.worker.state}")
+            self.query_one("#model_status", Static).update("Error: Worker failed.")
+            self.query_one(ProgressBar).display = False
+
 
     def action_focus_previous(self) -> None:
         """Focus the previous widget."""
@@ -58,7 +91,6 @@ class MainMenuScreen(Screen):
         elif event.button.id == "load_game":
             self.app.push_screen(LoadGameScreen())
         elif event.button.id == "settings":
-            # We'll add the settings screen later
             pass
         elif event.button.id == "quit":
             self.app.exit()

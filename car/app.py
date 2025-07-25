@@ -1,4 +1,5 @@
 from textual.app import App
+from textual.reactive import reactive
 from textual.events import Key
 import logging
 from .screens.world import WorldScreen
@@ -29,6 +30,8 @@ class CarApp(App):
     """The main application class for the Car RPG."""
 
     CSS_PATH = "app.css"
+    
+    llm_pipeline = reactive(None)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -101,9 +104,12 @@ class CarApp(App):
                 self.screen.query_one("#notifications", Notifications).add_notification(notification)
 
             # --- Throttled UI Updates ---
-            # Only search for the closest entity 4 times a second to save performance
+            # These calculations are expensive, so we only run them a few times per second.
             if self.frame_count % 8 == 0:
                 gs.closest_entity_info = self.find_closest_entity()
+            
+            if self.frame_count % 6 == 0:
+                self.update_compass_data()
 
             # --- Update UI Widgets ---
             self.screen.update_widgets()
@@ -172,3 +178,31 @@ class CarApp(App):
                         "art": art
                     }
         return closest
+
+    def update_compass_data(self):
+        """Calculates the compass direction and caches it in the game state."""
+        gs = self.game_state
+        target_x, target_y, target_name = None, None, None
+        
+        if gs.waypoint:
+            target_x, target_y = gs.waypoint
+            target_name = "Waypoint"
+        elif gs.current_quest:
+            if gs.current_quest.ready_to_turn_in:
+                target_x = gs.current_quest.city_id[0] * CITY_SPACING
+                target_y = gs.current_quest.city_id[1] * CITY_SPACING
+                target_name = "Turn In Quest"
+            elif gs.current_quest.boss:
+                boss = gs.current_quest.boss
+                target_x, target_y = boss.x, boss.y
+                target_name = boss.name
+        
+        if target_x is not None:
+            angle_to_target = math.atan2(target_y - gs.car_world_y, target_x - gs.car_world_x)
+            gs.compass_info = {
+                "target_angle": math.degrees(angle_to_target),
+                "player_angle": gs.car_angle,
+                "target_name": target_name
+            }
+        else:
+            gs.compass_info = {"target_angle": 0, "player_angle": 0, "target_name": ""}

@@ -159,32 +159,9 @@ class WorldScreen(Screen):
         location.city_name = get_city_name(grid_x, grid_y)
 
         compass = self.query_one("#compass_hud", CompassHUD)
-        target_x, target_y, target_name = None, None, None
-        
-        if gs.waypoint:
-            target_x, target_y = gs.waypoint
-            target_name = "Waypoint"
-        elif gs.current_quest:
-            if gs.current_quest.ready_to_turn_in:
-                # Point to quest giver
-                target_x = gs.current_quest.city_id[0] * CITY_SPACING
-                target_y = gs.current_quest.city_id[1] * CITY_SPACING
-                target_name = "Turn In Quest"
-            elif gs.current_quest.boss:
-                # Point to boss
-                boss = gs.current_quest.boss
-                target_x, target_y = boss.x, boss.y
-                target_name = boss.name
-        
-        if target_x is not None:
-            angle_to_target = math.atan2(target_y - gs.car_world_y, target_x - gs.car_world_x)
-            compass.target_angle = math.degrees(angle_to_target)
-            compass.player_angle = gs.car_angle
-            compass.target_name = target_name
-        else:
-            compass.target_angle = 0
-            compass.player_angle = 0
-            compass.target_name = ""
+        compass.target_angle = gs.compass_info["target_angle"]
+        compass.player_angle = gs.compass_info["player_angle"]
+        compass.target_name = gs.compass_info["target_name"]
 
         # Update Entity Modal
         entity_modal = self.query_one("#entity_modal", EntityModal)

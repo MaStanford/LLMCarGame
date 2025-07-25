@@ -38,6 +38,12 @@ def _get_spawn_coordinates(game_state):
 
 def spawn_enemy(game_state, world):
     """Spawns a new enemy."""
+    # --- Prevent spawning in the neutral hub city ---
+    grid_x = round(game_state.car_world_x / CITY_SPACING)
+    grid_y = round(game_state.car_world_y / CITY_SPACING)
+    if grid_x == 0 and grid_y == 0:
+        return
+
     max_enemies = game_state.difficulty_mods.get("max_enemies", 5)
     if len(game_state.active_enemies) >= max_enemies:
         return

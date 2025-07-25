@@ -17,6 +17,10 @@ class Weapon:
         return self.base_stats["name"]
 
     @property
+    def price(self):
+        return self.base_stats["price"]
+
+    @property
     def damage(self):
         base_damage = self.base_stats["power"]
         if "damage_boost" in self.modifiers:

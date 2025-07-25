@@ -139,4 +139,4 @@ cython_debug/
 saves/
 *.sav
 .installed
-\ntemp/
+temp/

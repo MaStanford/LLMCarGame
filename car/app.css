@@ -88,14 +88,42 @@ MainMenuScreen {
     align: center middle;
 }
 
-#main-menu-buttons {
+#main-menu-container {
+    width: 40%;
+    height: auto;
     align: center middle;
-    width: 40;
 }
 
-MainMenuScreen Button {
+#main-menu-buttons {
     width: 100%;
+    height: auto;
+    align: center middle;
+}
+
+#main-menu-buttons Button {
+    align: center middle;
+    width: 50%;
+    max-width: 40;
     margin: 1;
+}
+
+#model-loader-container {
+    align: center middle;
+    margin-top: 2;
+    height: 5;
+    width: 100%;
+}
+
+#model-loader-container #model_status {
+    width: 50%;
+    max-width: 50;
+    text-align: center;
+}
+
+#model-loader-container ProgressBar {
+    width: 50%;
+    max-width: 50;
+    margin-top: 1;
 }
 
 

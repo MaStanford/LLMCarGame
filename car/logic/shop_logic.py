@@ -28,6 +28,10 @@ def get_shop_inventory(shop_type, game_state):
     # Price modifier is inversely proportional to control
     price_modifier = 1 + ((50 - faction_control) / 50) * price_volatility
 
+    # The neutral hub always has stable prices
+    if FACTION_DATA[local_faction_id].get("hub_city_coordinates") == [0, 0]:
+        price_modifier = 1.0
+
     if shop_type == "weapon_shop":
         # If faction control is too low, the shop is empty
         if faction_control < 20:

@@ -3,11 +3,13 @@ import importlib
 import os
 import shutil
 import pprint
+import logging
 from textual.app import ComposeResult
 from textual.containers import Vertical, Container
 from textual.screen import Screen
 from textual.widgets import Button, Static, Header, Footer
 from textual.binding import Binding
+from textual.worker import Worker, WorkerState
 
 from ..widgets.item_info import ItemInfoWidget
 from ..widgets.cycle_widget import CycleWidget
@@ -18,7 +20,7 @@ from ..game_state import GameState
 from ..entities.weapon import Weapon
 from ..world import World
 from ..logic.spawning import spawn_initial_entities
-from ..logic.llm_faction_generator import generate_factions_from_llm
+from ..workers.faction_generator import generate_factions_worker
 from .. import data as game_data
 
 
@@ -76,20 +78,6 @@ class NewGameScreen(Screen):
         self.selected_weapon_index = 0
         self.preview_angle = 0
         
-        # Custom Focus Management:
-        # Textual's default focus system wasn't providing the fine-grained
-        # control needed for this screen's layout. To solve this, we implement
-        # a manual focus system.
-        # 1. A list, `focusable_widgets`, defines the exact order of navigation.
-        # 2. The `current_focus_index` tracks the currently "focused" widget.
-        # 3. `action_focus_next` and `action_focus_previous` handle changing this
-        #    index when the user presses up/down.
-        # 4. The `update_focus` method is called to apply a `.focused` CSS
-        #    class to the widget at the current index and remove it from others.
-        # 5. CSS rules in `app.css` then use this `.focused` class to apply
-        #    visual styling (e.g., `CycleWidget.focused .cycle-value`).
-        # This approach gives us complete control over the tab order and visual
-        # feedback without interfering with Textual's internal focus state.
         self.focusable_widgets = [
             self.query_one("#car_select", CycleWidget),
             self.query_one("#color_select", CycleWidget),
@@ -107,7 +95,7 @@ class NewGameScreen(Screen):
         for i, widget in enumerate(self.focusable_widgets):
             if i == self.current_focus_index:
                 widget.add_class("focused")
-                widget.focus()  # Set native focus
+                widget.focus()
             else:
                 widget.remove_class("focused")
 
@@ -116,7 +104,6 @@ class NewGameScreen(Screen):
         self.current_focus_index = (self.current_focus_index - 1 + len(self.focusable_widgets)) % len(self.focusable_widgets)
         self.update_focus()
         self.update_weapon_focus()
-
 
     def action_focus_next(self) -> None:
         """Focus the next widget in our custom list."""
@@ -132,7 +119,6 @@ class NewGameScreen(Screen):
         elif focused_widget.id == "weapon-list-container":
             self.selected_weapon_index -=1
             self.update_car_and_weapon_info()
-
 
     def action_cycle_right(self) -> None:
         """Cycle the focused widget to the right, or change selected weapon."""
@@ -162,27 +148,18 @@ class NewGameScreen(Screen):
             self.selected_color_name = event.value
             self.update_car_and_weapon_info()
 
-
     def get_art_for_angle(self, car_instance, angle):
         """Gets the correct vehicle art for a given angle."""
         if isinstance(car_instance.art, dict):
             angle = angle % 360
-            if 337.5 <= angle or angle < 22.5:
-                direction = "N"
-            elif 22.5 <= angle < 67.5:
-                direction = "NE"
-            elif 67.5 <= angle < 112.5:
-                direction = "E"
-            elif 112.5 <= angle < 157.5:
-                direction = "SE"
-            elif 157.5 <= angle < 202.5:
-                direction = "S"
-            elif 202.5 <= angle < 247.5:
-                direction = "SW"
-            elif 247.5 <= angle < 292.5:
-                direction = "W"
-            else:
-                direction = "NW"
+            if 337.5 <= angle or angle < 22.5: direction = "N"
+            elif 22.5 <= angle < 67.5: direction = "NE"
+            elif 67.5 <= angle < 112.5: direction = "E"
+            elif 112.5 <= angle < 157.5: direction = "SE"
+            elif 157.5 <= angle < 202.5: direction = "S"
+            elif 202.5 <= angle < 247.5: direction = "SW"
+            elif 247.5 <= angle < 292.5: direction = "W"
+            else: direction = "NW"
             art = car_instance.art.get(direction, [""])
         else:
             art = car_instance.art
@@ -193,7 +170,6 @@ class NewGameScreen(Screen):
         car_class = PLAYER_CARS[self.selected_car_index]
         car_instance = car_class(x=0, y=0)
         
-        # Apply color to the art
         color_style = CAR_COLORS[self.selected_color_name]
         color = color_style.color.name if color_style.color else "white"
         
@@ -205,7 +181,6 @@ class NewGameScreen(Screen):
         art = self.get_art_for_angle(car_instance, self.preview_angle)
         self.query_one("#car-preview", Static).update(art)
 
-        # Update color widget text
         color_widget = self.query_one("#color_select", CycleWidget)
         color_name = self.selected_color_name.replace("CAR_", "").replace("_", " ").title()
         color_widget.query_one(".cycle-value").update(color_name)
@@ -215,9 +190,7 @@ class NewGameScreen(Screen):
         item_info = self.query_one("#item_info", ItemInfoWidget)
 
         if hasattr(car_instance, "default_weapons"):
-            weapons = [
-                Weapon(w) for w in car_instance.default_weapons.values()
-            ]
+            weapons = [Weapon(w) for w in car_instance.default_weapons.values()]
             if not weapons:
                 weapon_list.update("No weapons.")
                 item_info.display_item(None)
@@ -238,42 +211,57 @@ class NewGameScreen(Screen):
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press events."""
-        from ..app import WorldScreen # Local import to avoid circular dependency
         if event.button.id == "start_game":
-        
-            # --- Clear temp directory and generate a new world of factions ---
-            if os.path.exists("temp"):
-                shutil.rmtree("temp")
-            os.makedirs("temp")
-            
-            new_faction_data = generate_factions_from_llm()
-            if new_faction_data:
-                # Write the new factions to a temporary file using pprint
-                # to ensure Python-compatible syntax (e.g., None instead of null).
-                with open("temp/factions.py", "w") as f:
-                    f.write("FACTION_DATA = ")
-                    pprint.pprint(new_faction_data, stream=f, indent=4)
-                
-                # IMPORTANT: We need a way to tell the game to use this new file
-                # This will be handled by modifying the import system or game state loader
-            
-            difficulty = self.query_one("#difficulty_select", CycleWidget).options[self.query_one("#difficulty_select", CycleWidget).current_index]
-            color_name = self.query_one("#color_select", CycleWidget).options[self.query_one("#color_select", CycleWidget).current_index]
-            
-            game_state = GameState(
-                selected_car_index=self.selected_car_index,
-                difficulty=difficulty,
-                difficulty_mods=DIFFICULTY_MODIFIERS[difficulty],
-                car_color_names=[color_name],
+            start_button = self.query_one("#start_game", Button)
+            start_button.disabled = True
+            start_button.label = "Generating World..."
+            self.run_worker(
+                generate_factions_worker(self.app.llm_pipeline),
+                exclusive=True,
+                thread=True,
+                name="FactionGenerator"
             )
-            # Set initial player position
-            game_state.car_world_x = 10.0
-            game_state.car_world_y = 10.0
-            game_state.player_car.x = game_state.car_world_x
-            game_state.player_car.y = game_state.car_world_y
-            
-            self.app.game_state = game_state
-            self.app.world = World(seed=12345)
-            
-            self.app.switch_screen(WorldScreen())
-            self.app.game_loop = self.app.set_interval(1 / 30, self.app.update_game)
+
+    def on_worker_state_changed(self, event: Worker.StateChanged) -> None:
+        """Handle worker state changes."""
+        from ..app import WorldScreen # Local import to avoid circular dependency
+        if event.worker.name == "FactionGenerator":
+            if event.worker.state == WorkerState.SUCCESS:
+                new_faction_data = event.worker.result
+                if new_faction_data:
+                    if os.path.exists("temp"):
+                        shutil.rmtree("temp")
+                    os.makedirs("temp")
+                    with open("temp/factions.py", "w") as f:
+                        f.write("FACTION_DATA = ")
+                        pprint.pprint(new_faction_data, stream=f, indent=4)
+                    
+                    difficulty = self.query_one("#difficulty_select", CycleWidget).options[self.query_one("#difficulty_select", CycleWidget).current_index]
+                    color_name = self.query_one("#color_select", CycleWidget).options[self.query_one("#color_select", CycleWidget).current_index]
+                    
+                    game_state = GameState(
+                        selected_car_index=self.selected_car_index,
+                        difficulty=difficulty,
+                        difficulty_mods=DIFFICULTY_MODIFIERS[difficulty],
+                        car_color_names=[color_name],
+                    )
+                    game_state.car_world_x = 10.0
+                    game_state.car_world_y = 10.0
+                    game_state.player_car.x = game_state.car_world_x
+                    game_state.player_car.y = game_state.car_world_y
+                    
+                    self.app.game_state = game_state
+                    self.app.world = World(seed=12345)
+                    
+                    self.app.switch_screen(WorldScreen())
+                    self.app.game_loop = self.app.set_interval(1 / 30, self.app.update_game)
+                else:
+                    logging.error("Faction generation failed.")
+                    start_button = self.query_one("#start_game", Button)
+                    start_button.disabled = False
+                    start_button.label = "Start Game (Failed)"
+            elif event.worker.state == WorkerState.ERROR:
+                logging.error("Faction generator worker failed.")
+                start_button = self.query_one("#start_game", Button)
+                start_button.disabled = False
+                start_button.label = "Start Game (Error)"

@@ -45,7 +45,7 @@ class CityHallScreen(ModalScreen):
                 self.available_quests = [conquest_quest]
             else:
                 # Generate 3 normal quests using the LLM
-                self.available_quests = [generate_quest_from_llm(gs, self.current_city_faction) for _ in range(3)]
+                self.available_quests = [generate_quest_from_llm(gs, self.current_city_faction, self.app.llm_pipeline) for _ in range(3)]
 
             self.can_challenge = check_challenge_conditions(gs, self.current_city_faction)
         
@@ -104,7 +104,7 @@ class CityHallScreen(ModalScreen):
                 
                 selected_quest = self.available_quests[self.selected_index]
                 self.query_one("#quest_info", Static).update(selected_quest.description)
-                self.query_one(Dialog).update_text(selected_quest.dialog)
+                self.query_one(Dialog).update(selected_quest.dialog)
                 self.query_one("#accept_quest", Button).disabled = False
 
             self.query_one("#quest_list", Static).update(quest_list_str)

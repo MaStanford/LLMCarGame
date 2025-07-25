@@ -137,6 +137,7 @@ class GameState:
         self.screen_height = 0
         self.notifications = []
         self.closest_entity_info = None
+        self.compass_info = {"target_angle": 0, "player_angle": 0, "target_name": ""}
 
         self.apply_level_bonuses()
 

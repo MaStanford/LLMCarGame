@@ -71,7 +71,7 @@ BUILDING_DATA = {
             " ║   └─┬─┘   ║ ",
             " ╚═════╧═════╝ "
         ],
-        "width": 15, "height": 1,
+        "width": 15, "height": 15,
         "color_pair_name": "BUILDING_WALL"
     }
 }
