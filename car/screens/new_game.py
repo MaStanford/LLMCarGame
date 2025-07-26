@@ -1,13 +1,12 @@
-import json
-import importlib
 import os
 import shutil
 import pprint
 import logging
+from functools import partial
 from textual.app import ComposeResult
-from textual.containers import Vertical, Container
+from textual.containers import Vertical, Container, Horizontal
 from textual.screen import Screen
-from textual.widgets import Button, Static, Header, Footer
+from textual.widgets import Button, Static, Header, Footer, ProgressBar
 from textual.binding import Binding
 from textual.worker import Worker, WorkerState
 
@@ -19,7 +18,6 @@ from ..data.colors import CAR_COLORS
 from ..game_state import GameState
 from ..entities.weapon import Weapon
 from ..world import World
-from ..logic.spawning import spawn_initial_entities
 from ..workers.faction_generator import generate_factions_worker
 from .. import data as game_data
 
@@ -39,6 +37,7 @@ class NewGameScreen(Screen):
         super().__init__()
         self.focusable_widgets = []
         self.current_focus_index = 0
+        self.new_faction_data = None
 
     def compose(self) -> ComposeResult:
         """Compose the layout of the screen."""
@@ -68,7 +67,10 @@ class NewGameScreen(Screen):
                 with Vertical(id="weapon-list-container", classes="focusable"):
                     yield Static(id="weapon_list")
                 yield ItemInfoWidget(id="item_info")
-                yield Button("Start Game", id="start_game", variant="primary")
+                with Horizontal(id="faction-loader-container"):
+                    yield Static("Fetching Factions from LLM...", id="faction_status")
+                    yield ProgressBar(id="faction_progress", show_eta=False)
+                yield Button("Start Game", id="start_game", variant="primary", disabled=True)
         yield Footer()
 
     def on_mount(self) -> None:
@@ -89,6 +91,15 @@ class NewGameScreen(Screen):
         self.current_focus_index = 0
         self.update_focus()
         self.update_car_and_weapon_info()
+
+        # Start the faction generation worker
+        worker_callable = partial(generate_factions_worker, self.app.llm_pipeline)
+        self.run_worker(
+            worker_callable,
+            exclusive=True,
+            thread=True,
+            name="FactionGenerator"
+        )
 
     def update_focus(self) -> None:
         """Update the visual and native focus state."""
@@ -211,57 +222,53 @@ class NewGameScreen(Screen):
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press events."""
+        from ..app import WorldScreen # Local import to avoid circular dependency
         if event.button.id == "start_game":
-            start_button = self.query_one("#start_game", Button)
-            start_button.disabled = True
-            start_button.label = "Generating World..."
-            self.run_worker(
-                generate_factions_worker(self.app.llm_pipeline),
-                exclusive=True,
-                thread=True,
-                name="FactionGenerator"
-            )
+            if self.new_faction_data:
+                if os.path.exists("temp"):
+                    shutil.rmtree("temp")
+                os.makedirs("temp")
+                with open("temp/factions.py", "w") as f:
+                    f.write("FACTION_DATA = ")
+                    pprint.pprint(self.new_faction_data, stream=f, indent=4)
+                
+                difficulty = self.query_one("#difficulty_select", CycleWidget).options[self.query_one("#difficulty_select", CycleWidget).current_index]
+                color_name = self.query_one("#color_select", CycleWidget).options[self.query_one("#color_select", CycleWidget).current_index]
+                
+                game_state = GameState(
+                    selected_car_index=self.selected_car_index,
+                    difficulty=difficulty,
+                    difficulty_mods=DIFFICULTY_MODIFIERS[difficulty],
+                    car_color_names=[color_name],
+                )
+                game_state.car_world_x = 10.0
+                game_state.car_world_y = 10.0
+                game_state.player_car.x = game_state.car_world_x
+                game_state.player_car.y = game_state.car_world_y
+                
+                self.app.game_state = game_state
+                self.app.world = World(seed=12345)
+                
+                self.app.switch_screen(WorldScreen())
+                self.app.game_loop = self.app.set_interval(1 / 30, self.app.update_game)
 
     def on_worker_state_changed(self, event: Worker.StateChanged) -> None:
         """Handle worker state changes."""
-        from ..app import WorldScreen # Local import to avoid circular dependency
         if event.worker.name == "FactionGenerator":
+            start_button = self.query_one("#start_game", Button)
+            loader = self.query_one("#faction-loader-container")
+            
             if event.worker.state == WorkerState.SUCCESS:
-                new_faction_data = event.worker.result
-                if new_faction_data:
-                    if os.path.exists("temp"):
-                        shutil.rmtree("temp")
-                    os.makedirs("temp")
-                    with open("temp/factions.py", "w") as f:
-                        f.write("FACTION_DATA = ")
-                        pprint.pprint(new_faction_data, stream=f, indent=4)
-                    
-                    difficulty = self.query_one("#difficulty_select", CycleWidget).options[self.query_one("#difficulty_select", CycleWidget).current_index]
-                    color_name = self.query_one("#color_select", CycleWidget).options[self.query_one("#color_select", CycleWidget).current_index]
-                    
-                    game_state = GameState(
-                        selected_car_index=self.selected_car_index,
-                        difficulty=difficulty,
-                        difficulty_mods=DIFFICULTY_MODIFIERS[difficulty],
-                        car_color_names=[color_name],
-                    )
-                    game_state.car_world_x = 10.0
-                    game_state.car_world_y = 10.0
-                    game_state.player_car.x = game_state.car_world_x
-                    game_state.player_car.y = game_state.car_world_y
-                    
-                    self.app.game_state = game_state
-                    self.app.world = World(seed=12345)
-                    
-                    self.app.switch_screen(WorldScreen())
-                    self.app.game_loop = self.app.set_interval(1 / 30, self.app.update_game)
-                else:
-                    logging.error("Faction generation failed.")
-                    start_button = self.query_one("#start_game", Button)
+                self.new_faction_data = event.worker.result
+                if self.new_faction_data:
+                    logging.info("Faction generation successful.")
                     start_button.disabled = False
-                    start_button.label = "Start Game (Failed)"
+                    loader.display = False
+                else:
+                    logging.error("Faction generation failed: No data returned.")
+                    self.query_one("#faction_status", Static).update("Error: Faction generation failed.")
+                    self.query_one(ProgressBar).display = False
             elif event.worker.state == WorkerState.ERROR:
                 logging.error("Faction generator worker failed.")
-                start_button = self.query_one("#start_game", Button)
-                start_button.disabled = False
-                start_button.label = "Start Game (Error)"
+                self.query_one("#faction_status", Static).update("Error: Worker failed.")
+                self.query_one(ProgressBar).display = False

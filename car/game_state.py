@@ -115,6 +115,7 @@ class GameState:
         self.can_challenge_boss = {}
         self.defeated_bosses = set()
         self.combat_enemy = None
+        self.quest_cache = {}
 
         # --- UI and Game Flow State ---
         self.shop_cooldown = 0

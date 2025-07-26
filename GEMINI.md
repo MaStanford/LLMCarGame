@@ -18,9 +18,10 @@ This project is a collaboration between two super-developers with a shared passi
 
 ## Summary
 
-This project is a terminal-based, open-world, automotive RPG survival game. Players select a starting vehicle and embark on an adventure in an infinitely-generated, random world. The map features roads connecting cities, surrounded by various types of wilderness.
+This project is a terminal-based, open-world, automotive RPG survival game. Players select a starting vehicle and embark on an adventure in an infinitely-generated, random world, driven by a singular goal: to find the legendary "Genesis Module." This piece of pre-apocalypse technology is rumored to be the only thing powerful enough to allow a vehicle to escape the wasteland's harsh environment. The player's journey will involve navigating the complex political landscape of warring factions, taking on quests, and upgrading their vehicle in hopes of finally tracking down the module and winning their freedom.
 
 ### Key Gameplay Elements:
+- **The Genesis Module:** The ultimate goal of the game. Finding this legendary car component allows the player to win by escaping the wasteland at a designated point on the world map (e.g., coordinates -300, -300).
 - **Infinite World:** A randomly generated world provides endless exploration.
 - **Cities:** Procedurally generated with buildings like gas stations, mechanic shops, weapon shops, and a city hall for quests. Cities are populated with random NPCs.
 - **Wilderness:** The areas between cities are filled with randomly generated fauna (e.g., deer, dogs) and enemies (e.g., bandits, other hostile vehicles).
@@ -41,7 +42,7 @@ This project is a terminal-based, open-world, automotive RPG survival game. Play
     -   **Town Hall:** Each cities town will offer a quest. 
     -   **Quest types:** There are 3 quest types, kill n, survive n time, kill boss
     -   **Progression:** Quests get harder the more you complete and the higher you level up
-    -   **Town reputation:** Completing quests increses town reputation up to a limit of 100, the reputation is a modifier for town prices and drops for quests and enemies in the town.  
+    -   **Town reputation:** Completing quests increses town reputation up to a limit of 100, a reputation is a modifier for town prices and drops for quests and enemies in the town.  
 - **Shops:** (Price determined by town reputation)
     -   **GAS/fuel:** Buy gas for car and weapon here. 
     -   **Repair:** Fix car durability here. Buy new attachment points, upgrade attachment points here. 
@@ -107,7 +108,7 @@ The game is built around the **Textual TUI framework**, which provides an event-
             3.  `action_focus_next` and `action_focus_previous` methods modify this index.
             4.  A helper method, `update_focus`, applies a `.focused` CSS class to the currently indexed widget.
             5.  Styling is then handled in `car/app.css` using descendant selectors (e.g., `CycleWidget.focused .cycle-value`).
-        -   **Benefit**: This gives us precise control over navigation flow and visual feedback, independent of Textual's built-in focus state.
+        -   **Benefit**: This gives us precise control over the navigation flow and visual feedback, independent of Textual's built-in focus state.
     -   **The Grand Inventory UX Refactor (`InventoryScreen`)**:
         -   **Layout:** The inventory screen is a two-column layout. The left column contains the rotatable car preview and the "Loadout" list. The right column contains the scrollable player "Inventory" list, the `WeaponInfo` panel, and a comprehensive player stats display.
         -   **Interactive Preview:** The car preview can be rotated 360 degrees. When the "Loadout" list is focused, the currently selected attachment point flashes on the car preview, alternating between its index number and a circle icon.
@@ -169,13 +170,14 @@ The game is built around the **Textual TUI framework**, which provides an event-
     - **`car/ui/cutscene.py`:** Manages **blocking, full-screen cinematic events**. This module is responsible for scenes that take over the entire screen and pause gameplay, such as the "Game Over" sequence or future narrative events.
     - **`car/ui/entity_modal.py`:** Handles the **persistent, non-blocking entity display**. This is a core HUD element that dynamically shows information about the closest enemy or boss during live gameplay. It also contains the logic for playing entity-specific animations, like explosions, within its modal window, ensuring that all aspects of an entity's dynamic visualization are handled in one place.
 
-- **LLM-Powered World Generation:** The game uses a local Large Language Model (LLM) to generate the entire political landscape and narrative on the fly.
-    - **Genesis Engine:** At the start of a new game, the LLM is called to create a unique set of factions, including their names, ideologies, relationships, and powerful faction bosses. This ensures no two playthroughs are the same.
+- **The Genesis Module: An Emergent Narrative Engine:** The game uses a local Large Language Model (LLM) to generate the entire political landscape and narrative on the fly. This system is designed to create a unique, emergent story for every playthrough.
+    - **Dynamic Faction Generation:** At the start of a new game, the LLM is called to create a unique set of factions, including their names, ideologies, relationships, and powerful faction bosses. This ensures no two playthroughs are the same.
+    - **The Living Dossier (`quest_log.json`):** The game maintains a chronological record of every quest the player accepts and its outcome. This log serves as the game's "memory."
+    - **Dynamic Context Injection:** Before any new content (like a quest) is generated, the `prompt_builder.py` module assembles a rich "dossier" for the LLM. This includes static lore, the current political state (from `factions.py`), and a summary of the player's journey (from `quest_log.json`).
+    - **Canonization of Choice:** Pre-fetched or offered quests are ephemeral. Only the specific quest the player *accepts* is written to the `quest_log.json`, becoming a permanent part of that playthrough's story. The unchosen quests are discarded, representing branching paths not taken.
+    - **Quest Pre-Fetching and Caching:** To hide LLM latency, the game anticipates when the player might need new quests (e.g., after completing a current objective). It launches background workers to generate and cache quests for nearby cities *before* the player arrives. When the player enters the City Hall, the quests are presented instantly from this in-memory cache.
     - **Dynamic Save System:** Each new game generates a unique world. This world state (including the generated `factions.py` and `quest_log.json`) is stored in a temporary `temp/` directory during play. When the game is saved, the contents of `temp/` are copied into a dedicated save slot in the `saves/` directory, creating a persistent, unique world for each playthrough.
     - **Dynamic Data Loading:** A dedicated module, `car/logic/data_loader.py`, intelligently loads game data. It checks for session-specific data in the `temp/` directory first, and falls back to the default data if none is found. This ensures the game always uses the correct data for the current session.
-    - **Living Context Engine:** A dedicated `prompt_builder.py` module dynamically assembles a rich "dossier" for the LLM before any content generation. This dossier includes static lore, the player's current status, the world's political state, and a log of completed quests, ensuring that all generated content is deeply contextual and contributes to an emergent narrative.
-    - **Emergent Narrative:** The system maintains a `quest_log.json` of completed quests. This history is fed back into the prompt, allowing the LLM to generate new quests that form a cohesive, evolving narrative unique to each playthrough.
-    - **Dynamic Content:** This approach provides a virtually endless stream of unique, context-aware factions and quests, making each game a different story.
 
 - **Wasteland Warfare & Conquest:** The core gameplay loop is built around a dynamic power struggle between factions.
     - **Faction Control:** Player actions directly impact the "Control" score of factions, affecting their economic and military strength.

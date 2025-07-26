@@ -27,14 +27,15 @@ class CityHallScreen(ModalScreen):
         self.is_turn_in = False
         self.can_challenge = False
         self.current_city_faction = None
+        self.current_city_id = None
 
     def on_mount(self) -> None:
         """Called when the screen is mounted."""
         gs = self.app.game_state
         self.current_city_faction = get_city_faction(gs.car_world_x, gs.car_world_y)
-        current_city_id = (round(gs.car_world_x / CITY_SPACING), round(gs.car_world_y / CITY_SPACING))
+        self.current_city_id = (round(gs.car_world_x / CITY_SPACING), round(gs.car_world_y / CITY_SPACING))
         
-        if gs.current_quest and gs.current_quest.ready_to_turn_in and gs.current_quest.city_id == current_city_id:
+        if gs.current_quest and gs.current_quest.ready_to_turn_in and gs.current_quest.city_id == self.current_city_id:
             self.is_turn_in = True
         else:
             self.is_turn_in = False
@@ -44,8 +45,14 @@ class CityHallScreen(ModalScreen):
             if conquest_quest and conquest_quest.quest_giver_faction == self.current_city_faction:
                 self.available_quests = [conquest_quest]
             else:
-                # Generate 3 normal quests using the LLM
-                self.available_quests = [generate_quest_from_llm(gs, self.current_city_faction, self.app.llm_pipeline) for _ in range(3)]
+                # --- Quest Pre-fetching Logic ---
+                # 1. Check the cache first
+                cached_quests = gs.quest_cache.get(self.current_city_id)
+                if cached_quests and cached_quests != "pending":
+                    self.available_quests = cached_quests
+                else:
+                    # 2. Fallback to generating on the spot if nothing is cached
+                    self.available_quests = [generate_quest_from_llm(gs, self.current_city_faction, self.app.llm_pipeline) for _ in range(3)]
 
             self.can_challenge = check_challenge_conditions(gs, self.current_city_faction)
         
@@ -127,12 +134,15 @@ class CityHallScreen(ModalScreen):
             return
 
         if self.is_turn_in:
-            complete_quest(gs)
+            complete_quest(gs, self.app)
             self.app.pop_screen()
         else:
             if self.available_quests:
                 selected_quest = self.available_quests[self.selected_index]
                 handle_quest_acceptance(gs, selected_quest)
+                # Clear the cache for this city now that a quest has been taken
+                if self.current_city_id in gs.quest_cache:
+                    del gs.quest_cache[self.current_city_id]
                 self.app.pop_screen()
 
     def compose(self):

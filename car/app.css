@@ -271,6 +271,21 @@ Button:focus {
     margin-top: 1;
 }
 
+#faction-loader-container {
+    align: center middle;
+    height: 3;
+    margin-top: 1;
+}
+
+#faction-loader-container #faction_status {
+    width: auto;
+    margin-right: 2;
+}
+
+#faction-loader-container ProgressBar {
+    width: 30;
+}
+
 GameOverScreen {
     align: center middle;
 }

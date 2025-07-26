@@ -34,7 +34,7 @@ class MainMenuScreen(Screen):
                 yield Button("Settings", id="settings", variant="default")
                 yield Button("Quit", id="quit", variant="error")
             with Vertical(id="model-loader-container"):
-                yield Static("Loading LLM Model...", id="model_status")
+                yield Static("Loading LLM Model...\n(First time may take a while)", id="model_status")
                 yield ProgressBar(id="model_progress", show_eta=False)
         yield Footer()
 

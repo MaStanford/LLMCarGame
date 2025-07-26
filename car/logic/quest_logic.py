@@ -74,6 +74,7 @@ def handle_quest_acceptance(game_state, quest):
                 # audio_manager.play_music("car/sounds/boss.mid")
 
 from ..screens.quest_complete import QuestCompleteScreen
+from .quest_caching import trigger_quest_prefetching
 
 def update_quests(game_state, audio_manager, app):
     """
@@ -91,10 +92,11 @@ def update_quests(game_state, audio_manager, app):
                 notifications.append(f"Objective complete! Return to city.")
                 audio_manager.stop_music()
                 audio_manager.play_music("car/sounds/world.mid")
+                trigger_quest_prefetching(app) # Trigger pre-fetching
             else:
                 # For quests that complete immediately without turn-in
                 app.push_screen(QuestCompleteScreen(game_state.current_quest))
-                complete_quest(game_state)
+                complete_quest(game_state, app)
                 audio_manager.stop_music()
                 audio_manager.play_music("car/sounds/world.mid")
 
@@ -186,7 +188,7 @@ def generate_quest(game_state, quest_id):
 import json
 import os
 
-def complete_quest(game_state):
+def complete_quest(game_state, app):
     """
     Handles the logic for completing a quest.
     If the quest is part of a chain, it sets up the next quest.
@@ -236,4 +238,7 @@ def complete_quest(game_state):
         game_state.current_quest = None
     
     check_for_faction_takeover(game_state)
+    
+    # Trigger pre-fetching for the next set of quests
+    trigger_quest_prefetching(app)
 

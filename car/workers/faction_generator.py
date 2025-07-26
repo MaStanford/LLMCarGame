@@ -1,4 +1,5 @@
 import logging
+import time
 from typing import Any, Dict
 
 def generate_factions_worker(pipeline: Any) -> Dict:
@@ -9,10 +10,13 @@ def generate_factions_worker(pipeline: Any) -> Dict:
     from ..logic.llm_faction_generator import generate_factions_from_llm
     
     logging.info("Faction generator worker started.")
+    start_time = time.time()
     try:
         faction_data = generate_factions_from_llm(pipeline)
-        logging.info("Faction generator worker finished successfully.")
+        end_time = time.time()
+        logging.info(f"Faction generator worker finished successfully in {end_time - start_time:.2f} seconds.")
         return faction_data
     except Exception as e:
-        logging.error(f"Faction generator worker failed: {e}", exc_info=True)
+        end_time = time.time()
+        logging.error(f"Faction generator worker failed after {end_time - start_time:.2f} seconds: {e}", exc_info=True)
         return None

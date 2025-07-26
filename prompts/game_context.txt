@@ -1,23 +1,12 @@
-This document outlines the core concepts, factions, and mechanics for "Car," a terminal-based, open-world, automotive RPG survival game.
+This document outlines the core concepts, factions, and mechanics for "The Genesis Module," a terminal-based, open-world, automotive RPG survival game.
 
 ## Core Gameplay Loop
 Players are freelance mercenaries in a post-apocalyptic world dominated by warring vehicle-based factions. They drive between procedurally generated cities, taking on contracts (quests) to earn money, experience, and reputation. The primary gameplay involves vehicular combat, resource management (fuel, ammo, durability), and completing quests that directly impact the balance of power between factions.
+The goal of the player is to find something called **The Geneisis Module**. This item will greatly raise all stats of the player and allow them to leave the wasteland. 
 
 ## Faction Dossiers
 
-There are three major factions vying for control:
-
-1.  **The Vultures:**
-    *   **Vibe:** Scrap-punk survivalists. They are masters of salvage and improvisation, favoring rugged, heavily armored vehicles bristling with makeshift weaponry. They are territorial, aggressive, and see value in anything that can be stripped for parts.
-    *   **Goals:** Expand their scrap heaps and control the trade of salvaged goods. They believe that "might makes right" and respect only strength and utility.
-
-2.  **The Desert Rats:**
-    *   **Vibe:** Nomadic, speed-obsessed freedom fighters. They value agility and hit-and-run tactics, using fast, lightweight buggies and technicals. They operate under a loose code of honor and fight to remain independent from the other, more tyrannical factions.
-    *   **Goals:** Maintain their freedom, control the open roads, and disrupt the supply lines of their rivals. They value speed, skill, and daring.
-
-3.  **The Corporate Guard:**
-    *   **Vibe:** Remnants of a pre-apocalypse corporate security force. They are organized, technologically advanced, and use well-maintained, high-tech energy weapons. They see themselves as the rightful heirs to the old world, seeking to impose order and control through superior firepower and strategy.
-    *   **Goals:** Re-establish a centralized, authoritarian government under their control. They believe that order, discipline, and technology are the keys to rebuilding civilization.
+There are 5 major factions vying for control of the wasteland. 
 
 ## Key Mechanics
 
