@@ -17,7 +17,9 @@ PREVIOUSLY...
 
 # INSTRUCTIONS
 Based on all of the above, generate a new quest.
-- The quest should be relevant to the current political landscape and the player's status.
+- The quest must adhere to the world's current theme: {{ theme }}
+- The quest should be relevant to the current political landscape (especially the "vibe" of the factions) and the player's status.
+- The quest's difficulty and rewards should be appropriate for a player who has completed a number of quests (as noted in the "PREVIOUSLY..." section).
 - The quest must have a clear `name`, a `description` for the player, and some `dialog` for the quest giver.
 - The quest must have one of the following objective types: `KillCountObjective`, `KillBossObjective`, or `SurvivalObjective`.
 - Provide a JSON object matching the format below exactly.

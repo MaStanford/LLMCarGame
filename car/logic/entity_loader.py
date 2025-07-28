@@ -31,7 +31,7 @@ from ..entities.obstacles.wrecked_husk import WreckedHusk
 from ..entities.obstacles.oil_barrel import OilBarrel
 
 PLAYER_CARS = [
-    Hatchback, SportsCar, Sedan, MuscleCar, Truck, Van, Hotrod, PanelWagon
+    Hatchback, SportsCar, Sedan, Truck, Van, Hotrod, PanelWagon
 ]
 
 ENEMY_VEHICLES = [

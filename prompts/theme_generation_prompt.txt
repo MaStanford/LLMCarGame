@@ -1,0 +1,25 @@
+You are a creative assistant for a video game. Your task is to generate three distinct, compelling themes for a new playthrough of an open-world, automotive RPG.
+
+For each theme, provide a short, evocative "name" and a one-sentence "description" that captures the mood and core concept.
+
+The output must be a valid JSON object containing a single key "themes", which is a list of three theme objects. Do not include any other text, explanation, or markdown formatting.
+
+Example output format:
+{
+  "themes": [
+    {
+      "name": "Gritty Noir",
+      "description": "A rain-slicked, black-and-white world of betrayal, femme fatales, and cynical detectives in trench coats, but with cars."
+    },
+    {
+      "name": "Wasteland Survival",
+      "description": "A desperate, sun-scorched struggle for fuel and survival against cannibalistic marauders in a world reduced to dust and rust."
+    },
+    {
+      "name": "Zany Cartoon Apocalypse",
+      "description": "A wacky, cel-shaded adventure where cars bounce, weapons shoot paintballs, and the goal is to win the annual 'Wacky Wasteland Race'."
+    }
+  ]
+}
+
+# New Themes JSON:

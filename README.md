@@ -1,6 +1,6 @@
-# Car - A Terminal-Based Automotive RPG
+# Genesis Module - A Terminal-Based Automotive RPG
 
-Welcome to Car, a terminal-based, open-world, automotive RPG survival game. Players select a starting vehicle and embark on an adventure in an infinitely-generated, random world. The map features roads connecting cities, surrounded by various types of wilderness.
+Welcome to Genesis Module, a terminal-based, open-world, automotive RPG survival game. Players select a starting vehicle and embark on an adventure in an infinitely-generated, random world. The map features roads connecting cities, surrounded by various types of wilderness.
 
 ## Key Gameplay Elements:
 
@@ -23,7 +23,7 @@ Welcome to Car, a terminal-based, open-world, automotive RPG survival game. Play
 
 ## How to Play
 
--   **Movement:** Use the **Arrow Keys** or **WASD** to accelerate, brake, and steer your car.
+-   **Movement:** Use **WASD** to accelerate, brake, and steer your car.
 -   **Fire Weapons:** Press the **Spacebar** to fire your equipped weapons.
 -   **Inventory:** Press **Tab** to open your inventory and manage your car's attachments and items.
 -   **Factions:** Press **F** to open the Faction Command screen and view the current state of the wasteland.
@@ -32,57 +32,47 @@ Welcome to Car, a terminal-based, open-world, automotive RPG survival game. Play
 ## Dependencies
 
 -   **Python 3:** The game is written in Python 3.
--   **curses:** The game uses the `curses` library for rendering. This is included with Python on Linux and macOS, but requires a separate installation on Windows.
--   **pygame:** The game uses the `pygame` library for audio.
--   **fluidsynth:** The game uses `fluidsynth` for MIDI audio.
+-   **Textual:** The game uses the `Textual` library for rendering.
 
 ## Installation and Running the Game
 
-### Windows
+**1. Install Dependencies**
 
-1.  **Install Python 3:** If you don't have Python 3 installed, download and install it from the [official Python website](https://www.python.org/downloads/). Make sure to check the box that says "Add Python to PATH" during installation.
-2.  **Install dependencies:** Open a command prompt and run the following command:
+First, install the necessary Python packages. The exact requirements vary by operating system.
+
+*   **For Windows:**
+    ```bash
+    pip install -r requirements-windows.txt
     ```
-    pip install -r requirements.txt
+*   **For macOS:**
+    ```bash
+    pip install -r requirements-macos.txt
     ```
-3.  **Install FluidSynth:** Download and install FluidSynth from the [official FluidSynth website](https://www.fluidsynth.org/downloads/).
-4.  **Download SoundFont:** Download the `GeneralUser_GS_v1.471.sf2` SoundFont from [this link](https://www.schristiancollins.com/soundfonts.php) and place it in the `car/sounds` directory.
-5.  **Run the game:** Open a command prompt, navigate to the project's root directory, and run the following command:
+*   **For Linux:**
+    ```bash
+    pip install -r requirements-linux.txt
     ```
+
+**2. Download the Language Model**
+
+The game's dynamic story generation is powered by a local Large Language Model. You need to download the model file before you can play.
+
+Run the following command from the project's root directory:
+```bash
+python download_model.py
+```
+This will download the `gemma-2b-it.gguf` file (which is several gigabytes) and place it in the `models/` directory. You only need to do this once.
+
+**3. Run the Game**
+
+Once the dependencies are installed and the model is downloaded, you can run the game using the appropriate script for your system:
+
+*   **On Windows:**
+    ```bash
     run_game.bat
     ```
-
-### macOS and Linux
-
-1.  **Install Python 3:**
-    *   **macOS:** If you don't have Python 3 installed, you can install it using [Homebrew](https://brew.sh/):
-        ```
-        brew install python
-        ```
-    *   **Linux:** Python 3 is usually pre-installed on most Linux distributions. If not, you can install it using your distribution's package manager. For example, on Debian-based distributions (like Ubuntu), you can run:
-        ```
-        sudo apt-get update
-        sudo apt-get install python3 python3-pip
-        ```
-2.  **Install FluidSynth:**
-    *   **macOS:**
-        ```
-        brew install fluidsynth
-        ```
-    *   **Linux:**
-        ```
-        sudo apt-get install fluidsynth
-        ```
-3.  **Install dependencies:** Open a terminal and run the following command:
-    ```
-    pip3 install -r requirements.txt
-    ```
-4.  **Download SoundFont:** Download the `GeneralUser_GS_v1.471.sf2` SoundFont from [this link](https://www.schristiancollins.com/soundfonts.php) and place it in the `car/sounds` directory.
-5.  **Make the script executable:** Open a terminal, navigate to the project's root directory, and run the following command. You only need to do this once.
-    ```
+*   **On macOS and Linux:**
+    ```bash
     chmod +x run_game.sh
-    ```
-6.  **Run the game:** Run the following command from the project's root directory:
-    ```
     ./run_game.sh
     ```

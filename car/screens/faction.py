@@ -2,7 +2,6 @@ from textual.screen import ModalScreen
 from textual.widgets import Header, Footer, DataTable, Static
 from textual.containers import Grid
 from textual.binding import Binding
-from ..logic.data_loader import FACTION_DATA
 from ..world.generation import get_city_name
 from ..data.game_constants import CITY_SPACING
 from ..logic.entity_loader import ALL_VEHICLES
@@ -13,6 +12,10 @@ class FactionScreen(ModalScreen):
     BINDINGS = [
         Binding("escape", "app.pop_screen", "Back"),
     ]
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.faction_data = {}
 
     def compose(self):
         """Compose the layout of the screen."""
@@ -25,6 +28,8 @@ class FactionScreen(ModalScreen):
     def on_mount(self) -> None:
         """Called when the screen is mounted."""
         gs = self.app.game_state
+        # Load the CURRENT session's faction data dynamically from the app
+        self.faction_data = self.app.data.factions.FACTION_DATA
         
         table = self.query_one(DataTable)
         table.cursor_type = "row"
@@ -32,15 +37,16 @@ class FactionScreen(ModalScreen):
         table.add_column("Control", width=15)
         table.add_column("Reputation", width=15)
         
-        for faction_id, data in FACTION_DATA.items():
+        for faction_id, data in self.faction_data.items():
             control = gs.faction_control.get(faction_id, 50)
             reputation = gs.faction_reputation.get(faction_id, 0)
             table.add_row(data["name"], f"{control}%", str(reputation), key=faction_id)
             
         # Set initial focus and update details
-        table.move_cursor(row=0, animate=False)
-        initial_faction_name = table.get_row_at(0)[0]
-        self.update_details(initial_faction_name)
+        if table.row_count > 0:
+            table.move_cursor(row=0, animate=False)
+            initial_faction_name = table.get_row_at(0)[0]
+            self.update_details(initial_faction_name)
         table.focus()
 
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
@@ -55,12 +61,12 @@ class FactionScreen(ModalScreen):
         details_panel = self.query_one("#faction_details")
         
         # Find the faction data
-        faction_id = next((fid for fid, data in FACTION_DATA.items() if data["name"] == faction_name), None)
+        faction_id = next((fid for fid, data in self.faction_data.items() if data["name"] == faction_name), None)
         if not faction_id:
             details_panel.update("Select a faction.")
             return
             
-        faction_data = FACTION_DATA[faction_id]
+        faction_data = self.faction_data[faction_id]
         rep = gs.faction_reputation.get(faction_id, 0)
         control = gs.faction_control.get(faction_id, 50)
         
@@ -71,13 +77,10 @@ class FactionScreen(ModalScreen):
         
         unit_names = []
         for unit_id in faction_data.get("units", []):
-            # Find the vehicle class by its snake_case file name (which is the unit_id)
             vehicle_class = next((v for v in ALL_VEHICLES if v.__name__.lower() == unit_id.lower()), None)
             if vehicle_class:
-                # Instantiate to get the proper name attribute
                 unit_names.append(vehicle_class(0,0).name)
             else:
-                # Fallback to a formatted version of the ID
                 unit_names.append(unit_id.replace("_", " ").title())
         units_str = ", ".join(unit_names) if unit_names else "N/A"
 
@@ -87,8 +90,10 @@ class FactionScreen(ModalScreen):
         details += f"Reputation: {rep}\n\n"
         details += f"[bold]Known Units:[/bold]\n{units_str}\n\n"
         details += "[bold]Relationships:[/bold]\n"
-        for other_id, status in faction_data["relationships"].items():
-            other_name = FACTION_DATA[other_id]["name"]
-            details += f"- {other_name}: {status}\n"
+        for other_id, status in faction_data.get("relationships", {}).items():
+            # Use the dynamically loaded faction data for lookup
+            if other_id in self.faction_data:
+                other_name = self.faction_data[other_id]["name"]
+                details += f"- {other_name}: {status}\n"
             
         details_panel.update(details)

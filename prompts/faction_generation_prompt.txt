@@ -1,54 +1,59 @@
-You are a world-building expert creating the foundational lore for "Car," a post-apocalyptic automotive RPG.
-Your task is to generate a set of 5 rival factions that will fight for control of the wasteland.
+You are a JSON data generator. Your only task is to create a valid JSON object based on the rules provided.
 
-First, here is the context for the game you are working on:
----
-{{ game_context }}
----
+# RULES
+1.  The JSON object must contain exactly 5 top-level keys.
+2.  Each top-level key must be a unique, snake_case string representing a faction's ID.
+3.  Exactly ONE of the 5 factions must have its `hub_city_coordinates` set to `[0, 0]`. This is the neutral faction.
+4.  The `relationships` dictionary for each faction must ONLY contain keys that are present as top-level faction IDs.
+5.  Adhere to the provided theme: {{ theme }}
+6.  Use the provided vehicle list: {{ vehicle_list }}
 
-# INSTRUCTIONS
-- Create exactly 5 unique factions.
-- Give each faction a compelling name, a short but vivid description of their "vibe," and a list of 3-4 typical vehicle units they would use from the following list: {{ vehicle_list }}.
-- Define their relationships with each other as "Hostile," "Allied," or "Neutral." Ensure a complex web of relationships, not just all-out war.
-- Designate ONE faction as a "Neutral" hub (e.g., "The Junction"), which should have neutral relationships with most other factions and no faction boss.
-- Assign each faction a unique Hub City coordinate on a 100x100 grid (e.g., (35, 35), (-15, 20)). The neutral faction must be at (0, 0).
-- Design a unique, powerful "Faction Boss" for each non-neutral faction, including a creative name and a signature vehicle type from the game's vehicle list.
-- All factions except the neutral one should start with a "control" value of 50. The neutral faction starts with 100.
-
-# REQUIRED JSON FORMAT
-Output *only* the JSON object for the new faction data. Do not include any other text, explanation, or markdown formatting. The top-level keys should be snake_case identifiers for the factions.
-
+# EXAMPLE OUTPUT
 ```json
 {
-  "faction_one_id": {
-    "name": "<Faction Name>",
-    "hub_city_coordinates": [<int>, <int>],
+  "scrap_vultures": {
+    "name": "Scrap Vultures",
+    "description": "Vicious scavengers who adorn their vehicles with the bones of their enemies.",
+    "hub_city_coordinates": [-25, 30],
     "control": 50,
-    "relationships": {
-      "faction_two_id": "<Hostile/Allied/Neutral>",
-      "faction_three_id": "<Hostile/Allied/Neutral>",
-      "faction_four_id": "<Hostile/Allied/Neutral>",
-      "faction_five_id": "<Hostile/Allied/Neutral>"
-    },
-    "units": ["<vehicle_1>", "<vehicle_2>", "<vehicle_3>"],
-    "faction_boss": {
-      "name": "<Boss Name>",
-      "vehicle": "<vehicle_type>",
-      "hp_multiplier": <float>,
-      "damage_multiplier": <float>
-    }
+    "relationships": { "neon_runners": "Hostile", "aether_syndicate": "Hostile", "iron_pioneers": "Neutral", "the_junction": "Neutral" },
+    "units": ["RaiderBuggy", "Technical", "RustySedan"],
+    "faction_boss": { "name": "Scrap King Klaw", "vehicle": "WarRig", "hp_multiplier": 5.0, "damage_multiplier": 2.5 }
   },
-  "neutral_faction_id": {
-    "name": "<Neutral Faction Name>",
+  "neon_runners": {
+    "name": "Neon Runners",
+    "description": "Speed-obsessed racers who value style and velocity above all else.",
+    "hub_city_coordinates": [35, -20],
+    "control": 50,
+    "relationships": { "scrap_vultures": "Hostile", "aether_syndicate": "Hostile", "iron_pioneers": "Allied", "the_junction": "Neutral" },
+    "units": ["SportsCar", "Hotrod", "MuscleCar"],
+    "faction_boss": { "name": "Ace Velocity", "vehicle": "SportsCar", "hp_multiplier": 3.5, "damage_multiplier": 3.0 }
+  },
+  "aether_syndicate": {
+    "name": "Aether Syndicate",
+    "description": "A shadowy corporation that deals in pre-apocalypse technology and information.",
+    "hub_city_coordinates": [40, 45],
+    "control": 50,
+    "relationships": { "scrap_vultures": "Hostile", "neon_runners": "Hostile", "iron_pioneers": "Hostile", "the_junction": "Neutral" },
+    "units": ["Sedan", "Hatchback", "Technical"],
+    "faction_boss": { "name": "The Alchemist", "vehicle": "Hatchback", "hp_multiplier": 4.0, "damage_multiplier": 3.5 }
+  },
+  "iron_pioneers": {
+    "name": "Iron Pioneers",
+    "description": "Hardy survivalists and builders, focused on creating a new civilization from the ashes.",
+    "hub_city_coordinates": [-30, -35],
+    "control": 50,
+    "relationships": { "scrap_vultures": "Neutral", "neon_runners": "Allied", "aether_syndicate": "Hostile", "the_junction": "Neutral" },
+    "units": ["Truck", "Van", "PanelWagon"],
+    "faction_boss": { "name": "Mother Lode", "vehicle": "Miner", "hp_multiplier": 6.0, "damage_multiplier": 2.0 }
+  },
+  "the_junction": {
+    "name": "The Junction",
+    "description": "A neutral trading hub, home to mercenaries, merchants, and those who wish to stay out of faction politics.",
     "hub_city_coordinates": [0, 0],
     "control": 100,
-    "relationships": {
-        "faction_one_id": "Neutral",
-        "faction_two_id": "Neutral",
-        "faction_three_id": "Neutral",
-        "faction_four_id": "Neutral"
-    },
-    "units": ["<vehicle_1>", "<vehicle_2>"],
+    "relationships": { "scrap_vultures": "Neutral", "neon_runners": "Neutral", "aether_syndicate": "Neutral", "iron_pioneers": "Neutral" },
+    "units": ["Sedan", "Truck"],
     "faction_boss": null
   }
 }

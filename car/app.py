@@ -22,9 +22,12 @@ from .widgets.explosion import Explosion
 from .widgets.notifications import Notifications
 from .widgets.fps_counter import FPSCounter
 from .world.generation import get_buildings_in_city
+from .config import load_settings
 import random
 import math
 import time
+import importlib
+from . import data as game_data
 
 class CarApp(App):
     """The main application class for the Car RPG."""
@@ -43,6 +46,18 @@ class CarApp(App):
         self.last_time = time.time()
         self.game_loop = None
         self.dev_mode = False
+        self.data = game_data
+        self.settings = load_settings()
+        self.generation_mode = self.settings.get("generation_mode", "local")
+
+    def reload_dynamic_data(self):
+        """Forces a reload of the data modules to pick up generated content."""
+        try:
+            importlib.reload(self.data.factions)
+            importlib.reload(self.data)
+            logging.info("Dynamic game data reloaded successfully.")
+        except Exception as e:
+            logging.error(f"Failed to reload dynamic data: {e}", exc_info=True)
 
     def stop_game_loop(self):
         """Stops the game loop timer."""

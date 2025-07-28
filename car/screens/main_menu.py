@@ -8,6 +8,7 @@ from textual.worker import Worker, WorkerState
 
 from .new_game import NewGameScreen
 from .load_game import LoadGameScreen
+from .settings import SettingsScreen
 from ..workers.model_loader import load_pipeline
 
 class MainMenuScreen(Screen):
@@ -34,7 +35,7 @@ class MainMenuScreen(Screen):
                 yield Button("Settings", id="settings", variant="default")
                 yield Button("Quit", id="quit", variant="error")
             with Vertical(id="model-loader-container"):
-                yield Static("Loading LLM Model...\n(First time may take a while)", id="model_status")
+                yield Static("Loading LLM Model...", id="model_status")
                 yield ProgressBar(id="model_progress", show_eta=False)
         yield Footer()
 
@@ -56,7 +57,8 @@ class MainMenuScreen(Screen):
             if pipeline:
                 logging.info("Model loaded successfully! Hiding loader and enabling buttons.")
                 self.app.llm_pipeline = pipeline
-                self.query_one("#model-loader-container").display = False
+                self.query_one("#model_status", Static).update("LLM model loaded.")
+                self.query_one(ProgressBar).display = False
                 self.query_one("#new_game").disabled = False
                 self.query_one("#load_game").disabled = False
                 self.focusable_widgets[self.current_focus_index].focus()
@@ -91,6 +93,6 @@ class MainMenuScreen(Screen):
         elif event.button.id == "load_game":
             self.app.push_screen(LoadGameScreen())
         elif event.button.id == "settings":
-            pass
+            self.app.push_screen(SettingsScreen())
         elif event.button.id == "quit":
             self.app.exit()

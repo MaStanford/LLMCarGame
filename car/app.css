@@ -209,35 +209,50 @@ CityHallScreen {
     height: 3;
 }
 NewGameScreen {
-    align: center top;
-}
-
-#new-game-scroll-container {
-    overflow: auto;
-    align: center top;
+    align: center middle;
 }
 
 #new-game-container {
-    width: 80;
-    height: auto;
-    align: center top;
+    layout: vertical;
+    width: 100%;
+    height: 100%;
+    align: center middle;
+}
+
+#new-game-layout {
+    width: 90%;
+    max-width: 120;
+    height: 1fr;
+    layout: horizontal;
+    grid-size: 2;
+    grid-gutter: 1;
+}
+
+#new-game-left-column {
+    width: 1fr;
+    height: 100%;
+}
+
+#new-game-right-column {
+    width: 1fr;
+    height: 100%;
+    padding: 0 1;
 }
 
 #car-preview-container {
-    height: 15;
+    height: 1fr;
     border: heavy white;
-    margin-bottom: 1;
     align: center middle;
+    margin-bottom: 1;
 }
 
 #car-preview {
     text-align: center;
 }
 
-/* Container of 3 widgets in app. */
 .cycle-widgets-container {
-    align: center middle;
-    height: 15;
+    height: auto;
+    margin-bottom: 1;
 }
 
 #weapon-list-container.focused {
@@ -261,14 +276,16 @@ Button:focus {
     padding: 1;
 }
 
-#weapon_info {
-    margin-top: 1;
+#item_info {
     height: 10;
+    margin-top: 1;
 }
 
 #start_game {
-    width: 100%;
+    width: 90%;
+    max-width: 120;
     margin-top: 1;
+    dock: bottom;
 }
 
 #faction-loader-container {
@@ -418,4 +435,101 @@ CombatScreen {
     grid-size: 2 1;
     grid-columns: 1fr 2fr;
     padding: 1;
+}
+
+WorldBuildingScreen {
+    align: center middle;
+}
+
+WorldBuildingScreen #world-building-container {
+    align: center middle;
+    width: 60;
+    height: auto;
+}
+
+WorldBuildingScreen #title {
+    width: 100%;
+    text-align: center;
+    margin-top: 2;
+    margin-bottom: 1;
+}
+
+WorldBuildingScreen ProgressBar {
+    align: center middle;
+    width: 100%;
+    margin-bottom: 1;
+}
+
+WorldBuildingScreen #status_message {
+    text-align: center;
+    width: 100%;
+}
+
+WorldBuildingScreen .world-building-animation {
+    text-align: center;
+    height: 10;
+    color: $text-muted;
+    margin-bottom: 1;
+}
+
+
+WorldBuildingScreen #retry {
+    text-align: center;
+    align: center middle;
+}
+
+ThemeSelectionScreen {
+    align: center middle;
+}
+
+ThemeSelectionScreen #theme-selection-container {
+    width: 80;
+    height: auto;
+    align: center middle;
+}
+
+ThemeSelectionScreen #title {
+    text-align: center;
+    text-style: bold;
+    margin-bottom: 1;
+}
+
+ThemeSelectionScreen #subtitle {
+    text-align: center;
+    margin-bottom: 2;
+}
+
+ThemeSelectionScreen #theme-buttons-container Button {
+    width: 100%;
+    height: 5;
+    margin-bottom: 1;
+}
+
+SettingsScreen {
+    align: center middle;
+}
+
+SettingsScreen #settings-container {
+    width: 60;
+    height: auto;
+    align: center middle;
+}
+
+SettingsScreen #title {
+    text-align: center;
+    margin-bottom: 2;
+}
+
+SettingsScreen .setting-label {
+    text-style: bold;
+    margin-top: 1;
+}
+
+SettingsScreen Button {
+    width: 100%;
+    margin-top: 1;
+}
+
+SettingsScreen #back {
+    margin-top: 2;
 }

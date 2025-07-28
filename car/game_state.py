@@ -6,12 +6,13 @@ from .logic.entity_loader import PLAYER_CARS
 from .data import *
 
 class GameState:
-    def __init__(self, selected_car_index, difficulty, difficulty_mods, car_color_names):
+    def __init__(self, selected_car_index, difficulty, difficulty_mods, car_color_names, theme=None):
         # --- Game Configuration ---
         self.selected_car_index = selected_car_index
         self.difficulty = difficulty
         self.difficulty_mods = difficulty_mods
         self.car_color_names = car_color_names
+        self.theme = theme if theme is not None else {"name": "Default", "description": "A standard wasteland adventure."}
         
         # --- Player Actions ---
         self.pedal_position = 0.0  # -1.0 for full brake, 1.0 for full accelerator
@@ -206,6 +207,7 @@ class GameState:
             "selected_car_index": self.selected_car_index,
             "difficulty": self.difficulty,
             "car_color_names": self.car_color_names,
+            "theme": self.theme,
             
             # Player State
             "player_cash": self.player_cash,
@@ -245,7 +247,8 @@ class GameState:
             selected_car_index=data["selected_car_index"],
             difficulty=difficulty,
             difficulty_mods=difficulty_mods,
-            car_color_names=data["car_color_names"]
+            car_color_names=data["car_color_names"],
+            theme=data.get("theme")
         )
         
         # --- Restore Player State ---

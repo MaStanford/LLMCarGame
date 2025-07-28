@@ -1,25 +1,17 @@
-import os
-import shutil
-import pprint
 import logging
-from functools import partial
 from textual.app import ComposeResult
 from textual.containers import Vertical, Container, Horizontal
 from textual.screen import Screen
-from textual.widgets import Button, Static, Header, Footer, ProgressBar
+from textual.widgets import Button, Static, Header, Footer
 from textual.binding import Binding
-from textual.worker import Worker, WorkerState
 
+from .theme_selection import ThemeSelectionScreen
 from ..widgets.item_info import ItemInfoWidget
 from ..widgets.cycle_widget import CycleWidget
 from ..logic.entity_loader import PLAYER_CARS
 from ..data.difficulty import DIFFICULTY_LEVELS, DIFFICULTY_MODIFIERS
 from ..data.colors import CAR_COLORS
-from ..game_state import GameState
 from ..entities.weapon import Weapon
-from ..world import World
-from ..workers.faction_generator import generate_factions_worker
-from .. import data as game_data
 
 
 class NewGameScreen(Screen):
@@ -37,40 +29,41 @@ class NewGameScreen(Screen):
         super().__init__()
         self.focusable_widgets = []
         self.current_focus_index = 0
-        self.new_faction_data = None
 
     def compose(self) -> ComposeResult:
         """Compose the layout of the screen."""
         yield Header(show_clock=True)
-        with Container(id="new-game-scroll-container"):
-            with Vertical(id="new-game-container"):
-                with Vertical(id="car-preview-container"):
-                    yield Static(id="car-preview")
-                with Vertical(classes="cycle-widgets-container"):
-                    yield CycleWidget(
-                        label="Car",
-                        options=[car.__name__ for car in PLAYER_CARS],
-                        id="car_select",
-                    )
-                    yield CycleWidget(
-                        label="Color",
-                        options=list(CAR_COLORS.keys()),
-                        id="color_select",
-                    )
-                    yield CycleWidget(
-                        label="Difficulty",
-                        options=DIFFICULTY_LEVELS,
-                        initial_index=1,
-                        id="difficulty_select",
-                    )
-                yield Static("Weapons", classes="panel-title")
-                with Vertical(id="weapon-list-container", classes="focusable"):
-                    yield Static(id="weapon_list")
-                yield ItemInfoWidget(id="item_info")
-                with Horizontal(id="faction-loader-container"):
-                    yield Static("Fetching Factions from LLM...", id="faction_status")
-                    yield ProgressBar(id="faction_progress", show_eta=False)
-                yield Button("Start Game", id="start_game", variant="primary", disabled=True)
+        with Vertical(id="new-game-container"):
+            with Horizontal(id="new-game-layout"):
+                # --- LEFT COLUMN ---
+                with Vertical(id="new-game-left-column"):
+                    with Vertical(id="car-preview-container"):
+                        yield Static(id="car-preview")
+                    yield Static("Default Weapons", classes="panel-title")
+                    with Vertical(id="weapon-list-container", classes="focusable"):
+                        yield Static(id="weapon_list")
+                    yield ItemInfoWidget(id="item_info")
+
+                # --- RIGHT COLUMN ---
+                with Vertical(id="new-game-right-column"):
+                    with Vertical(classes="cycle-widgets-container"):
+                        yield CycleWidget(
+                            label="Car",
+                            options=[car.__name__ for car in PLAYER_CARS],
+                            id="car_select",
+                        )
+                        yield CycleWidget(
+                            label="Color",
+                            options=list(CAR_COLORS.keys()),
+                            id="color_select",
+                        )
+                        yield CycleWidget(
+                            label="Difficulty",
+                            options=DIFFICULTY_LEVELS,
+                            initial_index=1,
+                            id="difficulty_select",
+                        )
+            yield Button("Start Game", id="start_game", variant="primary")
         yield Footer()
 
     def on_mount(self) -> None:
@@ -91,15 +84,6 @@ class NewGameScreen(Screen):
         self.current_focus_index = 0
         self.update_focus()
         self.update_car_and_weapon_info()
-
-        # Start the faction generation worker
-        worker_callable = partial(generate_factions_worker, self.app.llm_pipeline)
-        self.run_worker(
-            worker_callable,
-            exclusive=True,
-            thread=True,
-            name="FactionGenerator"
-        )
 
     def update_focus(self) -> None:
         """Update the visual and native focus state."""
@@ -184,10 +168,14 @@ class NewGameScreen(Screen):
         color_style = CAR_COLORS[self.selected_color_name]
         color = color_style.color.name if color_style.color else "white"
         
-        colored_art_dict = {}
-        for direction, art_lines in car_instance.art.items():
-            colored_art_dict[direction] = [f"[{color}]{line}[/]" for line in art_lines]
-        car_instance.art = colored_art_dict
+        # Handle both dict (directional) and list (non-directional) art
+        if isinstance(car_instance.art, dict):
+            colored_art_dict = {}
+            for direction, art_lines in car_instance.art.items():
+                colored_art_dict[direction] = [f"[{color}]{line}[/]" for line in art_lines]
+            car_instance.art = colored_art_dict
+        else:
+            car_instance.art = [f"[{color}]{line}[/]" for line in car_instance.art]
 
         art = self.get_art_for_angle(car_instance, self.preview_angle)
         self.query_one("#car-preview", Static).update(art)
@@ -222,53 +210,15 @@ class NewGameScreen(Screen):
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press events."""
-        from ..app import WorldScreen # Local import to avoid circular dependency
         if event.button.id == "start_game":
-            if self.new_faction_data:
-                if os.path.exists("temp"):
-                    shutil.rmtree("temp")
-                os.makedirs("temp")
-                with open("temp/factions.py", "w") as f:
-                    f.write("FACTION_DATA = ")
-                    pprint.pprint(self.new_faction_data, stream=f, indent=4)
-                
-                difficulty = self.query_one("#difficulty_select", CycleWidget).options[self.query_one("#difficulty_select", CycleWidget).current_index]
-                color_name = self.query_one("#color_select", CycleWidget).options[self.query_one("#color_select", CycleWidget).current_index]
-                
-                game_state = GameState(
-                    selected_car_index=self.selected_car_index,
-                    difficulty=difficulty,
-                    difficulty_mods=DIFFICULTY_MODIFIERS[difficulty],
-                    car_color_names=[color_name],
-                )
-                game_state.car_world_x = 10.0
-                game_state.car_world_y = 10.0
-                game_state.player_car.x = game_state.car_world_x
-                game_state.player_car.y = game_state.car_world_y
-                
-                self.app.game_state = game_state
-                self.app.world = World(seed=12345)
-                
-                self.app.switch_screen(WorldScreen())
-                self.app.game_loop = self.app.set_interval(1 / 30, self.app.update_game)
-
-    def on_worker_state_changed(self, event: Worker.StateChanged) -> None:
-        """Handle worker state changes."""
-        if event.worker.name == "FactionGenerator":
-            start_button = self.query_one("#start_game", Button)
-            loader = self.query_one("#faction-loader-container")
+            difficulty = self.query_one("#difficulty_select", CycleWidget).options[self.query_one("#difficulty_select", CycleWidget).current_index]
+            color_name = self.query_one("#color_select", CycleWidget).options[self.query_one("#color_select", CycleWidget).current_index]
             
-            if event.worker.state == WorkerState.SUCCESS:
-                self.new_faction_data = event.worker.result
-                if self.new_faction_data:
-                    logging.info("Faction generation successful.")
-                    start_button.disabled = False
-                    loader.display = False
-                else:
-                    logging.error("Faction generation failed: No data returned.")
-                    self.query_one("#faction_status", Static).update("Error: Faction generation failed.")
-                    self.query_one(ProgressBar).display = False
-            elif event.worker.state == WorkerState.ERROR:
-                logging.error("Faction generator worker failed.")
-                self.query_one("#faction_status", Static).update("Error: Worker failed.")
-                self.query_one(ProgressBar).display = False
+            settings = {
+                "selected_car_index": self.selected_car_index,
+                "difficulty": difficulty,
+                "difficulty_mods": DIFFICULTY_MODIFIERS[difficulty],
+                "car_color_name": color_name,
+            }
+            self.app.switch_screen(ThemeSelectionScreen(settings))
+
