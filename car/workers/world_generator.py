@@ -2,15 +2,39 @@ import logging
 import time
 from types import SimpleNamespace
 from typing import Any, Dict
+from textual.worker import active_worker
 
 from ..logic.llm_faction_generator import generate_factions_from_llm, _get_fallback_factions
 from ..logic.llm_quest_generator import generate_quest_from_llm, _get_fallback_quest
+from ..logic.prompt_builder import _format_world_state
+from ..logic.gemini_cli import generate_with_gemini_cli
+
+def _generate_story_intro(app, theme, factions, neutral_faction_name):
+    """Generates the introductory story text."""
+    logging.info("Generating story intro...")
+    mock_game_state = SimpleNamespace(faction_control={})
+    world_state = _format_world_state(factions, mock_game_state)
+    
+    with open("prompts/story_intro_prompt.txt", "r") as f:
+        prompt = f.read()
+    
+    prompt = prompt.replace("{{ theme }}", f"'{theme['name']}': {theme['description']}")
+    prompt = prompt.replace("{{ world_state }}", world_state)
+    prompt = prompt.replace("{{ neutral_city_name }}", neutral_faction_name)
+
+    if app.generation_mode == "gemini_cli":
+        response = generate_with_gemini_cli(prompt)
+        # The CLI often returns just the string, which is what we want.
+        return response if isinstance(response, str) else "Welcome to the wasteland."
+    else:
+        return "You arrive at the neutral city of The Junction, a beacon of tense neutrality in a world torn apart by warring factions. Your goal is simple: find the Genesis Module and escape. The road will be long and dangerous. Good luck."
+
 
 def generate_initial_world_worker(app: Any, new_game_settings: dict) -> Dict:
     """
-    A worker that generates the complete initial state for a new world,
-    including factions and the first set of quests, based on a chosen theme.
+    A worker that generates the complete initial state for a new world.
     """
+    worker = active_worker.get()
     logging.info("Initial world generation worker started.")
     start_time = time.time()
     
@@ -18,7 +42,8 @@ def generate_initial_world_worker(app: Any, new_game_settings: dict) -> Dict:
         theme = new_game_settings["theme"]
         logging.info(f"Generating world with theme: {theme['name']}")
 
-        # 1. Generate Factions
+        # Stage 1: Generate Factions
+        worker.post_message(("stage", "Stage 1: Forging Factions..."))
         if app.generation_mode == "local":
             logging.info("Using local generation mode. Returning fallback factions.")
             factions = _get_fallback_factions()
@@ -28,45 +53,32 @@ def generate_initial_world_worker(app: Any, new_game_settings: dict) -> Dict:
         if not factions or "error" in factions:
             raise ValueError(f"Faction generation failed: {factions.get('details', 'No details')}")
 
-        # 2. Find the Neutral Faction
-        neutral_faction_id = None
-        for faction_id, data in factions.items():
-            if data.get("hub_city_coordinates") == [0, 0]:
-                neutral_faction_id = faction_id
-                break
-        
+        neutral_faction_id = next((fid for fid, data in factions.items() if data.get("hub_city_coordinates") == [0, 0]), None)
         if not neutral_faction_id:
             raise ValueError("Could not find a neutral faction at (0,0) in the generated data.")
+        neutral_faction_name = factions[neutral_faction_id]['name']
 
-        logging.info(f"Neutral faction identified: {neutral_faction_id}")
-
-        # 3. Generate Initial Quests for the Neutral Hub
+        # Stage 2: Generate Initial Quests
+        worker.post_message(("stage", "Stage 2: Weaving Plot Threads..."))
         initial_quests = []
         mock_game_state = SimpleNamespace(
-            faction_reputation={},
-            faction_control={},
-            quest_log=[],
-            difficulty_mods=new_game_settings["difficulty_mods"],
-            theme=theme
+            faction_reputation={}, faction_control={}, quest_log=[],
+            difficulty_mods=new_game_settings["difficulty_mods"], theme=theme
         )
-
-        logging.info("Generating initial quests for the neutral hub...")
         for i in range(3):
-            logging.info(f"Generating quest {i+1}...")
             if app.generation_mode == "local":
                 quest = _get_fallback_quest(neutral_faction_id)
             else:
                 quest = generate_quest_from_llm(
-                    game_state=mock_game_state,
-                    quest_giver_faction_id=neutral_faction_id,
-                    app=app,
-                    faction_data=factions
+                    game_state=mock_game_state, quest_giver_faction_id=neutral_faction_id,
+                    app=app, faction_data=factions
                 )
             if quest:
                 initial_quests.append(quest)
-        
-        if len(initial_quests) < 3:
-            logging.warning("Failed to generate all initial quests. The game will proceed with fewer quests.")
+
+        # Stage 3: Generate Story Intro
+        worker.post_message(("stage", "Stage 3: Writing the First Chapter..."))
+        story_intro = _generate_story_intro(app, theme, factions, neutral_faction_name)
 
         end_time = time.time()
         logging.info(f"Initial world generation finished successfully in {end_time - start_time:.2f} seconds.")
@@ -74,7 +86,8 @@ def generate_initial_world_worker(app: Any, new_game_settings: dict) -> Dict:
         return {
             "factions": factions,
             "quests": initial_quests,
-            "neutral_city_id": neutral_faction_id
+            "neutral_city_id": neutral_faction_id,
+            "story_intro": story_intro
         }
 
     except Exception as e:

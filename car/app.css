@@ -505,6 +505,27 @@ ThemeSelectionScreen #theme-buttons-container Button {
     margin-bottom: 1;
 }
 
+IntroCutsceneScreen {
+    align: center middle;
+}
+
+IntroCutsceneScreen #intro-cutscene-container {
+    width: 80%;
+    max-width: 100;
+    height: auto;
+    background: $panel;
+    padding: 2;
+    border: heavy white;
+}
+
+IntroCutsceneScreen #intro-text {
+    margin-bottom: 2;
+}
+
+IntroCutsceneScreen Button {
+    width: 100%;
+}
+
 SettingsScreen {
     align: center middle;
 }

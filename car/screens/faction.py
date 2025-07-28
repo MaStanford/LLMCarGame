@@ -4,7 +4,7 @@ from textual.containers import Grid
 from textual.binding import Binding
 from ..world.generation import get_city_name
 from ..data.game_constants import CITY_SPACING
-from ..logic.entity_loader import ALL_VEHICLES
+from ..data import factions as faction_data_module
 
 class FactionScreen(ModalScreen):
     """A modal screen to display faction intelligence."""
@@ -29,7 +29,7 @@ class FactionScreen(ModalScreen):
         """Called when the screen is mounted."""
         gs = self.app.game_state
         # Load the CURRENT session's faction data dynamically from the app
-        self.faction_data = self.app.data.factions.FACTION_DATA
+        self.faction_data = faction_data_module.FACTION_DATA
         
         table = self.query_one(DataTable)
         table.cursor_type = "row"

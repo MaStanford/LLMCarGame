@@ -59,9 +59,8 @@ class WorldBuildingScreen(Screen):
         self.set_interval(0.05, self.update_animation)
 
         # Start the world generation worker
-        worker_callable = partial(generate_initial_world_worker, self.app, self.new_game_settings)
         self.run_worker(
-            worker_callable,
+            partial(generate_initial_world_worker, self.app, self.new_game_settings),
             exclusive=True,
             thread=True,
             name="WorldGenerator"
@@ -102,6 +101,12 @@ class WorldBuildingScreen(Screen):
                 self.query_one(ProgressBar).display = False
                 self.query_one("#world-building-container").mount(Button("Retry", id="retry", variant="error"))
 
+    def on_worker_message(self, event) -> None:
+        """Handle messages from the worker."""
+        message_type, data = event.data
+        if message_type == "stage":
+            self.query_one("#title", Static).update(f"[bold]{data}[/bold]")
+
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle retry button press."""
         if event.button.id == "retry":
@@ -111,8 +116,8 @@ class WorldBuildingScreen(Screen):
             self.on_mount() # Re-run the generation
 
     def start_game(self) -> None:
-        """Finalizes game state and switches to the main game screen."""
-        from ..app import WorldScreen
+        """Finalizes game state and switches to the intro cutscene."""
+        from .intro_cutscene import IntroCutsceneScreen
         import os
         import shutil
         import pprint
@@ -143,7 +148,7 @@ class WorldBuildingScreen(Screen):
         neutral_city_id = self.world_data["neutral_city_id"]
         game_state.quest_cache[neutral_city_id] = self.world_data["quests"]
         
-        # Set player position and start game
+        # Set player position
         game_state.car_world_x = 10.0
         game_state.car_world_y = 10.0
         game_state.player_car.x = game_state.car_world_x
@@ -152,5 +157,5 @@ class WorldBuildingScreen(Screen):
         self.app.game_state = game_state
         self.app.world = World(seed=int(time.time()))
         
-        self.app.switch_screen(WorldScreen())
-        self.app.game_loop = self.app.set_interval(1 / 30, self.app.update_game)
+        # Switch to the intro cutscene
+        self.app.switch_screen(IntroCutsceneScreen(self.world_data["story_intro"]))

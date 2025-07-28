@@ -32,10 +32,14 @@ class CityHallScreen(ModalScreen):
     def on_mount(self) -> None:
         """Called when the screen is mounted."""
         gs = self.app.game_state
+        grid_x = round(gs.car_world_x / CITY_SPACING)
+        grid_y = round(gs.car_world_y / CITY_SPACING)
+        self.current_city_id = f"city_{grid_x}_{grid_y}"
         self.current_city_faction = get_city_faction(gs.car_world_x, gs.car_world_y)
-        self.current_city_id = (round(gs.car_world_x / CITY_SPACING), round(gs.car_world_y / CITY_SPACING))
         
-        if gs.current_quest and gs.current_quest.ready_to_turn_in and gs.current_quest.city_id == self.current_city_id:
+        # Check for quest turn-in
+        turn_in_city_tuple = (grid_x, grid_y)
+        if gs.current_quest and gs.current_quest.ready_to_turn_in and gs.current_quest.city_id == turn_in_city_tuple:
             self.is_turn_in = True
         else:
             self.is_turn_in = False
@@ -46,13 +50,15 @@ class CityHallScreen(ModalScreen):
                 self.available_quests = [conquest_quest]
             else:
                 # --- Quest Pre-fetching Logic ---
-                # 1. Check the cache first
                 cached_quests = gs.quest_cache.get(self.current_city_id)
-                if cached_quests and cached_quests != "pending":
+                if cached_quests == "pending":
+                    self.available_quests = [] # Show loading state
+                elif cached_quests:
                     self.available_quests = cached_quests
                 else:
-                    # 2. Fallback to generating on the spot if nothing is cached
-                    self.available_quests = [generate_quest_from_llm(gs, self.current_city_faction, self.app.llm_pipeline) for _ in range(3)]
+                    # This should rarely happen if the caching is working, but as a fallback:
+                    logging.warning(f"No quests found in cache for {self.current_city_id}. Caching may be slow.")
+                    self.available_quests = []
 
             self.can_challenge = check_challenge_conditions(gs, self.current_city_faction)
         
@@ -98,7 +104,11 @@ class CityHallScreen(ModalScreen):
         else:
             quest_list_str = ""
             if not self.available_quests:
-                quest_list_str = "No quests available."
+                cached_quests = self.app.game_state.quest_cache.get(self.current_city_id)
+                if cached_quests == "pending":
+                    quest_list_str = "Checking for new contracts..."
+                else:
+                    quest_list_str = "No contracts available at this time."
                 self.query_one("#quest_info", Static).update("")
                 self.query_one(Dialog).update_text("Seems quiet around here...")
                 self.query_one("#accept_quest", Button).disabled = True

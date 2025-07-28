@@ -22,6 +22,7 @@ from .widgets.explosion import Explosion
 from .widgets.notifications import Notifications
 from .widgets.fps_counter import FPSCounter
 from .world.generation import get_buildings_in_city
+from .data import factions as faction_data_module
 from .config import load_settings
 import random
 import math
@@ -53,7 +54,7 @@ class CarApp(App):
     def reload_dynamic_data(self):
         """Forces a reload of the data modules to pick up generated content."""
         try:
-            importlib.reload(self.data.factions)
+            importlib.reload(faction_data_module)
             importlib.reload(self.data)
             logging.info("Dynamic game data reloaded successfully.")
         except Exception as e:
@@ -123,8 +124,12 @@ class CarApp(App):
             if self.frame_count % 8 == 0:
                 gs.closest_entity_info = self.find_closest_entity()
             
-            if self.frame_count % 6 == 0:
+            if self.frame_count % 12 == 0:
                 self.update_compass_data()
+
+            # --- Proximity Quest Generation ---
+            if self.frame_count % 90 == 0: # Every 3 seconds
+                self.check_and_cache_quests_for_nearby_cities()
 
             # --- Update UI Widgets ---
             self.screen.update_widgets()
@@ -221,3 +226,65 @@ class CarApp(App):
             }
         else:
             gs.compass_info = {"target_angle": 0, "player_angle": 0, "target_name": ""}
+
+    def check_and_cache_quests_for_nearby_cities(self):
+        """
+        Checks for cities near the player and dispatches workers to generate quests
+        for them if they aren't already cached.
+        """
+        from .workers.quest_generator import generate_quests_worker
+        from .world.generation import get_city_faction
+        from functools import partial
+
+        gs = self.game_state
+        player_grid_x = round(gs.car_world_x / 1000)
+        player_grid_y = round(gs.car_world_y / 1000)
+
+        # Check a 3x3 grid around the player
+        for dx in range(-1, 2):
+            for dy in range(-1, 2):
+                check_x, check_y = player_grid_x + dx, player_grid_y + dy
+                city_id = f"city_{check_x}_{check_y}"
+
+                # Don't generate quests for cities that are already cached or pending
+                if city_id in gs.quest_cache:
+                    continue
+
+                # Mark as pending to prevent re-dispatching
+                gs.quest_cache[city_id] = "pending"
+
+                city_faction_id = get_city_faction(check_x * 1000, check_y * 1000)
+                
+                logging.info(f"No quests cached for nearby city {city_id}. Starting pre-fetch worker.")
+
+                worker_callable = partial(
+                    generate_quests_worker,
+                    app=self,
+                    city_id=city_id,
+                    city_faction_id=city_faction_id,
+                    theme=gs.theme,
+                    faction_data=faction_data_module.FACTION_DATA
+                )
+                
+                worker = self.run_worker(
+                    worker_callable,
+                    exclusive=False, # Allow multiple quest generators to run
+                    thread=True,
+                    name=f"QuestGenerator_{city_id}"
+                )
+                # Pass the city_id to the worker's custom attribute to know where to store the result
+                worker.city_id = city_id
+
+    def on_worker_state_changed(self, event: "Worker.StateChanged") -> None:
+        """Handles completed quest generation workers."""
+        if event.worker.name.startswith("QuestGenerator"):
+            if event.worker.state == "SUCCESS":
+                city_id = event.worker.city_id
+                quests = event.worker.result
+                if quests:
+                    self.game_state.quest_cache[city_id] = quests
+                    logging.info(f"Successfully cached {len(quests)} quests for city {city_id}.")
+                else:
+                    # If generation fails, remove the pending status so we can try again later
+                    self.game_state.quest_cache.pop(city_id, None)
+                    logging.warning(f"Quest generation failed for city {city_id}. No quests cached.")

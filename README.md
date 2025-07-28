@@ -18,7 +18,7 @@ Welcome to Genesis Module, a terminal-based, open-world, automotive RPG survival
     -   **Choose Your Allegiance:** The world is controlled by different factions. You can choose to align with one, or play them against each other.
     -   **Dynamic Reputation and Control:** Your actions have consequences. Completing quests for a faction will earn you their trust and increase their **Control** over their territory, making their shops better and their patrols stronger. Working against a faction will make you an enemy and decrease their Control, sowing chaos in their lands.
     -   **Territory Control:** As you shift the balance of power, the world will change. Help your allies take over enemy territory by completing a "Decisive Battle" quest, or become a feared outcast hunted by all.
--   **LLM-Powered Quests:** Accept dynamically generated quests from Faction Leaders in their Hub Cities. The game uses a local Large Language Model (LLM) to create quests on the fly, taking into account the current state of the world and your personal quest history to create an emergent, unique narrative for every playthrough.
+-   **LLM-Powered Narrative:** The game's story is not pre-written. It uses a Large Language Model to generate a unique theme, set of factions, and quests for every single playthrough. See the "World Generation Modes" section for more details.
 -   **Weapon Modifiers:** Weapons can have modifiers that affect their stats, such as damage, fire rate, and range. These can be found as loot or purchased from shops.
 
 ## How to Play
@@ -28,6 +28,28 @@ Welcome to Genesis Module, a terminal-based, open-world, automotive RPG survival
 -   **Inventory:** Press **Tab** to open your inventory and manage your car's attachments and items.
 -   **Factions:** Press **F** to open the Faction Command screen and view the current state of the wasteland.
 -   **Pause Menu:** Press **Esc** to open the pause menu, where you can save, load, or quit the game.
+
+## World Generation Modes
+
+The game features two modes for generating its dynamic narrative content. You can switch between them in the **Settings** menu.
+
+### Local Mode (Default)
+-   **How it works:** Uses a built-in, local LLM that runs on your computer's CPU.
+-   **Pros:** Fully offline. After the initial setup, you can play anywhere without an internet connection.
+-   **Cons:** World generation can be slow (several minutes) depending on your computer's hardware.
+
+### Gemini CLI Mode (Recommended)
+-   **How it works:** Uses the Google Gemini CLI, which runs in the cloud.
+-   **Pros:** Extremely fast world and quest generation (usually under 30 seconds). Produces higher-quality, more creative narrative content.
+-   **Cons:** Requires an active internet connection and a one-time setup of the Gemini CLI.
+
+#### Setting up Gemini CLI Mode
+1.  **Install the Gemini CLI:** Follow the official [installation instructions](https://ai.google.dev/tutorials/gemini_cli_quickstart).
+2.  **Authenticate:** Run the following command and follow the on-screen instructions to log in with your Google account:
+    ```bash
+    gemini auth
+    ```
+3.  **Select the Mode:** Launch the game, go to **Settings**, and switch the Generation Mode to "Gemini CLI".
 
 ## Dependencies
 
@@ -53,9 +75,9 @@ First, install the necessary Python packages. The exact requirements vary by ope
     pip install -r requirements-linux.txt
     ```
 
-**2. Download the Language Model**
+**2. Download the Language Model (for Local Mode)**
 
-The game's dynamic story generation is powered by a local Large Language Model. You need to download the model file before you can play.
+If you plan to play in the offline "Local Mode", you need to download the model file.
 
 Run the following command from the project's root directory:
 ```bash
@@ -65,7 +87,7 @@ This will download the `gemma-2b-it.gguf` file (which is several gigabytes) and 
 
 **3. Run the Game**
 
-Once the dependencies are installed and the model is downloaded, you can run the game using the appropriate script for your system:
+Once the dependencies are installed, you can run the game using the appropriate script for your system:
 
 *   **On Windows:**
     ```bash

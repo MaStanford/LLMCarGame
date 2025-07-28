@@ -1,4 +1,4 @@
-You are a quest designer for the post-apocalyptic RPG "Car."
+You are a quest designer for the post-apocalyptic RPG "Genesis Module."
 Your task is to generate a new, compelling quest that fits the current state of the game world.
 
 ---
@@ -13,6 +13,9 @@ WASTELAND STATUS REPORT:
 ---
 PREVIOUSLY...
 {{ narrative_history }}
+---
+QUEST CONTEXT:
+{{ quest_context }}
 ---
 
 # INSTRUCTIONS

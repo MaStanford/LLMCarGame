@@ -72,13 +72,21 @@ def _get_vehicle_list():
     """Returns a formatted string of available vehicles for prompts."""
     return ", ".join([vehicle.__name__ for vehicle in ALL_VEHICLES])
 
-def build_quest_prompt(game_state, faction_data_override=None):
+def build_quest_prompt(game_state, quest_giver_faction_id, faction_data_override=None):
     """
     Builds the complete, dynamic prompt for quest generation.
     Uses faction_data_override if provided, otherwise falls back to the global import.
     """
     faction_data = faction_data_override if faction_data_override is not None else GLOBAL_FACTION_DATA
     theme = getattr(game_state, 'theme', {'name': 'Default', 'description': 'A standard wasteland adventure.'})
+    
+    # --- Build Quest Context ---
+    quest_giver_faction = faction_data[quest_giver_faction_id]
+    quest_context = (
+        f"You are generating a quest for the city of '{quest_giver_faction['name']}'.\n"
+        f"This city is controlled by the '{quest_giver_faction['name']}' faction.\n"
+        f"Their vibe is: {quest_giver_faction.get('description', 'N/A')}"
+    )
 
     with open("prompts/game_context.txt", "r") as f:
         game_summary = f.read()
@@ -96,6 +104,7 @@ def build_quest_prompt(game_state, faction_data_override=None):
     prompt = prompt.replace("{{ world_state }}", world_state)
     prompt = prompt.replace("{{ narrative_history }}", narrative_history)
     prompt = prompt.replace("{{ theme }}", theme_str)
+    prompt = prompt.replace("{{ quest_context }}", quest_context)
     
     logging.info(f"--- BUILT QUEST PROMPT ---\n{prompt}\n--------------------------")
     return prompt

@@ -11,7 +11,7 @@ def generate_quest_from_llm(game_state, quest_giver_faction_id, app, faction_dat
     Generates a new quest by calling the language model.
     Can be passed faction_data directly to override the global data, useful for workers.
     """
-    prompt = build_quest_prompt(game_state, faction_data)
+    prompt = build_quest_prompt(game_state, quest_giver_faction_id, faction_data)
     
     if app.generation_mode == "gemini_cli":
         quest_data = generate_with_gemini_cli(prompt)
@@ -28,9 +28,9 @@ def generate_quest_from_llm(game_state, quest_giver_faction_id, app, faction_dat
                 messages, max_new_tokens=1024, do_sample=True, temperature=0.8
             )
             response_text = outputs[0]["generated_text"][-1]["content"]
-            logging.info(f"--- RAW QUEST RESPONSE ---
+            logging.info(f"""--- RAW QUEST RESPONSE ---
 {response_text}
-------------------------")
+------------------------""")
             cleaned_json = response_text.strip().replace("```json", "").replace("```", "")
             quest_data = json.loads(cleaned_json)
         except Exception as e:

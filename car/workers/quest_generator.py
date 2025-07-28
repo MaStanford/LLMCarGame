@@ -1,17 +1,37 @@
 import logging
 from typing import Any, Dict, List
 
-def generate_quests_worker(pipeline: Any, game_state: Any, city_id: str, num_quests: int) -> List:
+from ..logic.llm_quest_generator import generate_quest_from_llm
+
+def generate_quests_worker(app: Any, city_id: str, city_faction_id: str, theme: dict, faction_data: Dict) -> List:
     """
-    A synchronous worker that calls the LLM to generate a batch of quests.
+    A worker that generates a set of quests for a specific city.
     """
-    from ..logic.llm_quest_generator import generate_quest_from_llm
+    from types import SimpleNamespace
+
+    logging.info(f"Quest generator worker started for city {city_id} (Faction: {city_faction_id}).")
     
-    logging.info(f"Quest generator worker started for city {city_id}.")
-    try:
-        quests = [generate_quest_from_llm(game_state, city_id, pipeline) for _ in range(num_quests)]
-        logging.info(f"Quest generator worker for {city_id} finished successfully.")
-        return quests
-    except Exception as e:
-        logging.error(f"Quest generator worker for {city_id} failed: {e}", exc_info=True)
-        return []
+    # Create a mock game_state with the necessary info for the prompt builder
+    mock_game_state = SimpleNamespace(
+        faction_reputation={},
+        faction_control={},
+        quest_log=[],
+        theme=theme,
+        # The prompt builder doesn't need difficulty mods for quest gen
+        difficulty_mods={}, 
+    )
+
+    generated_quests = []
+    for i in range(3):
+        logging.info(f"Generating quest {i+1} for {city_id}...")
+        quest = generate_quest_from_llm(
+            game_state=mock_game_state,
+            quest_giver_faction_id=city_faction_id,
+            app=app,
+            faction_data=faction_data
+        )
+        if quest:
+            generated_quests.append(quest)
+
+    logging.info(f"Quest generator worker for {city_id} finished with {len(generated_quests)} quests.")
+    return generated_quests

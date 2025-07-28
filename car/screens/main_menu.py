@@ -43,33 +43,56 @@ class MainMenuScreen(Screen):
         """Set up the initial state of the screen."""
         logging.info("MainMenuScreen mounted.")
         self.focusable_widgets = list(self.query("Button"))
+        self._update_ui_for_mode()
+
+    def on_screen_resume(self) -> None:
+        """Called when returning to this screen from another."""
+        self._update_ui_for_mode()
+
+    def _update_ui_for_mode(self):
+        """Checks the generation mode and updates the UI accordingly."""
         self.focusable_widgets[self.current_focus_index].focus()
         
-        logging.info("Starting model loader worker...")
-        self.run_worker(load_pipeline, exclusive=True, thread=True)
-        logging.info("Model loader worker started.")
-
-    def on_worker_state_changed(self, event: Worker.StateChanged) -> None:
-        """Called when the worker state changes."""
-        logging.info(f"Worker {event.worker.name} changed state to {event.worker.state}")
-        if event.worker.state == WorkerState.SUCCESS:
-            pipeline = event.worker.result
-            if pipeline:
-                logging.info("Model loaded successfully! Hiding loader and enabling buttons.")
-                self.app.llm_pipeline = pipeline
+        if self.app.generation_mode == "gemini_cli":
+            logging.info("Gemini CLI mode is active. Skipping local model load.")
+            self.query_one("#model_status", Static).update("Ready (Gemini CLI)")
+            self.query_one(ProgressBar).display = False
+            self.query_one("#new_game").disabled = False
+            self.query_one("#load_game").disabled = False
+        else:
+            # Local mode, check if model is already loaded or loading
+            if self.app.llm_pipeline is None:
+                logging.info("Local mode active. Starting model loader worker...")
+                self.query_one("#model_status", Static).update("Loading LLM Model...")
+                self.query_one(ProgressBar).display = True
+                self.query_one("#new_game").disabled = True
+                self.query_one("#load_game").disabled = True
+                self.run_worker(load_pipeline, exclusive=True, thread=True)
+            else:
+                logging.info("Local mode active. Model already loaded.")
                 self.query_one("#model_status", Static).update("LLM model loaded.")
                 self.query_one(ProgressBar).display = False
                 self.query_one("#new_game").disabled = False
                 self.query_one("#load_game").disabled = False
-                self.focusable_widgets[self.current_focus_index].focus()
-            else:
-                logging.error("Model loading failed in worker.")
-                self.query_one("#model_status", Static).update("Error: Model failed to load.")
+
+    def on_worker_state_changed(self, event: Worker.StateChanged) -> None:
+        """Called when the worker state changes."""
+        logging.info(f"Worker {event.worker.name} changed state to {event.worker.state}")
+        if event.worker.name == "load_pipeline":
+            if event.worker.state == WorkerState.SUCCESS:
+                pipeline = event.worker.result
+                if pipeline:
+                    logging.info("Model loaded successfully! Hiding loader and enabling buttons.")
+                    self.app.llm_pipeline = pipeline
+                    self._update_ui_for_mode()
+                else:
+                    logging.error("Model loading failed in worker.")
+                    self.query_one("#model_status", Static).update("Error: Model failed to load.")
+                    self.query_one(ProgressBar).display = False
+            elif event.worker.state == WorkerState.ERROR:
+                logging.error(f"Worker failed with state {event.worker.state}")
+                self.query_one("#model_status", Static).update("Error: Worker failed.")
                 self.query_one(ProgressBar).display = False
-        elif event.worker.state == WorkerState.ERROR:
-            logging.error(f"Worker failed with state {event.worker.state}")
-            self.query_one("#model_status", Static).update("Error: Worker failed.")
-            self.query_one(ProgressBar).display = False
 
 
     def action_focus_previous(self) -> None:

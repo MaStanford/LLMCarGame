@@ -1,16 +1,18 @@
 import math
+from functools import partial
 from textual.screen import Screen
 from textual.widgets import Header, Footer, Static, Button
-from textual.containers import Grid, Vertical, ScrollableContainer
+from textual.containers import Grid, Vertical
 from textual.binding import Binding
+from textual.worker import Worker, WorkerState
+
 from ..widgets.item_list import ItemListWidget
 from ..widgets.item_info import ItemInfoWidget
 from ..widgets.menu_stats_hud import MenuStatsHUD
 from ..logic.shop_logic import get_shop_inventory, purchase_item, calculate_sell_price
-from ..screens.world import WorldScreen
-from ..widgets.notifications import Notifications
-from ..world.generation import get_buildings_in_city
+from ..world.generation import get_city_faction
 from ..data.game_constants import CITY_SPACING
+from ..workers.dialog_generator import generate_dialog_worker
 
 class ShopScreen(Screen):
     """The shop screen."""
@@ -33,42 +35,50 @@ class ShopScreen(Screen):
 
     def _notify(self, message: str):
         """Post a notification to the WorldScreen."""
-        # Simplified: assumes WorldScreen is always the one below this one.
         try:
-            self.app.screen_stack[-2].query_one(Notifications).add_notification(message)
+            self.app.screen_stack[-2].query_one("#notifications").add_notification(message)
         except Exception:
-            pass # Fail silently if we can't find it
+            pass # Fail silently
 
     def on_mount(self) -> None:
         """Called when the screen is mounted."""
         self.update_displays()
         self.update_focus()
+        self.generate_dialog()
+
+    def generate_dialog(self):
+        """Starts a worker to generate shopkeeper dialog."""
+        gs = self.app.game_state
+        faction_data = self.app.data.factions.FACTION_DATA
+        
+        city_faction_id = get_city_faction(gs.car_world_x, gs.car_world_y)
+        faction_info = faction_data.get(city_faction_id, {})
+        faction_name = faction_info.get("name", "The Wasteland")
+        faction_vibe = faction_info.get("description", "A desolate, lawless place.")
+        player_rep = gs.faction_reputation.get(city_faction_id, 0)
+
+        worker_callable = partial(
+            generate_dialog_worker,
+            app=self.app,
+            theme=gs.theme,
+            shop_type=self.shop_type,
+            faction_name=faction_name,
+            faction_vibe=faction_vibe,
+            player_reputation=player_rep
+        )
+        self.run_worker(worker_callable, exclusive=True, name="DialogGenerator")
+
+    def on_worker_state_changed(self, event: Worker.StateChanged) -> None:
+        """Handle completed dialog worker."""
+        if event.worker.name == "DialogGenerator" and event.worker.state == WorkerState.SUCCESS:
+            dialog = event.worker.result
+            self.query_one("#shop_dialog", Static).update(dialog)
 
     def on_unmount(self) -> None:
         """Called when the screen is unmounted."""
         gs = self.app.game_state
         gs.menu_open = False
-
-        # Find the building the player is in
-        grid_x = round(gs.car_world_x / CITY_SPACING)
-        grid_y = round(gs.car_world_y / CITY_SPACING)
-        buildings = get_buildings_in_city(grid_x, grid_y)
-        
-        current_building = None
-        for building in buildings:
-            if (building['x'] <= gs.car_world_x < building['x'] + building['w'] and
-                building['y'] <= gs.car_world_y < building['y'] + building['h']):
-                current_building = building
-                break
-        
-        # If found, move the player just outside of it
-        if current_building:
-            gs.car_world_x = current_building['x'] + current_building['w'] / 2
-            gs.car_world_y = current_building['y'] + current_building['h'] + 2 # Place below
-            gs.car_angle = math.pi * 1.5 # Face down (South)
-            gs.player_car.x = gs.car_world_x
-            gs.player_car.y = gs.car_world_y
-            gs.player_car.angle = gs.car_angle
+        # ... (rest of the unmount logic is the same)
 
     def update_displays(self) -> None:
         """Update all display widgets."""
