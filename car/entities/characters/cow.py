@@ -10,15 +10,15 @@ class Cow(Character):
         ]
         super().__init__(x, y, art, durability=20, speed=0.25)
 
-    def update(self, game_state, world):
+    def update(self, game_state, world, dt):
         # Simple wandering AI
         if random.random() < 0.1:
             self.vx = random.uniform(-self.speed, self.speed)
             self.vy = random.uniform(-self.speed, self.speed)
         
         # Update position
-        self.x += self.vx
-        self.y += self.vy
+        self.x += self.vx * dt
+        self.y += self.vy * dt
 
     def draw(self, stdscr, game_state, world_start_x, world_start_y, color_map):
         from ...rendering.draw_utils import draw_sprite

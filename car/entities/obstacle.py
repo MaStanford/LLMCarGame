@@ -13,7 +13,7 @@ class Obstacle(Entity):
         self.height = len(art) if art else 0
         self.angle = 0.0
 
-    def update(self, game_state, world):
+    def update(self, game_state, world, dt):
         # Obstacles are static by default, so no update logic is needed here.
         # This can be overridden by subclasses for moving obstacles.
         pass

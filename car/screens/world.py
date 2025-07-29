@@ -34,6 +34,8 @@ class WorldScreen(Screen):
         Binding("s", "brake", "Brake", show=True),
         Binding("a", "turn_left", "Turn Left", show=True),
         Binding("d", "turn_right", "Turn Right", show=True),
+        Binding("left", "swivel_left", "Aim Left", show=True),
+        Binding("right", "swivel_right", "Aim Right", show=True),
         Binding("space", "fire", "Fire", show=True),
         Binding("escape", "toggle_pause", "Pause", show=True),
         Binding("tab", "toggle_inventory", "Inventory", show=True),
@@ -73,6 +75,16 @@ class WorldScreen(Screen):
     def action_turn_right(self) -> None:
         gs = self.app.game_state
         gs.car_angle += gs.turn_rate
+        
+    def action_swivel_left(self) -> None:
+        """Swivel the weapon aim to the left."""
+        gs = self.app.game_state
+        gs.weapon_angle_offset -= 0.1 # Placeholder value
+
+    def action_swivel_right(self) -> None:
+        """Swivel the weapon aim to the right."""
+        gs = self.app.game_state
+        gs.weapon_angle_offset += 0.1 # Placeholder value
         
     def action_fire(self) -> None:
         gs = self.app.game_state
@@ -162,6 +174,7 @@ class WorldScreen(Screen):
         compass.target_angle = gs.compass_info["target_angle"]
         compass.player_angle = gs.compass_info["player_angle"]
         compass.target_name = gs.compass_info["target_name"]
+        compass.weapon_angle = math.degrees(gs.car_angle + gs.weapon_angle_offset)
 
         # Update Entity Modal
         entity_modal = self.query_one("#entity_modal", EntityModal)

@@ -12,7 +12,7 @@ class Miner(Vehicle):
                 " \\MM/ "
             ]
         }
-        super().__init__(x, y, art, durability=150, speed=2.0, acceleration=0.3, handling=0.05)
+        super().__init__(x, y, art, durability=150, speed=1.9, acceleration=0.3, handling=0.05)
         self.name = "Miner"
         self.is_major_enemy = True
         self.ai_state = {

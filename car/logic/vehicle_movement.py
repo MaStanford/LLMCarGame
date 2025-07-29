@@ -1,18 +1,23 @@
 import math
 
-def update_vehicle_movement(game_state, world, audio_manager):
+def update_vehicle_movement(game_state, world, audio_manager, dt):
     """
     Handles the player's vehicle movement, including acceleration, braking, turning, and gas consumption.
+    All calculations are now based on delta time (dt) for frame-rate independent physics.
     """
     engine_force = 0.0 # Initialize here to ensure it's always available
+    
     # --- Vehicle Movement ---
+    # Note: Turn rate and acceleration are now defined in units per second.
     turn_this_frame = 0.0
     speed_turn_modifier = max(0.1, 1.0 - (game_state.car_speed / (game_state.max_speed * 1.5 if game_state.max_speed > 0 else 1.5)))
     effective_turn_rate = game_state.turn_rate * speed_turn_modifier
+    
     if game_state.actions["turn_right"]: 
-        turn_this_frame += effective_turn_rate
+        turn_this_frame += effective_turn_rate * dt
     if game_state.actions["turn_left"]: 
-        turn_this_frame -= effective_turn_rate
+        turn_this_frame -= effective_turn_rate * dt
+        
     game_state.car_angle = (game_state.car_angle + turn_this_frame) % (2 * math.pi)
     game_state.player_car.angle = game_state.car_angle
 
@@ -29,43 +34,45 @@ def update_vehicle_movement(game_state, world, audio_manager):
     # --- Physics Calculations ---
     # 1. Calculate target speed based on pedal position
     target_speed = game_state.pedal_position * effective_max_speed
-    # Reverse speed is capped at 50% of max speed
     if target_speed < 0:
-        target_speed *= 0.5
+        target_speed *= 0.5 # Reverse speed is capped
 
     # 2. Calculate the difference between current and target speed
     speed_diff = target_speed - game_state.car_speed
 
     # 3. Determine the force to apply (acceleration or braking)
-    # The force is proportional to the car's acceleration stat, but we ensure it doesn't overshoot the target.
-    if abs(speed_diff) < game_state.acceleration_factor:
+    # The force is proportional to the car's acceleration stat.
+    change_in_speed = game_state.acceleration_factor * math.copysign(1, speed_diff) * dt
+    
+    # Prevent overshooting the target speed
+    if abs(change_in_speed) > abs(speed_diff):
         change_in_speed = speed_diff
-    else:
-        change_in_speed = game_state.acceleration_factor * math.copysign(1, speed_diff)
 
     # 4. Apply coasting resistance if there's no pedal input
-    if game_state.pedal_position == 0:
+    if game_state.pedal_position == 0 and game_state.car_speed != 0:
         drag_force = game_state.drag_coefficient * (game_state.car_speed ** 2) * math.copysign(1, game_state.car_speed)
-        friction_force = game_state.friction_coefficient * math.copysign(1, game_state.car_speed) if game_state.car_speed != 0 else 0
-        change_in_speed -= (drag_force + friction_force)
+        friction_force = game_state.friction_coefficient * math.copysign(1, game_state.car_speed)
+        change_in_speed -= (drag_force + friction_force) * dt
 
     # 5. Update car speed
     game_state.car_speed += change_in_speed
 
-    # If braking brought the car to a stop, reset the pedal to prevent instant reverse
+    # If braking brought the car to a stop, reset the pedal
     if previous_speed > 0 and game_state.car_speed <= 0 and game_state.pedal_position < 0:
         game_state.car_speed = 0
         game_state.pedal_position = 0.0
     
-    # Enforce max speed (and max reverse speed)
+    # Enforce max speed
     game_state.car_speed = max(-effective_max_speed * 0.5, min(game_state.car_speed, effective_max_speed))
 
-    # Adjust angle for world coordinates (0 is North, but math functions treat 0 as East)
+    # Update position based on new velocity
     adjusted_angle = game_state.car_angle - (math.pi / 2)
     game_state.car_velocity_x = game_state.car_speed * math.cos(adjusted_angle)
     game_state.car_velocity_y = game_state.car_speed * math.sin(adjusted_angle)
-    next_world_x = game_state.car_world_x + game_state.car_velocity_x
-    next_world_y = game_state.car_world_y + game_state.car_velocity_y
+    
+    next_world_x = game_state.car_world_x + game_state.car_velocity_x * dt
+    next_world_y = game_state.car_world_y + game_state.car_velocity_y * dt
+    
     next_center_x = next_world_x + game_state.player_car.width / 2
     next_center_y = next_world_y + game_state.player_car.height / 2
     next_terrain = world.get_terrain_at(next_center_x, next_center_y)
@@ -81,15 +88,14 @@ def update_vehicle_movement(game_state, world, audio_manager):
         game_state.car_speed = 0
         game_state.car_velocity_x = 0
         game_state.car_velocity_y = 0
-        game_state.current_durability -= max(1, int(prev_speed * 2))
+        game_state.current_durability -= max(1, int(prev_speed * 0.2)) # Damage based on speed
         audio_manager.play_sfx("player_hit")
 
-
-    distance_this_frame = game_state.car_speed
+    # --- Gas Consumption ---
+    distance_this_frame = abs(game_state.car_speed * dt)
     game_state.distance_traveled += distance_this_frame
-    gas_used_moving = distance_this_frame * game_state.gas_consumption_rate * game_state.gas_consumption_scaler
-    gas_used_accel = engine_force * 0.1 if engine_force > 0 else 0
-    game_state.current_gas = max(0, game_state.current_gas - (gas_used_moving + gas_used_accel))
+    gas_used_moving = distance_this_frame * game_state.gas_consumption_rate
+    game_state.current_gas = max(0, game_state.current_gas - gas_used_moving)
 
     # Synchronize the player_car entity's position with the game state
     game_state.player_car.x = game_state.car_world_x

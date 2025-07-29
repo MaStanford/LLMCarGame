@@ -40,9 +40,15 @@ class SaveGameScreen(ModalScreen):
 
     def action_save_and_exit(self) -> None:
         """Save the game and pop the screen."""
+        from .world import WorldScreen # Moved import to break circular dependency
         if self.save_name:
             save_game(self.app.game_state, self.save_name)
-            self.app.screen.query_one("#notifications").add_notification(f"Game Saved as '{self.save_name}'!")
+            
+            # Find the WorldScreen in the stack to post the notification
+            world_screen = next((s for s in self.app.screen_stack if isinstance(s, WorldScreen)), None)
+            if world_screen:
+                world_screen.query_one("#notifications").add_notification(f"Game Saved as '{self.save_name}'!")
+
             self.app.pop_screen() # Pop the save screen
             self.app.pop_screen() # Pop the pause screen
 

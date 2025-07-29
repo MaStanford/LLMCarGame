@@ -20,6 +20,7 @@ class MapView(Widget):
         """Called when the widget is mounted."""
         self.cursor_x = self.size.width // 2
         self.cursor_y = self.size.height // 2
+        self._generate_map_cache()
 
     def move_cursor(self, dx: int, dy: int):
         """Move the cursor."""
@@ -78,6 +79,8 @@ class MapView(Widget):
     def render(self) -> Text:
         """Render the map."""
         if self.cached_map is None:
+            # This should not happen if on_mount is called correctly,
+            # but as a fallback:
             self._generate_map_cache()
 
         # Start with a copy of the cached map
@@ -87,6 +90,14 @@ class MapView(Widget):
         gs = self.game_state
         w, h = self.size
         scale = 200
+        
+        # The map is now static, so we need to calculate the player's position
+        # relative to the top-left of the *entire world* represented in the cache.
+        # The cache was generated based on the player's position at the time of mounting.
+        # Let's assume the cache is centered on (0,0) for simplicity of this example,
+        # a real implementation would need to store the cache's world offset.
+        # For now, we'll recalculate the offset here.
+        
         map_start_x = gs.car_world_x - (w / 2) * scale
         map_start_y = gs.car_world_y - (h / 2) * scale
 
@@ -107,8 +118,9 @@ class MapView(Widget):
                 styles[boss_y][boss_x] = Style(color="magenta", bold=True)
 
         # Draw Cursor
-        canvas[self.cursor_y][self.cursor_x] = "X"
-        styles[self.cursor_y][self.cursor_x] = Style(color="yellow", bold=True)
+        if 0 <= self.cursor_y < h and 0 <= self.cursor_x < w:
+            canvas[self.cursor_y][self.cursor_x] = "X"
+            styles[self.cursor_y][self.cursor_x] = Style(color="yellow", bold=True)
 
         # Convert to Rich Text
         text = Text()

@@ -15,7 +15,7 @@ class MuscleCar(Vehicle):
             " ███████████ ",
             " (●)▀▀▀▀▀(●) "
         ]
-        super().__init__(x, y, art, durability=85, speed=8.5, acceleration=0.9, handling=0.18)
+        super().__init__(x, y, art, durability=85, speed=6.7, acceleration=0.9, handling=0.18)
         self.name = "Muscle Car"
         self.xp_value = 40
         self.cash_value = 75
@@ -35,9 +35,9 @@ class MuscleCar(Vehicle):
         self.current_phase = self.phases[0]
         self.phase_timer = random.uniform(self.current_phase["duration"][0], self.current_phase["duration"][1])
 
-    def update(self, game_state, world):
+    def update(self, game_state, world, dt):
         """Updates the vehicle's state and AI logic each frame."""
-        self.phase_timer -= 1 / 30.0 # Assuming 30 FPS
+        self.phase_timer -= dt
 
         if self.phase_timer <= 0:
             next_phase_options = list(self.current_phase["next_phases"].keys())
@@ -55,8 +55,8 @@ class MuscleCar(Vehicle):
             _execute_ram_behavior(self, game_state, self)
             
         # Update position
-        self.x += self.vx
-        self.y += self.vy
+        self.x += self.vx * dt
+        self.y += self.vy * dt
 
     def draw(self, stdscr, game_state, world_start_x, world_start_y, color_map):
         """Draws the vehicle on the screen."""

@@ -15,7 +15,7 @@ class RustBucket(Vehicle):
             " ██▄▄▄▄▄▄██ ",
             " (O)▀▀▀▀▀(X) "
         ]
-        super().__init__(x, y, art, durability=45, speed=6.0, acceleration=0.4, handling=0.08)
+        super().__init__(x, y, art, durability=45, speed=6.2, acceleration=0.4, handling=0.08)
         self.name = "Rust Bucket"
         self.phases = [
             {"name": "Kamikaze", "duration": (10, 10), "behavior": "RAM", "next_phases": {"Kamikaze": 1.0}}
@@ -28,7 +28,7 @@ class RustBucket(Vehicle):
         self.current_phase = self.phases[0]
         self.phase_timer = random.uniform(*self.current_phase["duration"])
 
-    def update(self, game_state, world):
+    def update(self, game_state, world, dt):
         """Updates the vehicle's state and AI logic each frame."""
         # This AI is simple, it just rams forever.
         behavior = self.current_phase["behavior"]
@@ -36,8 +36,8 @@ class RustBucket(Vehicle):
             _execute_ram_behavior(self, game_state, self)
         
         # Update position
-        self.x += self.vx
-        self.y += self.vy
+        self.x += self.vx * dt
+        self.y += self.vy * dt
 
     def draw(self, stdscr, game_state, world_start_x, world_start_y, color_map):
         """Draws the vehicle on the screen."""

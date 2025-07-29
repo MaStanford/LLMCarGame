@@ -61,6 +61,7 @@ class GameState:
         self.current_durability = 0
         self.current_gas = 0
         self.distance_traveled = 0.0
+        self.weapon_angle_offset = 0.0
 
         # --- Player State ---
         self.player_inventory = []

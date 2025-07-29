@@ -14,7 +14,7 @@ class GuardTruck(Vehicle):
             "█████████",
             " (●)═(●) "
         ]
-        super().__init__(x, y, art, durability=150, speed=0.4, acceleration=0.2, handling=0.2)
+        super().__init__(x, y, art, durability=150, speed=2.5, acceleration=0.2, handling=0.2)
         self.name = "Guard Truck"
         self.xp_value = 30
         self.cash_value = 50
@@ -32,8 +32,8 @@ class GuardTruck(Vehicle):
         self.current_phase = self.phases[0]
         self.phase_timer = random.uniform(*self.current_phase["duration"])
 
-    def update(self, game_state, world):
-        self.phase_timer -= 1 / 30.0
+    def update(self, game_state, world, dt):
+        self.phase_timer -= dt
 
         dist_to_player = ((self.x - game_state.car_world_x)**2 + (self.y - game_state.car_world_y)**2)**0.5
         
@@ -58,8 +58,8 @@ class GuardTruck(Vehicle):
         elif behavior == "STATIONARY":
             _execute_stationary_behavior(self, game_state, self)
 
-        self.x += self.vx
-        self.y += self.vy
+        self.x += self.vx * dt
+        self.y += self.vy * dt
 
     def draw(self, stdscr, game_state, world_start_x, world_start_y, color_map):
         from ...rendering.draw_utils import draw_sprite

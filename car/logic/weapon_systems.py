@@ -49,7 +49,7 @@ def update_weapon_systems(game_state, audio_manager):
                             angle_offset = (i - (weapon.pellet_count - 1) / 2) * weapon.spread_angle / (weapon.pellet_count -1)
                         
                         # Final projectile angle in game-world coordinates
-                        p_angle_rad = car_angle_rad + angle_offset
+                        p_angle_rad = car_angle_rad + game_state.weapon_angle_offset + angle_offset
                         
                         # Convert to mathematical angle for physics calculations
                         p_math_angle_rad = p_angle_rad - math.pi / 2

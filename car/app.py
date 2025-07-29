@@ -44,7 +44,7 @@ class GenesisModuleApp(App):
         self.world = None
         self.audio_manager = AudioManager()
         self.frame_count = 0
-        self.last_time = time.time()
+        self.last_update_time = time.time()
         self.game_loop = None
         self.dev_mode = False
         self.data = game_data
@@ -85,6 +85,11 @@ class GenesisModuleApp(App):
             return
         
         gs = self.game_state
+        
+        # --- Delta Time Calculation ---
+        current_time = time.time()
+        dt = current_time - self.last_update_time
+        self.last_update_time = current_time
 
         # Decrement cooldowns
         if gs.menu_nav_cooldown > 0:
@@ -96,25 +101,25 @@ class GenesisModuleApp(App):
                 self.push_screen(GameOverScreen())
                 return
 
-            notifications = update_physics_and_collisions(gs, self.world, self.audio_manager)
+            notifications = update_physics_and_collisions(gs, self.world, self.audio_manager, dt)
             for notification in notifications:
                 self.screen.query_one("#notifications", Notifications).add_notification(notification)
 
             # Spawning logic
-            gs.enemy_spawn_timer -= 1
+            gs.enemy_spawn_timer -= dt
             if gs.enemy_spawn_timer <= 0:
                 spawn_enemy(gs, self.world)
-                gs.enemy_spawn_timer = random.randint(50, 100)
+                gs.enemy_spawn_timer = random.uniform(1.5, 3.5) # Spawn every 1.5-3.5 seconds
 
-            gs.fauna_spawn_timer -= 1
+            gs.fauna_spawn_timer -= dt
             if gs.fauna_spawn_timer <= 0:
                 spawn_fauna(gs, self.world)
-                gs.fauna_spawn_timer = random.randint(50, 100)
+                gs.fauna_spawn_timer = random.uniform(2.0, 4.0)
 
-            gs.obstacle_spawn_timer -= 1
+            gs.obstacle_spawn_timer -= dt
             if gs.obstacle_spawn_timer <= 0:
                 spawn_obstacle(gs, self.world)
-                gs.obstacle_spawn_timer = random.randint(50, 100)
+                gs.obstacle_spawn_timer = random.uniform(1.0, 2.5)
             
             quest_notifications = update_quests(gs, self.audio_manager, self)
             for notification in quest_notifications:
@@ -142,13 +147,13 @@ class GenesisModuleApp(App):
             gs.actions["fire"] = False
 
         # Update FPS counter
-        current_time = time.time()
         self.frame_count += 1
-        if current_time - self.last_time >= 1.0:
-            fps = self.frame_count / (current_time - self.last_time)
-            if self.is_running and self.screen and isinstance(self.screen, WorldScreen):
-                 self.screen.query_one("#fps_counter").fps = fps
-            self.last_time = current_time
+        # Use a simple moving average for FPS to smooth it out
+        # This part of the code is for display only and doesn't affect game logic timing
+        if current_time - self.screen.query_one("#fps_counter").last_fps_update_time >= 1.0:
+            fps = self.frame_count / (current_time - self.screen.query_one("#fps_counter").last_fps_update_time)
+            self.screen.query_one("#fps_counter").fps = fps
+            self.screen.query_one("#fps_counter").last_fps_update_time = current_time
             self.frame_count = 0
 
     def check_building_interaction(self):

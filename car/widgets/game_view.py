@@ -1,3 +1,4 @@
+import time
 from textual.widget import Widget
 from ..common.utils import angle_to_direction
 from ..data.colors import ATTACHMENT_COLOR_MAP
@@ -14,16 +15,6 @@ class GameView(Widget):
         super().__init__(*args, **kwargs)
         self.game_state = game_state
         self.world = world
-        self.show_arrow = True
-
-    def on_mount(self) -> None:
-        """Called when the widget is mounted."""
-        self.set_interval(0.35, self.toggle_arrow)
-
-    def toggle_arrow(self) -> None:
-        """Toggle the arrow's visibility."""
-        self.show_arrow = not self.show_arrow
-        self.refresh()
 
     def render(self) -> Text:
         """Render the game world."""
@@ -82,31 +73,35 @@ class GameView(Widget):
                 )
 
         # Render player direction arrow
-        if self.show_arrow:
-            arrow_length = 15
-            # Start drawing the arrow just outside the car's body
+        if time.time() % 0.4 < 0.2:
+            car_arrow_length = 8
+            weapon_arrow_length = 15
             start_distance = max(gs.player_car.width, gs.player_car.height) // 2
             player_screen_x = w / 2
             player_screen_y = h / 2
-            math_angle_rad = gs.car_angle - math.pi / 2
-            
-            for i in range(start_distance, arrow_length):
-                # Calculate the point on the arrow
-                arrow_x = int(player_screen_x + i * math.cos(math_angle_rad))
-                arrow_y = int(player_screen_y + i * math.sin(math_angle_rad))
-                
+
+            # --- Car Direction Line ---
+            car_angle_rad = gs.car_angle - math.pi / 2
+            for i in range(start_distance, car_arrow_length):
+                arrow_x = int(player_screen_x + i * math.cos(car_angle_rad))
+                arrow_y = int(player_screen_y + i * math.sin(car_angle_rad))
                 if 0 <= arrow_y < h and 0 <= arrow_x < w:
-                    # Use '*' for the tip, '·' (middle dot) for the shaft
-                    char = "*" if i == arrow_length - 1 else "·"
+                    char = "*" if i == car_arrow_length - 1 else "·"
                     canvas[arrow_y][arrow_x] = char
-                    
-                    # Explicitly combine foreground color with existing background
                     existing_style = styles[arrow_y][arrow_x]
-                    new_style = Style(
-                        color="bright_cyan",
-                        bgcolor=existing_style.bgcolor
-                    )
-                    styles[arrow_y][arrow_x] = new_style
+                    styles[arrow_y][arrow_x] = Style(color="white", bgcolor=existing_style.bgcolor)
+
+            # --- Weapon Aim Line ---
+            weapon_angle_rad = gs.car_angle + gs.weapon_angle_offset - math.pi / 2
+            # Flashing effect
+            for i in range(start_distance, weapon_arrow_length):
+                arrow_x = int(player_screen_x + i * math.cos(weapon_angle_rad))
+                arrow_y = int(player_screen_y + i * math.sin(weapon_angle_rad))
+                if 0 <= arrow_y < h and 0 <= arrow_x < w:
+                    char = "*" if i == weapon_arrow_length - 1 else "·"
+                    canvas[arrow_y][arrow_x] = char
+                    existing_style = styles[arrow_y][arrow_x]
+                    styles[arrow_y][arrow_x] = Style(color="red", bold=True, bgcolor=existing_style.bgcolor)
 
         # Convert canvas to Rich Text using optimized run-length encoding
         text = Text()

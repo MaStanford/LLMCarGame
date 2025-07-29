@@ -9,6 +9,6 @@ class Character(Entity):
         self.height = len(art) if art else 0
         self.angle = 0.0
 
-    def update(self, game_state, world):
+    def update(self, game_state, world, dt):
         # To be implemented by subclasses
         pass

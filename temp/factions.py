@@ -1,85 +1,84 @@
-FACTION_DATA = {   'amber_clad': {   'control': 50,
-                      'description': 'A mysterious and slow-moving faction '
-                                     'that encases their vehicles in thick, '
-                                     'hardened sap from colossal, ancient '
-                                     'trees, making them nearly '
-                                     'indestructible.',
-                      'faction_boss': {   'damage_multiplier': 2.5,
-                                          'hp_multiplier': 5.5,
-                                          'name': 'The Amber Tyrant',
-                                          'vehicle': 'WarRig'},
-                      'hub_city_coordinates': [-35, 40],
-                      'name': 'Amber-Clad',
-                      'relationships': {   'glow_spore_cult': 'Neutral',
-                                           'nectar_thorns': 'Hostile',
-                                           'root_bound_salvagers': 'Allied',
-                                           'the_verdant_wardens': 'Neutral'},
-                      'units': ['Van', 'Sedan', 'WarRig']},
-    'glow_spore_cult': {   'control': 50,
-                           'description': 'Zealots who worship the '
-                                          'psychoactive, bio-luminescent '
-                                          "fungi. They see the 'Veridian "
-                                          "Overgrowth' as a divine entity and "
-                                          'seek to spread its spores across '
-                                          'the wasteland.',
-                           'faction_boss': {   'damage_multiplier': 3.0,
-                                               'hp_multiplier': 4.0,
-                                               'name': 'Prophet of the Bloom',
-                                               'vehicle': 'Technical'},
-                           'hub_city_coordinates': [45, -30],
-                           'name': 'Glow-Spore Cult',
-                           'relationships': {   'amber_clad': 'Neutral',
-                                                'nectar_thorns': 'Hostile',
-                                                'root_bound_salvagers': 'Hostile',
-                                                'the_verdant_wardens': 'Neutral'},
-                           'units': ['RustySedan', 'RaiderBuggy', 'Technical']},
-    'nectar_thorns': {   'control': 50,
-                         'description': 'Swift and deadly hunters who utilize '
-                                        'a potent paralytic nectar from giant '
-                                        'carnivorous flowers. Their vehicles '
-                                        'are built for speed and ambush '
-                                        'tactics.',
-                         'faction_boss': {   'damage_multiplier': 3.5,
-                                             'hp_multiplier': 3.5,
-                                             'name': 'Queen Briar',
-                                             'vehicle': 'SportsCar'},
-                         'hub_city_coordinates': [25, 50],
-                         'name': 'Nectar-Thorns',
-                         'relationships': {   'amber_clad': 'Hostile',
-                                              'glow_spore_cult': 'Hostile',
-                                              'root_bound_salvagers': 'Neutral',
-                                              'the_verdant_wardens': 'Neutral'},
-                         'units': ['Hatchback', 'SportsCar', 'Hotrod']},
-    'root_bound_salvagers': {   'control': 50,
-                                'description': 'Hardy engineers who reinforce '
-                                               'their vehicles with the '
-                                               'incredibly durable, iron-like '
-                                               'roots of the mega-flora. They '
-                                               'are masters of defense and '
-                                               'attrition.',
-                                'faction_boss': {   'damage_multiplier': 2.0,
-                                                    'hp_multiplier': 6.0,
-                                                    'name': 'Old Man Ironwood',
-                                                    'vehicle': 'Miner'},
-                                'hub_city_coordinates': [-50, -25],
-                                'name': 'Root-Bound Salvagers',
-                                'relationships': {   'amber_clad': 'Allied',
-                                                     'glow_spore_cult': 'Hostile',
-                                                     'nectar_thorns': 'Neutral',
-                                                     'the_verdant_wardens': 'Neutral'},
-                                'units': ['Miner', 'PanelWagon', 'Truck']},
-    'the_verdant_wardens': {   'control': 100,
-                               'description': "Guardians of the 'Heartwood,' "
-                                              'the oldest and most sacred '
-                                              'grove in the reclaimed world. '
-                                              'They act as neutral arbiters '
-                                              'and protectors of the natural '
-                                              'balance.',
-                               'faction_boss': None,
-                               'hub_city_coordinates': [0, 0],
-                               'name': 'The Verdant Wardens',
-                               'relationships': {   'amber_clad': 'Neutral',
-                                                    'glow_spore_cult': 'Neutral',
-                                                    'nectar_thorns': 'Neutral',
-                                                    'root_bound_salvagers': 'Neutral'},
-                               'units': ['Truck', 'Sedan']}}
+FACTION_DATA = {   'ashen_highwaymen': {   'control': 50,
+                            'description': 'Nomadic mercenaries who patrol the '
+                                           'overgrown highways, trading and '
+                                           'raiding as opportunity dictates. '
+                                           'They value freedom and the open '
+                                           'road above all else.',
+                            'faction_boss': {   'damage_multiplier': 3.5,
+                                                'hp_multiplier': 4.0,
+                                                'name': 'Road Captain Fury',
+                                                'vehicle': 'SportsCar'},
+                            'hub_city_coordinates': [-20, -35],
+                            'name': 'Ashen Highwaymen',
+                            'relationships': {   'gaian_disciples': 'Hostile',
+                                                 'reclaimers_of_rust': 'Neutral',
+                                                 'the_crossroads': 'Neutral',
+                                                 'verdant_wardens': 'Neutral'},
+                            'units': ['Hotrod', 'SportsCar', 'Technical']},
+    'gaian_disciples': {   'control': 50,
+                           'description': 'Fanatical eco-zealots who believe '
+                                          "the planet's reclamation is a "
+                                          'sacred event. They adorn their '
+                                          'vehicles with vines and moss, '
+                                          'viewing steel as a necessary evil.',
+                           'faction_boss': {   'damage_multiplier': 2.0,
+                                               'hp_multiplier': 5.5,
+                                               'name': 'Arch-Druid Theron',
+                                               'vehicle': 'WarRig'},
+                           'hub_city_coordinates': [-30, 40],
+                           'name': 'Gaian Disciples',
+                           'relationships': {   'ashen_highwaymen': 'Hostile',
+                                                'reclaimers_of_rust': 'Hostile',
+                                                'the_crossroads': 'Neutral',
+                                                'verdant_wardens': 'Neutral'},
+                           'units': ['RaiderBuggy', 'Technical', 'Hatchback']},
+    'reclaimers_of_rust': {   'control': 50,
+                              'description': 'Pragmatic survivors who believe '
+                                             "humanity's best chance is to "
+                                             'salvage and rebuild using the '
+                                             'technology of the old world. '
+                                             'They see the Gaians as dangerous '
+                                             'luddites.',
+                              'faction_boss': {   'damage_multiplier': 2.5,
+                                                  'hp_multiplier': 6.0,
+                                                  'name': 'Foreman Valerius',
+                                                  'vehicle': 'Miner'},
+                              'hub_city_coordinates': [45, -25],
+                              'name': 'Reclaimers of Rust',
+                              'relationships': {   'ashen_highwaymen': 'Neutral',
+                                                   'gaian_disciples': 'Hostile',
+                                                   'the_crossroads': 'Neutral',
+                                                   'verdant_wardens': 'Hostile'},
+                              'units': ['Truck', 'Van', 'Miner']},
+    'the_crossroads': {   'control': 100,
+                          'description': 'The last bastion of true neutrality. '
+                                         'A sprawling marketplace built in the '
+                                         'shadow of a ruined highway '
+                                         'cloverleaf, where all factions can '
+                                         'trade under a tense truce.',
+                          'faction_boss': None,
+                          'hub_city_coordinates': [0, 0],
+                          'name': 'The Crossroads',
+                          'relationships': {   'ashen_highwaymen': 'Neutral',
+                                               'gaian_disciples': 'Neutral',
+                                               'reclaimers_of_rust': 'Neutral',
+                                               'verdant_wardens': 'Allied'},
+                          'units': ['Sedan', 'Truck', 'Hatchback']},
+    'verdant_wardens': {   'control': 50,
+                           'description': 'A secluded group dedicated to '
+                                          'preserving and cultivating the new '
+                                          'wilderness, not through worship, '
+                                          'but through understanding. They are '
+                                          'wary of outsiders but not '
+                                          'inherently hostile.',
+                           'faction_boss': {   'damage_multiplier': 2.5,
+                                               'hp_multiplier': 4.5,
+                                               'name': 'Warden Elara',
+                                               'vehicle': 'PanelWagon'},
+                           'hub_city_coordinates': [30, 30],
+                           'name': 'Verdant Wardens',
+                           'relationships': {   'ashen_highwaymen': 'Neutral',
+                                                'gaian_disciples': 'Neutral',
+                                                'reclaimers_of_rust': 'Hostile',
+                                                'the_crossroads': 'Allied'},
+                           'units': ['PanelWagon', 'Sedan', 'RustySedan']}}

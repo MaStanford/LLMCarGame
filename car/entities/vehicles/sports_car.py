@@ -61,7 +61,7 @@ class SportsCar(PlayerCar):
         super().__init__(
             x, y, art,
             durability=80,
-            speed=4.1,
+            speed=6.5,
             acceleration=0.8,
             handling=0.15,
             braking_power=0.6,

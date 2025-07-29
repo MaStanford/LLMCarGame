@@ -44,12 +44,26 @@ The game features two modes for generating its dynamic narrative content. You ca
 -   **Cons:** Requires an active internet connection and a one-time setup of the Gemini CLI.
 
 #### Setting up Gemini CLI Mode
-1.  **Install the Gemini CLI:** Follow the official [installation instructions](https://ai.google.dev/tutorials/gemini_cli_quickstart).
-2.  **Authenticate:** Run the following command and follow the on-screen instructions to log in with your Google account:
+There are two ways to authenticate the Gemini CLI:
+
+**1. User-Based Authentication (Recommended for most users)**
+   - **Install the Gemini CLI:** Follow the official [installation instructions](https://ai.google.dev/tutorials/gemini_cli_quickstart).
+   - **Authenticate:** Run the following command and follow the on-screen instructions to log in with your Google account:
     ```bash
     gemini auth
     ```
-3.  **Select the Mode:** Launch the game, go to **Settings**, and switch the Generation Mode to "Gemini CLI".
+
+**2. API Key Authentication**
+   - **Get an API Key:**
+     1. Go to [Google AI Studio](https://aistudio.google.com/).
+     2. Click on **"Get API key"** in the top left.
+     3. Create a new API key in your Google Cloud project.
+   - **Set the Environment Variable:** Set the `GEMINI_API_KEY` environment variable to the key you just created.
+     - On Linux/macOS: `export GEMINI_API_KEY="YOUR_API_KEY"`
+     - On Windows: `set GEMINI_API_KEY="YOUR_API_KEY"`
+
+**3. Select the Mode in-game**
+   - Launch the game, go to **Settings**, and switch the Generation Mode to "Gemini CLI".
 
 ## Dependencies
 

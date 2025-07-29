@@ -39,6 +39,6 @@ class Entity(ABC):
         return height, max_width
 
     @abstractmethod
-    def update(self, game_state, world):
+    def update(self, game_state, world, dt):
         pass
 import logging

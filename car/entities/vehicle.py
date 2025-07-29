@@ -18,6 +18,6 @@ class Vehicle(Entity):
             self.width = max(len(line) for line in art) if art else 0
             self.height = len(art) if art else 0
 
-    def update(self, game_state, world):
+    def update(self, game_state, world, dt):
         # To be implemented by subclasses
         pass

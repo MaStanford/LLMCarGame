@@ -71,21 +71,15 @@ def load_game(save_name):
             shutil.copy2(s, d)
             
     # --- 3. Load the dynamic faction data ---
-    # This is a bit tricky since it's a .py file, not JSON
-    # We can use importlib to load it dynamically
-    import importlib.util
-    import sys
-    
     factions_data = {}
     factions_path = os.path.join(TEMP_DIR, FACTIONS_FILE)
     if os.path.exists(factions_path):
-        spec = importlib.util.spec_from_file_location("temp_factions", factions_path)
-        temp_factions_module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(temp_factions_module)
-        factions_data = temp_factions_module.FACTION_DATA
-        # Clean up from sys.modules to allow for future loads
-        del sys.modules["temp_factions"]
-
+        with open(factions_path, "r") as f:
+            # We execute the python file in a temporary scope
+            # to get the FACTION_DATA dictionary.
+            temp_scope = {}
+            exec(f.read(), temp_scope)
+            factions_data = temp_scope.get("FACTION_DATA", {})
 
     # --- 4. Load the GameState object ---
     game_state_path = os.path.join(TEMP_DIR, GAME_STATE_FILE)

@@ -16,7 +16,7 @@ class ArmoredTruck(Vehicle):
             "▀(●)▀▀▀(●)▀"
         ]
         # Upgraded stats to match its appearance
-        super().__init__(x, y, art, durability=250, speed=4.5, acceleration=0.2, handling=0.05)
+        super().__init__(x, y, art, durability=250, speed=1.8, acceleration=0.2, handling=0.05)
         self.name = "Armored Truck"
         self.xp_value = 50
         self.cash_value = 100
@@ -36,10 +36,10 @@ class ArmoredTruck(Vehicle):
         self.current_phase = self.phases[0]
         self.phase_timer = random.uniform(self.current_phase["duration"][0], self.current_phase["duration"][1])
 
-    def update(self, game_state, world):
+    def update(self, game_state, world, dt):
         """Updates the vehicle's state and AI logic each frame."""
         # Countdown the phase timer
-        self.phase_timer -= 1 / 30.0 # Assuming 30 FPS
+        self.phase_timer -= dt
 
         # Transition to a new phase if the timer runs out
         if self.phase_timer <= 0:
@@ -59,8 +59,8 @@ class ArmoredTruck(Vehicle):
             _execute_evade_behavior(self, game_state, self)
             
         # Update position based on velocity
-        self.x += self.vx
-        self.y += self.vy
+        self.x += self.vx * dt
+        self.y += self.vy * dt
 
     def draw(self, stdscr, game_state, world_start_x, world_start_y, color_map):
         """Draws the vehicle on the screen."""

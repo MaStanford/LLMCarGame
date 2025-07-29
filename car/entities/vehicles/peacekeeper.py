@@ -13,7 +13,7 @@ class Peacekeeper(Vehicle):
             " ▂▃▅█▅▃▂ ",
             " (●)═(●) "
         ]
-        super().__init__(x, y, art, durability=80, speed=0.6, acceleration=0.5, handling=0.7)
+        super().__init__(x, y, art, durability=80, speed=3.2, acceleration=0.5, handling=0.7)
         self.name = "Peacekeeper"
         self.xp_value = 10
         self.cash_value = 15
@@ -30,8 +30,8 @@ class Peacekeeper(Vehicle):
         self.current_phase = self.phases[0]
         self.phase_timer = random.uniform(*self.current_phase["duration"])
 
-    def update(self, game_state, world):
-        self.phase_timer -= 1 / 30.0
+    def update(self, game_state, world, dt):
+        self.phase_timer -= dt
 
         dist_to_player = ((self.x - game_state.car_world_x)**2 + (self.y - game_state.car_world_y)**2)**0.5
 
@@ -55,8 +55,8 @@ class Peacekeeper(Vehicle):
         elif behavior == "CHASE":
             _execute_chase_behavior(self, game_state, self)
         
-        self.x += self.vx
-        self.y += self.vy
+        self.x += self.vx * dt
+        self.y += self.vy * dt
 
     def draw(self, stdscr, game_state, world_start_x, world_start_y, color_map):
         from ...rendering.draw_utils import draw_sprite

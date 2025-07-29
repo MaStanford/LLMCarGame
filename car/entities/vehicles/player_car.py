@@ -9,7 +9,7 @@ class PlayerCar(Vehicle):
         self.default_weapons = default_weapons
         self.height, self.width = Entity.get_car_dimensions(list(art.values()))
 
-    def update(self, game_state, world):
+    def update(self, game_state, world, dt):
         # Player car update logic is handled in the main game loop
         pass
 

@@ -3,14 +3,14 @@ from .weapon_systems import update_weapon_systems
 from .collision_detection import handle_collisions
 import math
 
-def update_physics_and_collisions(game_state, world, audio_manager):
+def update_physics_and_collisions(game_state, world, audio_manager, dt):
     """
     Handles all physics updates, weapon systems, and collision detection
     by coordinating calls to specialized modules.
     Returns a list of notification messages.
     """
     # 1. Update player vehicle movement and position
-    update_vehicle_movement(game_state, world, audio_manager)
+    update_vehicle_movement(game_state, world, audio_manager, dt)
 
     # 2. Handle weapon firing and projectile updates
     update_weapon_systems(game_state, audio_manager)
@@ -21,7 +21,7 @@ def update_physics_and_collisions(game_state, world, audio_manager):
         p_x, p_y, p_angle, p_speed, p_power, max_range, p_char, origin_x, origin_y = p_state
         
         # Move projectile
-        p_dist = p_speed
+        p_dist = p_speed * dt
         p_x += p_dist * math.cos(p_angle)
         p_y += p_dist * math.sin(p_angle)
         
@@ -38,7 +38,7 @@ def update_physics_and_collisions(game_state, world, audio_manager):
 
     # 5. Update AI and movement for all non-player entities
     for enemy in game_state.active_enemies:
-        enemy.update(game_state, world)
+        enemy.update(game_state, world, dt)
         
         # Check for combat trigger
         if getattr(enemy, "is_major_enemy", False):
@@ -52,7 +52,7 @@ def update_physics_and_collisions(game_state, world, audio_manager):
                 game_state.player_car.app.push_screen(CombatScreen(game_state.player_car, enemy))
 
     for fauna in game_state.active_fauna:
-        fauna.update(game_state, world)
+        fauna.update(game_state, world, dt)
         
     # 6. Despawn entities that are too far away
     despawn_radius_sq = game_state.despawn_radius**2

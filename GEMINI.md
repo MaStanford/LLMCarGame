@@ -333,18 +333,9 @@ The game is built around the **Textual TUI framework**, which provides an event-
     *   Update the loot generation logic to have a chance to call the `item_generator` instead of dropping a standard item, especially for boss fights or high-level quests.
 
 ### General Tasks
-- [ ] **Gemini CLI Integration:**
-    - [ ] Create a new "Settings" screen accessible from the main menu.
-    - [ ] Add a toggle to switch between "Local" and "Gemini CLI" for world generation.
-    - [ ] Create a wrapper in `car/logic/gemini_cli.py` to execute `gemini --yolo -p "..."` commands.
-    - [ ] Refactor the `llm_..._generator.py` modules to use the Gemini CLI wrapper when the setting is active.
-    - [ ] When "Local" is selected, the generators should use the hardcoded fallback data to ensure a stable offline experience.
-    - [ ] Add error handling for when the `gemini` command is not installed, guiding the user to install it.
-- [ ] **Neutral city**
-    - [ ] 0,0 is a neutral hub city. Quests help no faction. Shops don't have faction bonuses. This city will always be neutral and always have 0 spawn chance. 
-- [ ] **Add shop keeper dialog:**, they will say something when we get in the shop. This is shop and faction specific and dynamically generated. 
-    - [ ] When buying or selling high modifier equipment the shop keeper will make a comment, different comments based on the modifier. 
-    - [ ] When you try to buy something without enough money, shop keeper makes a wise crack
+- [x] **Gemini CLI Integration:**
+- [x] **Neutral city**
+- [x] **Add shop keeper dialog:**
 - [ ] **Weapon swivel:**
     - [ ] Allow weapons to swivel with key presses like car turns
     - [ ] Swivel speed will be related to level
@@ -383,7 +374,15 @@ The game is built around the **Textual TUI framework**, which provides an event-
         - [ ] You can try to run, failing quest if in a quest, but otherwise surviving. 
 
 ## Completed Tasks
-
-## Roadmap
-
-## Known Issues
+- [x] **Gemini CLI Integration:**
+    - [x] Create a new "Settings" screen accessible from the main menu.
+    - [x] Add a toggle to switch between "Local" and "Gemini CLI" for world generation.
+    - [x] Create a wrapper in `car/logic/gemini_cli.py` to execute `gemini --yolo -p "..."` commands.
+    - [x] Refactor the `llm_..._generator.py` modules to use the Gemini CLI wrapper when the setting is active.
+    - [x] When "Local" is selected, the generators should use the hardcoded fallback data to ensure a stable offline experience.
+    - [x] Add error handling for when the `gemini` command is not installed, guiding the user to install it.
+- [x] **Neutral city**
+    - [x] 0,0 is a neutral hub city. Quests help no faction. Shops don't have faction bonuses. This city will always be neutral and always have 0 spawn chance. 
+- [x] **Add shop keeper dialog:**, they will say something when we get in the shop. This is shop and faction specific and dynamically generated. 
+    - [x] When buying or selling high modifier equipment the shop keeper will make a comment, different comments based on the modifier. 
+    - [x] When you try to buy something without enough money, shop keeper makes a wise crack

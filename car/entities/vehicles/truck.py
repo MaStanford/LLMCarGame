@@ -61,7 +61,7 @@ class Truck(PlayerCar):
         super().__init__(
             x, y, art,
             durability=180,
-            speed=3.0,
+            speed=2.8,
             acceleration=0.5,
             handling=0.08,
             braking_power=0.5,

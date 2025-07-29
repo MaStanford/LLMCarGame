@@ -25,8 +25,8 @@ class Bandit(Character):
         self.current_phase = self.phases[0]
         self.phase_timer = random.uniform(self.current_phase["duration"][0], self.current_phase["duration"][1])
 
-    def update(self, game_state, world):
-        self.phase_timer -= 1 / 30.0 # Assuming 30 FPS
+    def update(self, game_state, world, dt):
+        self.phase_timer -= dt
 
         if self.phase_timer <= 0:
             next_phase_options = list(self.current_phase["next_phases"].keys())
@@ -42,8 +42,8 @@ class Bandit(Character):
             _execute_stationary_behavior(self)
             
         # Update position
-        self.x += self.vx
-        self.y += self.vy
+        self.x += self.vx * dt
+        self.y += self.vy * dt
 
     def draw(self, stdscr, game_state, world_start_x, world_start_y, color_map):
         from ...rendering.draw_utils import draw_sprite
