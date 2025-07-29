@@ -1,3 +1,4 @@
+from textual.app import ComposeResult
 from textual.screen import Screen
 from textual.widgets import Static, Header, Footer, Button
 from textual.containers import Center, Vertical

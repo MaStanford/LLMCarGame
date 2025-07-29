@@ -30,8 +30,8 @@ import time
 import importlib
 from . import data as game_data
 
-class CarApp(App):
-    """The main application class for the Car RPG."""
+class GenesisModuleApp(App):
+    """The main application class for the Genesis Module RPG."""
 
     CSS_PATH = "app.css"
     
@@ -54,7 +54,8 @@ class CarApp(App):
     def reload_dynamic_data(self):
         """Forces a reload of the data modules to pick up generated content."""
         try:
-            importlib.reload(faction_data_module)
+            # We no longer need to reload the faction module this way
+            # importlib.reload(faction_data_module)
             importlib.reload(self.data)
             logging.info("Dynamic game data reloaded successfully.")
         except Exception as e:
@@ -253,7 +254,7 @@ class CarApp(App):
                 # Mark as pending to prevent re-dispatching
                 gs.quest_cache[city_id] = "pending"
 
-                city_faction_id = get_city_faction(check_x * 1000, check_y * 1000)
+                city_faction_id = get_city_faction(check_x * 1000, check_y * 1000, gs.factions)
                 
                 logging.info(f"No quests cached for nearby city {city_id}. Starting pre-fetch worker.")
 
@@ -263,7 +264,7 @@ class CarApp(App):
                     city_id=city_id,
                     city_faction_id=city_faction_id,
                     theme=gs.theme,
-                    faction_data=faction_data_module.FACTION_DATA
+                    faction_data=gs.factions
                 )
                 
                 worker = self.run_worker(

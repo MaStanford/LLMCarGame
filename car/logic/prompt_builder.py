@@ -75,9 +75,9 @@ def _get_vehicle_list():
 def build_quest_prompt(game_state, quest_giver_faction_id, faction_data_override=None):
     """
     Builds the complete, dynamic prompt for quest generation.
-    Uses faction_data_override if provided, otherwise falls back to the global import.
+    Uses faction_data_override if provided, otherwise falls back to the game_state.
     """
-    faction_data = faction_data_override if faction_data_override is not None else GLOBAL_FACTION_DATA
+    faction_data = faction_data_override if faction_data_override is not None else game_state.factions
     theme = getattr(game_state, 'theme', {'name': 'Default', 'description': 'A standard wasteland adventure.'})
     
     # --- Build Quest Context ---

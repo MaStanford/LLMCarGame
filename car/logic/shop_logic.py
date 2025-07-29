@@ -20,7 +20,7 @@ def get_shop_inventory(shop_type, game_state):
     inventory = []
     
     # Determine the local faction and their control level
-    local_faction_id = get_city_faction(game_state.car_world_x, game_state.car_world_y)
+    local_faction_id = get_city_faction(game_state.car_world_x, game_state.car_world_y, game_state.factions)
     faction_control = game_state.faction_control.get(local_faction_id, 50)
     
     # Price volatility: 0.5 means prices can vary by +/- 50%
@@ -29,7 +29,7 @@ def get_shop_inventory(shop_type, game_state):
     price_modifier = 1 + ((50 - faction_control) / 50) * price_volatility
 
     # The neutral hub always has stable prices
-    if FACTION_DATA[local_faction_id].get("hub_city_coordinates") == [0, 0]:
+    if game_state.factions[local_faction_id].get("hub_city_coordinates") == [0, 0]:
         price_modifier = 1.0
 
     if shop_type == "weapon_shop":

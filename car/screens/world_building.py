@@ -10,7 +10,7 @@ from textual.worker import Worker, WorkerState
 
 from ..game_state import GameState
 from ..world import World
-from ..workers.world_generator import generate_initial_world_worker
+from ..workers.world_generator import generate_initial_world_worker, StageUpdate
 from ..data.difficulty import DIFFICULTY_MODIFIERS
 
 class WorldBuildingScreen(Screen):
@@ -45,7 +45,7 @@ class WorldBuildingScreen(Screen):
         with Vertical(id="world-building-container"):
             yield Static(id="animation_display", classes="world-building-animation")
             yield Static("", id="title") # Title will be set dynamically
-            yield ProgressBar(id="progress", total=None)
+            yield ProgressBar(id="progress", total=None, show_percentage=False, show_eta=False)
             yield Static(self.status_messages[0], id="status_message")
         yield Footer()
 
@@ -101,11 +101,12 @@ class WorldBuildingScreen(Screen):
                 self.query_one(ProgressBar).display = False
                 self.query_one("#world-building-container").mount(Button("Retry", id="retry", variant="error"))
 
-    def on_worker_message(self, event) -> None:
-        """Handle messages from the worker."""
-        message_type, data = event.data
-        if message_type == "stage":
-            self.query_one("#title", Static).update(f"[bold]{data}[/bold]")
+    def on_stage_update(self, event: StageUpdate) -> None:
+        """Handle stage update messages from the worker."""
+        # The original on_worker_message was changed to on_stage_update and now expects a StageUpdate event.
+        # The content of the method remains the same as it correctly handles the 'stage' message type.
+        if event.message_type == "stage":
+            self.query_one("#title", Static).update(f"[bold]{event.data}[/bold]")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle retry button press."""
@@ -142,6 +143,7 @@ class WorldBuildingScreen(Screen):
             difficulty_mods=self.new_game_settings["difficulty_mods"],
             car_color_names=[self.new_game_settings["car_color_name"]],
             theme=self.new_game_settings["theme"],
+            factions=self.world_data["factions"],
         )
         
         # Pre-populate the quest cache

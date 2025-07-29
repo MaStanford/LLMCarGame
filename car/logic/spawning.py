@@ -49,7 +49,7 @@ def spawn_enemy(game_state, world):
         return
 
     # Determine current faction territory and player's reputation
-    current_faction_id = get_city_faction(game_state.car_world_x, game_state.car_world_y)
+    current_faction_id = get_city_faction(game_state.car_world_x, game_state.car_world_y, game_state.factions)
     player_rep = game_state.faction_reputation.get(current_faction_id, 0)
     faction_control = game_state.faction_control.get(current_faction_id, 50)
 

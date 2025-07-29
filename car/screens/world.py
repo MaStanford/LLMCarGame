@@ -156,7 +156,7 @@ class WorldScreen(Screen):
         location.y = int(gs.car_world_y)
         grid_x = round(gs.car_world_x / CITY_SPACING)
         grid_y = round(gs.car_world_y / CITY_SPACING)
-        location.city_name = get_city_name(grid_x, grid_y)
+        location.city_name = get_city_name(grid_x, grid_y, gs.factions)
 
         compass = self.query_one("#compass_hud", CompassHUD)
         compass.target_angle = gs.compass_info["target_angle"]

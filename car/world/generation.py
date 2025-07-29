@@ -9,29 +9,28 @@ from ..data.cosmetics import BUILDING_NAME_CHARS
 from ..data.buildings import BUILDING_DATA
 from ..data.shops import SHOP_DATA
 from ..data.terrain import TERRAIN_DATA
-from ..logic.data_loader import FACTION_DATA
 
 building_cache = {}
 
-def _get_neutral_faction_id():
+def _get_neutral_faction_id(faction_data):
     """Finds the ID of the neutral faction."""
-    for faction_id, data in FACTION_DATA.items():
+    for faction_id, data in faction_data.items():
         if data.get("hub_city_coordinates") == [0, 0]:
             return faction_id
     return None # Fallback
 
-def get_city_faction(x, y):
+def get_city_faction(x, y, faction_data):
     """Determines the faction for a given world coordinate."""
     grid_x = round(x / CITY_SPACING)
     grid_y = round(y / CITY_SPACING)
 
     # The central city is always the neutral hub
     if grid_x == 0 and grid_y == 0:
-        return _get_neutral_faction_id()
+        return _get_neutral_faction_id(faction_data)
 
     closest_faction = None
     min_dist = float('inf')
-    for faction_id, faction_info in FACTION_DATA.items():
+    for faction_id, faction_info in faction_data.items():
         hub_x, hub_y = faction_info["hub_city_coordinates"]
         dist = math.sqrt((grid_x - hub_x)**2 + (grid_y - hub_y)**2)
         if dist < min_dist:
@@ -39,9 +38,9 @@ def get_city_faction(x, y):
             closest_faction = faction_id
     return closest_faction
 
-def get_city_name(grid_x, grid_y):
+def get_city_name(grid_x, grid_y, faction_data):
     """Generates a city name based on grid coordinates."""
-    for faction_id, faction_info in FACTION_DATA.items():
+    for faction_id, faction_info in faction_data.items():
         if (grid_x, grid_y) == faction_info["hub_city_coordinates"]:
             return faction_info["name"]
 

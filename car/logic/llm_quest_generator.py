@@ -45,17 +45,23 @@ def generate_quest_from_llm(game_state, quest_giver_faction_id, app, faction_dat
         return _get_fallback_quest(quest_giver_faction_id)
 
     try:
-        # Dynamically select a valid target faction from the provided data
-        current_factions = faction_data if faction_data is not None else app.data.factions.FACTION_DATA
-        hostile_factions = [
-            fid for fid, rel in current_factions[quest_giver_faction_id]["relationships"].items()
-            if rel == "Hostile" and fid in current_factions
-        ]
-        if not hostile_factions:
-            logging.warning(f"No hostile factions found for {quest_giver_faction_id}. Using fallback quest.")
-            return _get_fallback_quest(quest_giver_faction_id)
-        target_faction_id = random.choice(hostile_factions)
-        
+        # Check if the LLM provided a specific target.
+        target_faction_id = quest_data.get("target_faction")
+
+        # If not, try to select a hostile one.
+        if not target_faction_id:
+            current_factions = faction_data if faction_data is not None else app.data.factions.FACTION_DATA
+            hostile_factions = [
+                fid for fid, rel in current_factions[quest_giver_faction_id]["relationships"].items()
+                if rel == "Hostile" and fid in current_factions
+            ]
+            if hostile_factions:
+                target_faction_id = random.choice(hostile_factions)
+            else:
+                # It's okay to have no specific target for some quests (e.g., from neutral cities)
+                target_faction_id = None
+                logging.info(f"No hostile factions found for {quest_giver_faction_id}, quest will have no target faction.")
+
         return Quest(
             name=quest_data["name"],
             description=quest_data["description"],

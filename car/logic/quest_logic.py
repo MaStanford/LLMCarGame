@@ -10,8 +10,8 @@ from . import faction_logic
 def get_available_quests(game_state):
     """Generates a list of available quests for the current city."""
     quests = []
-    quest_giver_faction_id = get_city_faction(game_state.car_world_x, game_state.car_world_y)
-    quest_giver_faction = FACTION_DATA[quest_giver_faction_id]
+    quest_giver_faction_id = get_city_faction(game_state.car_world_x, game_state.car_world_y, game_state.factions)
+    quest_giver_faction = game_state.factions[quest_giver_faction_id]
     
     hostile_factions = [fid for fid, rel in quest_giver_faction["relationships"].items() if rel == "Hostile"]
     if not hostile_factions:
@@ -20,7 +20,7 @@ def get_available_quests(game_state):
     # Generate 3 quests
     for _ in range(3):
         target_faction_id = random.choice(hostile_factions)
-        target_faction = FACTION_DATA[target_faction_id]
+        target_faction = game_state.factions[target_faction_id]
 
         quest_template_key = random.choice(list(QUEST_TEMPLATES.keys()))
         quest_template = QUEST_TEMPLATES[quest_template_key]
@@ -47,6 +47,7 @@ def get_available_quests(game_state):
         ))
     return quests
 
+
 def handle_quest_acceptance(game_state, quest):
     """Handles the logic for accepting a quest."""
     game_state.current_quest = quest
@@ -57,7 +58,7 @@ def handle_quest_acceptance(game_state, quest):
         quest_template = QUEST_TEMPLATES[quest_template_key]
         if "boss" in quest_template:
             boss_data = quest_template["boss"]
-            target_faction = FACTION_DATA[quest.target_faction]
+            target_faction = game_state.factions[quest.target_faction]
             boss_name = boss_data["name"].format(target_faction_name=target_faction["name"])
             boss_car_class = next((c for c in PLAYER_CARS if c.__name__.lower() == boss_data["car"].lower().replace(" ", "_")), None)
             if boss_car_class:
@@ -107,7 +108,7 @@ def update_quests(game_state, audio_manager, app):
                     game_state.faction_reputation[giver_faction_id] = 0
                 game_state.faction_reputation[giver_faction_id] -= 5
                 faction_logic.decrease_control(game_state, giver_faction_id, 2) # Control penalty for failure
-                notifications.append(f"Reputation with {FACTION_DATA[giver_faction_id]['name']} decreased.")
+                notifications.append(f"Reputation with {game_state.factions[giver_faction_id]['name']} decreased.")
             
             notifications.append(f"Quest Failed: {game_state.current_quest.name}")
             game_state.current_quest = None
@@ -131,19 +132,19 @@ def check_for_faction_takeover(game_state):
             strongest_ally = max(player_allies, key=lambda f_id: game_state.faction_reputation[f_id])
             
             # Update faction data
-            defeated_faction_name = FACTION_DATA[faction_id]["name"]
-            victor_faction_name = FACTION_DATA[strongest_ally]["name"]
+            defeated_faction_name = game_state.factions[faction_id]["name"]
+            victor_faction_name = game_state.factions[strongest_ally]["name"]
             
             notifications.append(f"{defeated_faction_name} has been defeated! Their territory is now controlled by {victor_faction_name}!")
             
             # Transfer control of the hub city
-            FACTION_DATA[faction_id]["name"] = f"{victor_faction_name} (Occupied)"
-            FACTION_DATA[faction_id]["units"] = FACTION_DATA[strongest_ally]["units"]
+            game_state.factions[faction_id]["name"] = f"{victor_faction_name} (Occupied)"
+            game_state.factions[faction_id]["units"] = game_state.factions[strongest_ally]["units"]
             
             # Update relationships
-            for f_id in FACTION_DATA:
+            for f_id in game_state.factions:
                 if f_id != faction_id:
-                    FACTION_DATA[f_id]["relationships"][faction_id] = "Defeated"
+                    game_state.factions[f_id]["relationships"][faction_id] = "Defeated"
             
             del game_state.faction_reputation[faction_id]
     return notifications
@@ -155,13 +156,13 @@ def generate_quest(game_state, quest_id):
         return None
 
     # Faction logic mirrors get_available_quests
-    quest_giver_faction_id = get_city_faction(game_state.car_world_x, game_state.car_world_y)
-    quest_giver_faction = FACTION_DATA[quest_giver_faction_id]
+    quest_giver_faction_id = get_city_faction(game_state.car_world_x, game_state.car_world_y, game_state.factions)
+    quest_giver_faction = game_state.factions[quest_giver_faction_id]
     hostile_factions = [fid for fid, rel in quest_giver_faction["relationships"].items() if rel == "Hostile"]
     if not hostile_factions:
         return None # Can't generate a quest without a target
     target_faction_id = random.choice(hostile_factions)
-    target_faction = FACTION_DATA[target_faction_id]
+    target_faction = game_state.factions[target_faction_id]
 
     objectives = []
     for obj_class, args in quest_template["objectives"]:

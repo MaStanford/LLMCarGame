@@ -2,12 +2,18 @@ import logging
 import time
 from types import SimpleNamespace
 from typing import Any, Dict
-from textual.worker import active_worker
+from textual.message import Message
 
 from ..logic.llm_faction_generator import generate_factions_from_llm, _get_fallback_factions
 from ..logic.llm_quest_generator import generate_quest_from_llm, _get_fallback_quest
 from ..logic.prompt_builder import _format_world_state
 from ..logic.gemini_cli import generate_with_gemini_cli
+
+class StageUpdate(Message):
+    """A message to update the world building stage."""
+    def __init__(self, data: tuple):
+        self.data = data
+        super().__init__()
 
 def _generate_story_intro(app, theme, factions, neutral_faction_name):
     """Generates the introductory story text."""
@@ -23,7 +29,7 @@ def _generate_story_intro(app, theme, factions, neutral_faction_name):
     prompt = prompt.replace("{{ neutral_city_name }}", neutral_faction_name)
 
     if app.generation_mode == "gemini_cli":
-        response = generate_with_gemini_cli(prompt)
+        response = generate_with_gemini_cli(prompt, parse_json=False)
         # The CLI often returns just the string, which is what we want.
         return response if isinstance(response, str) else "Welcome to the wasteland."
     else:
@@ -34,7 +40,6 @@ def generate_initial_world_worker(app: Any, new_game_settings: dict) -> Dict:
     """
     A worker that generates the complete initial state for a new world.
     """
-    worker = active_worker.get()
     logging.info("Initial world generation worker started.")
     start_time = time.time()
     
@@ -43,7 +48,8 @@ def generate_initial_world_worker(app: Any, new_game_settings: dict) -> Dict:
         logging.info(f"Generating world with theme: {theme['name']}")
 
         # Stage 1: Generate Factions
-        worker.post_message(("stage", "Stage 1: Forging Factions..."))
+        app.post_message(StageUpdate(("stage", "Stage 1: Forging Factions...")))
+        time.sleep(0.25)
         if app.generation_mode == "local":
             logging.info("Using local generation mode. Returning fallback factions.")
             factions = _get_fallback_factions()
@@ -59,7 +65,8 @@ def generate_initial_world_worker(app: Any, new_game_settings: dict) -> Dict:
         neutral_faction_name = factions[neutral_faction_id]['name']
 
         # Stage 2: Generate Initial Quests
-        worker.post_message(("stage", "Stage 2: Weaving Plot Threads..."))
+        app.post_message(StageUpdate(("stage", f"Populating the {theme['name']}...")))
+        time.sleep(0.25)
         initial_quests = []
         mock_game_state = SimpleNamespace(
             faction_reputation={}, faction_control={}, quest_log=[],
@@ -77,7 +84,8 @@ def generate_initial_world_worker(app: Any, new_game_settings: dict) -> Dict:
                 initial_quests.append(quest)
 
         # Stage 3: Generate Story Intro
-        worker.post_message(("stage", "Stage 3: Writing the First Chapter..."))
+        app.post_message(StageUpdate(("stage", "A poet is writing how it begins...")))
+        time.sleep(0.25)
         story_intro = _generate_story_intro(app, theme, factions, neutral_faction_name)
 
         end_time = time.time()

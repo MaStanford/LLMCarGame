@@ -1,7 +1,7 @@
 import argparse
 import logging
 from logging import FileHandler
-from .app import CarApp
+from .app import GenesisModuleApp
 
 def main():
     """Main entry point for the game."""
@@ -19,7 +19,7 @@ def main():
             format='%(asctime)s - %(levelname)s - %(message)s'
         )
     
-    app = CarApp()
+    app = GenesisModuleApp()
     app.dev_mode = args.dev
     app.run()
 

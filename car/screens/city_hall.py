@@ -35,7 +35,7 @@ class CityHallScreen(ModalScreen):
         grid_x = round(gs.car_world_x / CITY_SPACING)
         grid_y = round(gs.car_world_y / CITY_SPACING)
         self.current_city_id = f"city_{grid_x}_{grid_y}"
-        self.current_city_faction = get_city_faction(gs.car_world_x, gs.car_world_y)
+        self.current_city_faction = get_city_faction(gs.car_world_x, gs.car_world_y, gs.factions)
         
         # Check for quest turn-in
         turn_in_city_tuple = (grid_x, grid_y)

@@ -1,4 +1,4 @@
-# Project: Car
+# Project: The Genesis Module
 
 ## Vibe
 
@@ -260,6 +260,77 @@ The game is built around the **Textual TUI framework**, which provides an event-
 - [x] **Enhance HUD:** Integrate a territory display, boss compass, and quest objective tracker into the existing HUD elements.
 - [x] **Implement Immersive Quest Flow:** Create a quest briefing screen and a quest completion summary screen.
 - [x] **Build Save/Load UI:** Create a modal for naming save games.
+
+### **Project: The Living Wasteland - Dynamic World & Narrative Events**
+
+**Goal:** To transform the game from a series of static locations into a deeply immersive and reactive world. This will be achieved by expanding our generative systems to name the world's features, create unique equipment, and introduce a new layer of narrative delivery through world-based triggers and discoveries.
+
+---
+
+#### **Phase 1: Dynamic Naming & World Details (The Cartographer)**
+
+**Objective:** To give every significant location a unique, theme-appropriate name, making the world feel authored and consistent.
+
+*   **[ ] Create `world_details_prompt.txt`:**
+    *   This prompt will be triggered after faction generation.
+    *   **Input:** The world theme and the complete faction data (names, vibes, locations).
+    *   **Output:** A single, clean JSON object containing:
+        *   `cities`: A dictionary mapping city coordinates (e.g., `"0,0"`) to generated names (e.g., `"The Nexus"`).
+        *   `roads`: A list of objects, each defining a major road between two cities with a generated name (e.g., `{"from": "The Nexus", "to": "Rust-Tusk Outpost", "name": "The Ashen Highway"}`).
+        *   `landmarks`: A list of objects, each defining a point of interest with coordinates and a generated name (e.g., `{"x": 150, "y": -200, "name": "The Sunken Oasis"}`).
+*   **[ ] Integrate into World Generation:**
+    *   Update the `generate_initial_world_worker` in `car/workers/world_generator.py` to call the new prompt.
+    *   The worker's final output dictionary will now include a `world_details` key.
+*   **[ ] Update Save/Load System:**
+    *   Modify `save_game` and `load_game` in `car/logic/save_load.py` to handle a new `world_details.json` file within each save slot.
+    *   Update `GameState` to store this `world_details` data.
+*   **[ ] Update UI and Game Logic:**
+    *   Refactor `car/widgets/hud_location.py` to display the generated city name instead of a generic ID.
+    *   Modify the `MapScreen` to display city and road names.
+    *   Update quest dialogs and descriptions to reference named locations (e.g., "Deliver this package to *Rust-Tusk Outpost* via *The Ashen Highway*").
+
+---
+
+#### **Phase 2: Emergent Encounters & Narrative Triggers (The Storyteller)**
+
+**Objective:** To break the narrative out of the City Hall and have it unfold dynamically as the player explores the world. This introduces two new systems: "World Triggers" and "Narrative Discoveries."
+
+*   **[ ] Implement World Trigger System:**
+    *   **Concept:** These are invisible, circular zones on the world map that trigger an event when the player enters them. This is perfect for ambushes, unique NPC encounters, or atmospheric story moments.
+    *   **Data Structure:** Define a `triggers.json` file, which can be generated or handwritten. Each trigger will have:
+        *   `id`: A unique identifier.
+        *   `x`, `y`, `radius`: The location and size of the trigger zone.
+        *   `type`: The type of event (`dialog`, `combat`, `quest`).
+        *   `data`: The specific content (e.g., the dialog to display, the enemies to spawn, the quest ID to grant).
+        *   `one_shot`: A boolean to determine if the trigger can be activated multiple times.
+    *   **Game Loop Integration:** In `car/app.py`, add a new function to the main `update_game` loop that checks the player's distance to all active triggers.
+*   **[ ] Implement Narrative Discovery System:**
+    *   **Concept:** Allow certain in-world objects (initially, destroyed enemy vehicles and specific obstacles) to have a chance to drop a "lore item" or a "quest lead" instead of just loot.
+    *   **Loot Table Modification:** Update the loot generation logic in `car/logic/loot_generation.py` to include a new drop type: `narrative_item`.
+    *   **Item Interaction:** When a player picks up a `narrative_item`, it will trigger a simple dialog screen that displays a snippet of story or a rumor, potentially leading to a new, hidden quest.
+    *   **Example:** Destroying a "Scrap Barricade" might have a 5% chance to drop a "Tattered Journal." Picking it up reveals a dialog: *"The journal speaks of a hidden cache of pre-war tech in a cave to the east..."* and places a new waypoint on the player's map.
+
+---
+
+#### **Phase 3: The Generative Armory (The Blacksmith)**
+
+**Objective:** To use the LLM to generate unique, named variants of existing weapons and vehicles, creating a much deeper and more rewarding loot system. This will use the "Template and Modifier" system we discussed.
+
+*   **[ ] Create Base Templates:**
+    *   Formalize our existing Python classes for `Weapon` and `Vehicle` as the definitive "base templates."
+*   **[ ] Develop a "Modifier" Data Structure:**
+    *   Define a clear JSON structure for how the LLM can specify modifications.
+    *   **Example:** `{"name": "The Dust-Devil", "base_item": "hatchback", "description": "A modified hatchback built for speed on rough terrain.", "stat_modifiers": {"speed": 1.1, "durability": 0.9, "handling": 1.05}, "cosmetic_tags": ["spikes", "rust"]}`.
+*   **[ ] Create `item_generator_prompt.txt`:**
+    *   This prompt will be used to generate new items as quest rewards or rare loot.
+    *   **Input:** The world theme, player level, and the base item template.
+    *   **Output:** A single, validated JSON object representing the new item variant.
+*   **[ ] Implement a Strict Validation System:**
+    *   Create a new function, `validate_generated_item(item_data)`, that rigorously checks every key and value in the JSON returned by the LLM.
+    *   It must check data types, ensure stat modifiers are within a reasonable range, and verify that cosmetic tags exist in our pre-defined library.
+    *   **Crucially:** If validation fails, the system must log the error and fall back to a standard, non-generated item to prevent crashes.
+*   **[ ] Integrate into Loot System:**
+    *   Update the loot generation logic to have a chance to call the `item_generator` instead of dropping a standard item, especially for boss fights or high-level quests.
 
 ### General Tasks
 - [ ] **Gemini CLI Integration:**

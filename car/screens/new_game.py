@@ -63,7 +63,7 @@ class NewGameScreen(Screen):
                             initial_index=1,
                             id="difficulty_select",
                         )
-            yield Button("Start Game", id="start_game", variant="primary")
+                    yield Button("Start Game", id="start_game", variant="primary")
         yield Footer()
 
     def on_mount(self) -> None:

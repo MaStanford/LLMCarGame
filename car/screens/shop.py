@@ -49,10 +49,9 @@ class ShopScreen(Screen):
     def generate_dialog(self):
         """Starts a worker to generate shopkeeper dialog."""
         gs = self.app.game_state
-        faction_data = self.app.data.factions.FACTION_DATA
         
-        city_faction_id = get_city_faction(gs.car_world_x, gs.car_world_y)
-        faction_info = faction_data.get(city_faction_id, {})
+        city_faction_id = get_city_faction(gs.car_world_x, gs.car_world_y, gs.factions)
+        faction_info = gs.factions.get(city_faction_id, {})
         faction_name = faction_info.get("name", "The Wasteland")
         faction_vibe = faction_info.get("description", "A desolate, lawless place.")
         player_rep = gs.faction_reputation.get(city_faction_id, 0)

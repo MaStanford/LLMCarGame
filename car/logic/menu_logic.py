@@ -2,7 +2,6 @@ import curses
 import time
 import math
 from ..data.weapons import WEAPONS_DATA
-from ..world.generation import get_city_name
 from ..ui.inventory import draw_inventory_menu
 from ..data.game_constants import CITY_SPACING
 from ..entities.weapon import Weapon

@@ -25,7 +25,43 @@ Based on all of the above, generate a new quest.
 - The quest's difficulty and rewards should be appropriate for a player who has completed a number of quests (as noted in the "PREVIOUSLY..." section).
 - The quest must have a clear `name`, a `description` for the player, and some `dialog` for the quest giver.
 - The quest must have one of the following objective types: `KillCountObjective`, `KillBossObjective`, or `SurvivalObjective`.
+- If the quest is against a specific faction, include the `"target_faction"` key with that faction's ID.
+- If the quest is against generic enemies (like local bandits) or is non-combat, set `"target_faction": null`.
 - Provide a JSON object matching the format below exactly.
+
+# EXAMPLE 1 (Faction vs. Faction)
+```json
+{
+  "name": "Cartel Crackdown",
+  "description": "Assert our dominance by taking out a key leader in the Crimson Cartel.",
+  "dialog": "The Crimson Cartel thinks they can push us around. Show them what happens when they cross the Blue Syndicate. Take out their enforcer, 'Mad Dog' Malone.",
+  "objectives": [
+    ["KillBossObjective", ["Mad Dog Malone"]]
+  ],
+  "rewards": {
+    "xp": 750,
+    "cash": 1500
+  },
+  "target_faction": "crimson_cartel"
+}
+```
+
+# EXAMPLE 2 (Neutral City, Generic Target)
+```json
+{
+  "name": "Scrap Scavengers",
+  "description": "A group of rogue scavengers have been harassing our trade routes. Clear them out.",
+  "dialog": "Some scavs have gotten bold, setting up a toll on the old highway. They're not part of any big faction, just a nuisance. Deal with them, will you? We'll make it worth your while.",
+  "objectives": [
+    ["KillCountObjective", ["Scavenger", 5]]
+  ],
+  "rewards": {
+    "xp": 300,
+    "cash": 800
+  },
+  "target_faction": null
+}
+```
 
 # REQUIRED JSON FORMAT
 ```json
@@ -39,7 +75,8 @@ Based on all of the above, generate a new quest.
   "rewards": {
     "xp": <int>,
     "cash": <int>
-  }
+  },
+  "target_faction": "<faction_id_string_or_null>"
 }
 ```
 

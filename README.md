@@ -1,6 +1,6 @@
-# Genesis Module - A Terminal-Based Automotive RPG
+# The Genesis Module - A Terminal-Based Automotive RPG
 
-Welcome to Genesis Module, a terminal-based, open-world, automotive RPG survival game. Players select a starting vehicle and embark on an adventure in an infinitely-generated, random world. The map features roads connecting cities, surrounded by various types of wilderness.
+Welcome to The Genesis Module, a terminal-based, open-world, automotive RPG survival game. Players select a starting vehicle and embark on an adventure in an infinitely-generated, random world. The map features roads connecting cities, surrounded by various types of wilderness.
 
 ## Key Gameplay Elements:
 

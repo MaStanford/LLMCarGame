@@ -40,9 +40,10 @@ class MapView(Widget):
         grid_x = round(world_x / CITY_SPACING)
         grid_y = round(world_y / CITY_SPACING)
         
-        if get_city_name(grid_x, grid_y):
+        city_name = get_city_name(grid_x, grid_y, gs.factions)
+        if city_name:
             gs.waypoint = (grid_x * CITY_SPACING, grid_y * CITY_SPACING)
-            self.app.screen.query_one("#notifications").add_notification(f"Waypoint set to {get_city_name(grid_x, grid_y)}.")
+            self.app.screen.query_one("#notifications").add_notification(f"Waypoint set to {city_name}.")
 
     def _generate_map_cache(self):
         """Generates the static parts of the map and caches them."""
@@ -67,7 +68,7 @@ class MapView(Widget):
                 
                 grid_x = round(world_x / CITY_SPACING)
                 grid_y = round(world_y / CITY_SPACING)
-                if get_city_name(grid_x, grid_y):
+                if get_city_name(grid_x, grid_y, gs.factions):
                     city_center_x = grid_x * CITY_SPACING
                     city_center_y = grid_y * CITY_SPACING
                     if abs(world_x - city_center_x) < 10 * scale and abs(world_y - city_center_y) < 10 * scale:

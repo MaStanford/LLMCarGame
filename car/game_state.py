@@ -6,12 +6,13 @@ from .logic.entity_loader import PLAYER_CARS
 from .data import *
 
 class GameState:
-    def __init__(self, selected_car_index, difficulty, difficulty_mods, car_color_names, theme=None):
+    def __init__(self, selected_car_index, difficulty, difficulty_mods, car_color_names, factions, theme=None):
         # --- Game Configuration ---
         self.selected_car_index = selected_car_index
         self.difficulty = difficulty
         self.difficulty_mods = difficulty_mods
         self.car_color_names = car_color_names
+        self.factions = factions
         self.theme = theme if theme is not None else {"name": "Default", "description": "A standard wasteland adventure."}
         
         # --- Player Actions ---
@@ -208,6 +209,7 @@ class GameState:
             "difficulty": self.difficulty,
             "car_color_names": self.car_color_names,
             "theme": self.theme,
+            "factions": self.factions,
             
             # Player State
             "player_cash": self.player_cash,
@@ -236,7 +238,7 @@ class GameState:
         }
 
     @classmethod
-    def from_dict(cls, data):
+    def from_dict(cls, data, factions_data):
         """Deserializes a dictionary back into a GameState object."""
         # We need the difficulty modifiers to create the initial object
         difficulty = data.get("difficulty", "Normal")
@@ -248,7 +250,8 @@ class GameState:
             difficulty=difficulty,
             difficulty_mods=difficulty_mods,
             car_color_names=data["car_color_names"],
-            theme=data.get("theme")
+            theme=data.get("theme"),
+            factions=factions_data,
         )
         
         # --- Restore Player State ---
