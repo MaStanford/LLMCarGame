@@ -69,7 +69,7 @@ class Van(PlayerCar):
         super().__init__(
             x, y, art,
             durability=150,
-            speed=3.5,
+            speed=5.25,
             acceleration=0.4,
             handling=0.07,
             braking_power=0.4,

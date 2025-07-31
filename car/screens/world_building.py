@@ -146,6 +146,9 @@ class WorldBuildingScreen(Screen):
             factions=self.world_data["factions"],
         )
         
+        # Save the generated story intro to the game state
+        game_state.story_intro = self.world_data["story_intro"]
+        
         # Pre-populate the quest cache
         neutral_city_id = self.world_data["neutral_city_id"]
         game_state.quest_cache[neutral_city_id] = self.world_data["quests"]

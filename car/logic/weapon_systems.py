@@ -1,6 +1,8 @@
 import math
 import logging
 
+from ..data.game_constants import GLOBAL_SPEED_MULTIPLIER
+
 def update_weapon_systems(game_state, audio_manager):
     """
     Handles weapon firing, projectile creation, and projectile movement.
@@ -70,7 +72,7 @@ def update_weapon_systems(game_state, audio_manager):
                             game_state.active_particles.append([
                                 p_x, p_y, 
                                 p_math_angle_rad, 
-                                weapon.speed, 
+                                weapon.speed * GLOBAL_SPEED_MULTIPLIER, 
                                 projectile_power, 
                                 weapon.range, 
                                 particle_char,

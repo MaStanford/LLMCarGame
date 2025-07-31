@@ -2,15 +2,17 @@ import random
 from ..character import Character
 from ...logic.ai_behaviors import _execute_chase_behavior, _execute_stationary_behavior
 
+from ...data.game_constants import GLOBAL_SPEED_MULTIPLIER
+
 class Bandit(Character):
     def __init__(self, x, y):
         art = [
             "  _  ",
-            " / \\ ",
+            " / \ ",
             "|o.o|",
-            " \\_/ ",
+            " \_/ ",
         ]
-        super().__init__(x, y, art, durability=10, speed=0.25)
+        super().__init__(x, y, art, durability=10, speed=0.25 * GLOBAL_SPEED_MULTIPLIER)
         self.xp_value = 5
         self.cash_value = 10
         self.drop_item = "ammo_bullet"

@@ -109,3 +109,15 @@ def _load_entity(entity_type_path, name, entity_list):
 
 # Initial population of the entity lists
 _populate_entities()
+
+def get_enemy_vehicle_list():
+    """Returns a simple list of enemy vehicle names."""
+    return [v.__name__ for v in ENEMY_VEHICLES]
+
+def get_character_list():
+    """Returns a simple list of character names."""
+    return [c.__name__ for c in ENEMY_CHARACTERS + FAUNA]
+
+def get_obstacle_list():
+    """Returns a simple list of obstacle names."""
+    return [o.__name__ for o in OBSTACLES]

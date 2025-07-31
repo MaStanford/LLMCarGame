@@ -2,10 +2,13 @@ You are a quest designer for the post-apocalyptic RPG "Genesis Module."
 Your task is to generate a new, compelling quest that fits the current state of the game world.
 
 ---
-GAME SUMMARY:
+**Game Summary:**
 {{ game_summary }}
----
-PLAYER DOSSIER:
+
+**Story Intro:**
+{{ story_intro }}
+
+**Player State:**
 {{ player_state }}
 ---
 WASTELAND STATUS REPORT:
@@ -25,6 +28,9 @@ Based on all of the above, generate a new quest.
 - The quest's difficulty and rewards should be appropriate for a player who has completed a number of quests (as noted in the "PREVIOUSLY..." section).
 - The quest must have a clear `name`, a `description` for the player, and some `dialog` for the quest giver.
 - The quest must have one of the following objective types: `KillCountObjective`, `KillBossObjective`, or `SurvivalObjective`.
+- The `target_vehicle` for `KillBossObjective` objectives MUST be chosen from the `Enemy Vehicles` list in the **Available Entities** section of the game context.
+- The `enemy_types` for `KillCountObjective` and `SurvivalObjective` objectives MUST be chosen from the `Enemy Vehicles` and `Characters` lists in the **Available Entities** section of the game context.
+- Do NOT invent new entities. Use only the provided lists.
 - If the quest is against a specific faction, include the `"target_faction"` key with that faction's ID.
 - If the quest is against generic enemies (like local bandits) or is non-combat, set `"target_faction": null`.
 - Provide a JSON object matching the format below exactly.

@@ -68,7 +68,7 @@ class Hatchback(PlayerCar):
         super().__init__(
             x, y, art,
             durability=90,
-            speed=4.8,
+            speed=7.2,
             acceleration=0.7,
             handling=0.12,
             braking_power=0.75,

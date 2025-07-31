@@ -2,6 +2,8 @@ import random
 from ..vehicle import Vehicle
 from ...logic.ai_behaviors import _execute_chase_behavior, _execute_evade_behavior, _execute_deploy_mine_behavior
 
+from ...data.game_constants import GLOBAL_SPEED_MULTIPLIER
+
 class WarRig(Vehicle):
     """
     The formidable command vehicle of the Dustwind Caravans.
@@ -14,7 +16,7 @@ class WarRig(Vehicle):
             "█████████████████",
             "(●)═(●)═════(●)═(●)"
         ]
-        super().__init__(x, y, art, durability=300, speed=2.0, acceleration=0.2, handling=0.03)
+        super().__init__(x, y, art, durability=300, speed=3.0 * GLOBAL_SPEED_MULTIPLIER, acceleration=0.2, handling=0.03)
         self.name = "War Rig"
         self.is_major_enemy = True
         self.xp_value = 200

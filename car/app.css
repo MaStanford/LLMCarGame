@@ -135,8 +135,9 @@ PauseScreen {
 }
 
 PauseScreen Button {
-    width: 100%;
+    width: 40%;
     margin: 1;
+    align: center middle;
 }
 
 InventoryScreen #inventory_grid {
@@ -158,8 +159,19 @@ InventoryScreen #inventory_grid {
     border: heavy white;
 }
 
+#inventory_prompt {
+    border: heavy white;
+    padding: 1;
+    height: 5;
+}
+
 #stats {
     border: heavy white;
+}
+
+ShopScreen {
+    width: 100%;
+    height: 100%;
 }
 
 ShopScreen #shop_grid {
@@ -188,10 +200,44 @@ ShopScreen WeaponInfo, ShopScreen MenuStatsHUD, ShopScreen Button {
     margin-top: 1;
 }
 
+/* --- Shop-Specific Themes --- */
+.mechanic-shop {
+    background: #2d2d2d; /* Dark grey */
+    color: #e0e0e0; /* Light grey text */
+}
+.mechanic-shop #shop_inventory, .mechanic-shop #player_inventory, .mechanic-shop #shop_dialog {
+    border: heavy #ff8c00; /* Dark orange */
+}
+
+.gas-station {
+    background: #f5f5dc; /* Beige */
+    color: #8b0000; /* Dark red text */
+}
+.gas-station #shop_inventory, .gas-station #player_inventory, .gas-station #shop_dialog {
+    border: heavy #008080; /* Teal */
+}
+
+.weapon-shop {
+    background: #000000; /* Black */
+    color: #00ff00; /* Green text */
+}
+.weapon-shop #shop_inventory, .weapon-shop #player_inventory, .weapon-shop #shop_dialog {
+    border: heavy #808080; /* Grey */
+}
+
+
 CityHallScreen {
     layout: grid;
     grid-size: 2 1;
     grid-gutter: 1;
+}
+
+#quest_list_container {
+    align: center middle;
+}
+
+#loading_container {
+    align: center middle;
 }
 
 #item_list, #quest_list {
@@ -301,6 +347,27 @@ Button:focus {
 
 #faction-loader-container ProgressBar {
     width: 30;
+}
+
+SaveGameScreen {
+    align: center middle;
+}
+
+#save_game_container {
+    width: 50;
+    height: auto;
+    background: $panel;
+    padding: 2;
+    border: heavy white;
+}
+
+#save_prompt {
+    text-align: center;
+    margin-bottom: 1;
+}
+
+#save_name_input {
+    margin-bottom: 1;
 }
 
 GameOverScreen {
@@ -435,6 +502,15 @@ CombatScreen {
     grid-size: 2 1;
     grid-columns: 1fr 2fr;
     padding: 1;
+}
+
+#faction_details_container {
+    border: heavy white;
+    padding: 1;
+}
+
+.progress_bar_label {
+    margin-top: 1;
 }
 
 WorldBuildingScreen {

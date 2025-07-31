@@ -7,19 +7,19 @@ from ..entities.vehicles.miner import Miner
 from ..entities.vehicles.hotrod import Hotrod
 from ..entities.vehicles.truck import Truck
 
-def check_challenge_conditions(game_state, faction_id):
+def check_challenge_conditions(game_state, faction_id, factions_data):
     """
     Checks if the player can challenge a faction's boss.
     Returns True if conditions are met, False otherwise.
     """
-    if not FACTION_DATA[faction_id].get("faction_boss"):
+    if not factions_data[faction_id].get("faction_boss"):
         return False
 
     rep = game_state.faction_reputation.get(faction_id, 0)
     if rep <= -100:
         return True
 
-    hostile_factions = [fid for fid, rel in FACTION_DATA[faction_id]["relationships"].items() if rel == "Hostile"]
+    hostile_factions = [fid for fid, rel in factions_data[faction_id]["relationships"].items() if rel == "Hostile"]
     for h_id in hostile_factions:
         if game_state.faction_reputation.get(h_id, 0) >= 80:
             return True

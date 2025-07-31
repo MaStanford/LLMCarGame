@@ -1,127 +1,112 @@
 from textual.widget import Widget
 from rich.text import Text
 from rich.style import Style
-from ..data.game_constants import CITY_SPACING, ROAD_WIDTH
-from ..world.generation import get_city_name
+from ..data.game_constants import CITY_SPACING
+from ..world.generation import does_city_exist_at
+import time
+import random
 
 class MapView(Widget):
     """A widget to display the world map."""
     can_focus = True
 
-    def __init__(self, game_state, *args, **kwargs):
+    def __init__(self, game_state, world, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.game_state = game_state
-        self.cursor_x = 0
-        self.cursor_y = 0
-        self.cached_map = None
-        self.cached_styles = None
+        self.world = world
+        self.camera_x = 0
+        self.camera_y = 0
+        self.map_data = {}
+        self.blink_state = True
 
     def on_mount(self) -> None:
         """Called when the widget is mounted."""
-        self.cursor_x = self.size.width // 2
-        self.cursor_y = self.size.height // 2
-        self._generate_map_cache()
+        self.camera_x = self.game_state.car_world_x
+        self.camera_y = self.game_state.car_world_y
+        self._generate_map_chunk()
+        self.blink_timer = self.set_interval(0.5, self.toggle_blink)
 
-    def move_cursor(self, dx: int, dy: int):
-        """Move the cursor."""
-        self.cursor_x = max(0, min(self.size.width - 1, self.cursor_x + dx))
-        self.cursor_y = max(0, min(self.size.height - 1, self.cursor_y + dy))
+    def on_unmount(self) -> None:
+        """Called when the widget is unmounted."""
+        self.blink_timer.stop()
+
+    def toggle_blink(self) -> None:
+        """Toggle the blink state for the player marker."""
+        self.blink_state = not self.blink_state
         self.refresh()
 
-    def select_waypoint(self):
-        """Set a waypoint to the selected city."""
+    def move_camera(self, dx: int, dy: int):
+        """Move the camera."""
+        self.camera_x += dx * 200 # Scale factor for scrolling
+        self.camera_y += dy * 200
+        self.refresh()
+
+    def center_on_player(self):
+        """Re-center the map on the player."""
+        self.camera_x = self.game_state.car_world_x
+        self.camera_y = self.game_state.car_world_y
+        self.refresh()
+
+    def _generate_map_chunk(self):
+        """Generates a large chunk of the map around the player."""
         gs = self.game_state
-        scale = 200
-        map_start_x = gs.car_world_x - (self.size.width / 2) * scale
-        map_start_y = gs.car_world_y - (self.size.height / 2) * scale
+        chunk_size = 100000 # World units for the chunk
         
-        world_x = map_start_x + self.cursor_x * scale
-        world_y = map_start_y + self.cursor_y * scale
+        center_grid_x = round(self.camera_x / CITY_SPACING)
+        center_grid_y = round(self.camera_y / CITY_SPACING)
         
-        grid_x = round(world_x / CITY_SPACING)
-        grid_y = round(world_y / CITY_SPACING)
-        
-        city_name = get_city_name(grid_x, grid_y, gs.factions)
-        if city_name:
-            gs.waypoint = (grid_x * CITY_SPACING, grid_y * CITY_SPACING)
-            self.app.screen.query_one("#notifications").add_notification(f"Waypoint set to {city_name}.")
+        grid_radius = int((chunk_size / 2) / CITY_SPACING)
 
-    def _generate_map_cache(self):
-        """Generates the static parts of the map and caches them."""
-        gs = self.game_state
-        w, h = self.size
-        scale = 200
-        
-        map_start_x = gs.car_world_x - (w / 2) * scale
-        map_start_y = gs.car_world_y - (h / 2) * scale
-
-        self.cached_map = [[' ' for _ in range(w)] for _ in range(h)]
-        self.cached_styles = [[Style() for _ in range(w)] for _ in range(h)]
-
-        for y in range(h):
-            for x in range(w):
-                world_x = map_start_x + x * scale
-                world_y = map_start_y + y * scale
-                
-                if abs(world_x % CITY_SPACING) < ROAD_WIDTH * scale or abs(world_y % CITY_SPACING) < ROAD_WIDTH * scale:
-                    self.cached_map[y][x] = "+"
-                    self.cached_styles[y][x] = Style(color="bright_black")
-                
-                grid_x = round(world_x / CITY_SPACING)
-                grid_y = round(world_y / CITY_SPACING)
-                if get_city_name(grid_x, grid_y, gs.factions):
-                    city_center_x = grid_x * CITY_SPACING
-                    city_center_y = grid_y * CITY_SPACING
-                    if abs(world_x - city_center_x) < 10 * scale and abs(world_y - city_center_y) < 10 * scale:
-                        self.cached_map[y][x] = "C"
-                        self.cached_styles[y][x] = Style(color="cyan", bold=True)
+        for gx in range(center_grid_x - grid_radius, center_grid_x + grid_radius):
+            for gy in range(center_grid_y - grid_radius, center_grid_y + grid_radius):
+                if does_city_exist_at(gx, gy, self.world.seed, gs.factions):
+                    is_hub = any(faction.get("hub_city_coordinates") == [gx, gy] for faction in gs.factions.values())
+                    
+                    # Add jitter to the city position
+                    local_random = random.Random(f"{self.world.seed}-{gx}-{gy}")
+                    jitter_x = local_random.uniform(-0.3, 0.3)
+                    jitter_y = local_random.uniform(-0.3, 0.3)
+                    
+                    self.map_data[(gx + jitter_x, gy + jitter_y)] = "★" if is_hub else "■"
 
     def render(self) -> Text:
         """Render the map."""
-        if self.cached_map is None:
-            # This should not happen if on_mount is called correctly,
-            # but as a fallback:
-            self._generate_map_cache()
+        w, h = self.size
+        if self.cached_map is None or len(self.cached_map) != h or len(self.cached_map[0]) != w:
+            self._generate_map_chunk()
 
-        # Start with a copy of the cached map
         canvas = [row[:] for row in self.cached_map]
         styles = [row[:] for row in self.cached_styles]
         
         gs = self.game_state
-        w, h = self.size
         scale = 200
-        
-        # The map is now static, so we need to calculate the player's position
-        # relative to the top-left of the *entire world* represented in the cache.
-        # The cache was generated based on the player's position at the time of mounting.
-        # Let's assume the cache is centered on (0,0) for simplicity of this example,
-        # a real implementation would need to store the cache's world offset.
-        # For now, we'll recalculate the offset here.
-        
-        map_start_x = gs.car_world_x - (w / 2) * scale
-        map_start_y = gs.car_world_y - (h / 2) * scale
+        map_start_x = self.camera_x - (w / 2) * scale
+        map_start_y = self.camera_y - (h / 2) * scale
+
+        # Draw Cities and Labels
+        for (gx, gy), symbol in self.map_data.items():
+            city_world_x = gx * CITY_SPACING
+            city_world_y = gy * CITY_SPACING
+            
+            sx = int((city_world_x - map_start_x) / scale)
+            sy = int((city_world_y - map_start_y) / scale)
+            
+            if 0 <= sy < h and 0 <= sx < w:
+                canvas[sy][sx] = symbol
+                styles[sy][sx] = Style(color="cyan", bold=True, bgcolor="black")
+                
+                city_name = get_city_name(round(gx), round(gy), gs.factions)
+                label = f"{city_name} ({int(city_world_x)}, {int(city_world_y)})"
+                self._draw_text(canvas, styles, sx + 2, sy, label, Style(color="white", bgcolor="black"))
 
         # Draw Player
-        player_x = int((gs.car_world_x - map_start_x) / scale)
-        player_y = int((gs.car_world_y - map_start_y) / scale)
+        player_x = int((self.game_state.car_world_x - map_start_x) / scale)
+        player_y = int((self.game_state.car_world_y - map_start_y) / scale)
         if 0 <= player_y < h and 0 <= player_x < w:
-            canvas[player_y][player_x] = "@"
-            styles[player_y][player_x] = Style(color="red", bold=True)
+            if self.blink_state:
+                canvas[player_y][player_x] = "●"
+                styles[player_y][player_x] = Style(color="red", bold=True, bgcolor="black")
             
-        # Draw Quest Objective
-        if gs.current_quest and gs.current_quest.boss:
-            boss = gs.current_quest.boss
-            boss_x = int((boss.x - map_start_x) / scale)
-            boss_y = int((boss.y - map_start_y) / scale)
-            if 0 <= boss_y < h and 0 <= boss_x < w:
-                canvas[boss_y][boss_x] = "X"
-                styles[boss_y][boss_x] = Style(color="magenta", bold=True)
-
-        # Draw Cursor
-        if 0 <= self.cursor_y < h and 0 <= self.cursor_x < w:
-            canvas[self.cursor_y][self.cursor_x] = "X"
-            styles[self.cursor_y][self.cursor_x] = Style(color="yellow", bold=True)
-
         # Convert to Rich Text
         text = Text()
         for y, row in enumerate(canvas):
@@ -129,3 +114,10 @@ class MapView(Widget):
                 text.append(char, styles[y][x])
             text.append("\n")
         return text
+
+    def _draw_text(self, canvas, styles, x, y, text, style):
+        """Draws text onto the canvas."""
+        for i, char in enumerate(text):
+            if 0 <= y < len(canvas) and 0 <= x + i < len(canvas[0]):
+                canvas[y][x + i] = char
+                styles[y][x + i] = style

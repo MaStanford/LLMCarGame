@@ -70,7 +70,8 @@ def generate_initial_world_worker(app: Any, new_game_settings: dict) -> Dict:
         initial_quests = []
         mock_game_state = SimpleNamespace(
             faction_reputation={}, faction_control={}, quest_log=[],
-            difficulty_mods=new_game_settings["difficulty_mods"], theme=theme
+            difficulty_mods=new_game_settings["difficulty_mods"], theme=theme,
+            story_intro="The story is just beginning..."
         )
         for i in range(3):
             if app.generation_mode == "local":

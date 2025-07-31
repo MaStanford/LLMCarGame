@@ -66,6 +66,13 @@ class GenesisModuleApp(App):
         if self.game_loop:
             self.game_loop.stop()
 
+    def start_game_loop(self):
+        """Starts the game loop timer."""
+        # Ensure any old timer is stopped before creating a new one.
+        if self.game_loop:
+            self.game_loop.stop()
+        self.game_loop = self.set_interval(1 / 30, self.update_game)
+
     def on_mount(self) -> None:
         """Called when the app is first mounted."""
         self.push_screen(MainMenuScreen())
@@ -148,13 +155,14 @@ class GenesisModuleApp(App):
 
         # Update FPS counter
         self.frame_count += 1
-        # Use a simple moving average for FPS to smooth it out
-        # This part of the code is for display only and doesn't affect game logic timing
-        if current_time - self.screen.query_one("#fps_counter").last_fps_update_time >= 1.0:
-            fps = self.frame_count / (current_time - self.screen.query_one("#fps_counter").last_fps_update_time)
-            self.screen.query_one("#fps_counter").fps = fps
-            self.screen.query_one("#fps_counter").last_fps_update_time = current_time
-            self.frame_count = 0
+        if isinstance(self.screen, WorldScreen):
+            # Use a simple moving average for FPS to smooth it out
+            # This part of the code is for display only and doesn't affect game logic timing
+            if current_time - self.screen.query_one("#fps_counter").last_fps_update_time >= 1.0:
+                fps = self.frame_count / (current_time - self.screen.query_one("#fps_counter").last_fps_update_time)
+                self.screen.query_one("#fps_counter").fps = fps
+                self.screen.query_one("#fps_counter").last_fps_update_time = current_time
+                self.frame_count = 0
 
     def check_building_interaction(self):
         """Checks if the player is inside a building and pushes the appropriate screen."""
@@ -233,6 +241,27 @@ class GenesisModuleApp(App):
         else:
             gs.compass_info = {"target_angle": 0, "player_angle": 0, "target_name": ""}
 
+    def on_worker_state_changed(self, event: "Worker.StateChanged") -> None:
+        """Handles completed quest generation workers."""
+        if event.worker.name.startswith("QuestGenerator"):
+            if event.worker.state == "SUCCESS":
+                city_id = event.worker.city_id
+                quests = event.worker.result
+                if quests:
+                    self.game_state.quest_cache[city_id] = quests
+                    logging.info(f"Successfully cached {len(quests)} quests for city {city_id}.")
+                else:
+                    self.game_state.quest_cache.pop(city_id, None)
+                    logging.warning(f"Quest generation failed for city {city_id}. No quests cached.")
+                
+                from .screens.city_hall import CityHallScreen, QuestsLoaded
+                if isinstance(self.screen, CityHallScreen) and self.screen.current_city_id == city_id:
+                    self.screen.post_message(QuestsLoaded(quests or []))
+
+    def trigger_initial_quest_cache(self):
+        """Kicks off the quest caching for the player's starting area."""
+        self.check_and_cache_quests_for_nearby_cities()
+
     def check_and_cache_quests_for_nearby_cities(self):
         """
         Checks for cities near the player and dispatches workers to generate quests
@@ -269,7 +298,8 @@ class GenesisModuleApp(App):
                     city_id=city_id,
                     city_faction_id=city_faction_id,
                     theme=gs.theme,
-                    faction_data=gs.factions
+                    faction_data=gs.factions,
+                    story_intro=gs.story_intro
                 )
                 
                 worker = self.run_worker(
@@ -281,16 +311,6 @@ class GenesisModuleApp(App):
                 # Pass the city_id to the worker's custom attribute to know where to store the result
                 worker.city_id = city_id
 
-    def on_worker_state_changed(self, event: "Worker.StateChanged") -> None:
-        """Handles completed quest generation workers."""
-        if event.worker.name.startswith("QuestGenerator"):
-            if event.worker.state == "SUCCESS":
-                city_id = event.worker.city_id
-                quests = event.worker.result
-                if quests:
-                    self.game_state.quest_cache[city_id] = quests
-                    logging.info(f"Successfully cached {len(quests)} quests for city {city_id}.")
-                else:
-                    # If generation fails, remove the pending status so we can try again later
-                    self.game_state.quest_cache.pop(city_id, None)
-                    logging.warning(f"Quest generation failed for city {city_id}. No quests cached.")
+    def trigger_initial_quest_cache(self):
+        """Kicks off the quest caching for the player's starting area."""
+        self.check_and_cache_quests_for_nearby_cities()

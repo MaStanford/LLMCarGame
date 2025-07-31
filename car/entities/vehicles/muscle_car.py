@@ -2,6 +2,8 @@ import random
 from ..vehicle import Vehicle
 from ...logic.ai_behaviors import _execute_chase_behavior, _execute_strafe_behavior, _execute_ram_behavior
 
+from ...data.game_constants import GLOBAL_SPEED_MULTIPLIER
+
 class MuscleCar(Vehicle):
     """
     A classic, high-performance muscle car. It's fast, aggressive,
@@ -15,7 +17,7 @@ class MuscleCar(Vehicle):
             " ███████████ ",
             " (●)▀▀▀▀▀(●) "
         ]
-        super().__init__(x, y, art, durability=85, speed=6.7, acceleration=0.9, handling=0.18)
+        super().__init__(x, y, art, durability=85, speed=10.1 * GLOBAL_SPEED_MULTIPLIER, acceleration=0.9, handling=0.18)
         self.name = "Muscle Car"
         self.xp_value = 40
         self.cash_value = 75

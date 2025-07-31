@@ -194,6 +194,16 @@ class GameView(Widget):
             color_name = self.world.building_data[b_type].get("color_pair_name", "BUILDING_WALL")
             building_style = self.world.terrain_data[color_name]["style"]
 
+        # --- Pre-fill the background ---
+        end_sx = start_sx + b_w
+        end_sy = start_sy + b_h
+        for sy in range(start_sy, end_sy):
+            for sx in range(start_sx, end_sx):
+                if 0 <= sy < h and 0 <= sx < w:
+                    canvas[sy][sx] = " "
+                    styles[sy][sx] = building_style
+
+        # --- Draw the art on top ---
         if b_type != "GENERIC" and b_type in self.world.building_data:
             art = self.world.building_data[b_type].get("art", [])
             for i, line in enumerate(art):
@@ -202,25 +212,11 @@ class GameView(Widget):
                         sx, sy = start_sx + j, start_sy + i
                         if 0 <= sy < h and 0 <= sx < w:
                             canvas[sy][sx] = char
-                            styles[sy][sx] = building_style
+                            # Use the same background but with a foreground color
+                            styles[sy][sx] = Style.from_color(building_style.color, building_style.bgcolor)
         else:
-            # Fallback to procedural drawing for GENERIC buildings
-            end_sx = start_sx + b_w
-            end_sy = start_sy + b_h
-            wall_style = self.world.terrain_data["BUILDING_WALL"]["style"]
-            fill_style = Style(bgcolor="rgb(180,180,180)") # Darker fill for generic
-            for sy in range(start_sy, end_sy):
-                for sx in range(start_sx, end_sx):
-                    if 0 <= sy < h and 0 <= sx < w:
-                        char = " "
-                        style = fill_style
-                        # Edges
-                        if sy == start_sy or sy == end_sy - 1 or sx == start_sx or sx == end_sx - 1:
-                             char = " "
-                             style = wall_style
-                        
-                        canvas[sy][sx] = char
-                        styles[sy][sx] = style
+            # Fallback for GENERIC buildings (already handled by pre-fill)
+            pass
 
     def draw_weapon(self, canvas, styles, parent_entity, weapon, point_data, world_start_x, world_start_y, w, h):
         """Draws a weapon on the canvas at its attachment point."""

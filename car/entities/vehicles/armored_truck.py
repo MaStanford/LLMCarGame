@@ -2,6 +2,8 @@ import random
 from ..vehicle import Vehicle
 from ...logic.ai_behaviors import _execute_chase_behavior, _execute_ram_behavior, _execute_evade_behavior
 
+from ...data.game_constants import GLOBAL_SPEED_MULTIPLIER
+
 class ArmoredTruck(Vehicle):
     """
     A heavily armored security truck. Slow but incredibly durable.
@@ -16,7 +18,7 @@ class ArmoredTruck(Vehicle):
             "▀(●)▀▀▀(●)▀"
         ]
         # Upgraded stats to match its appearance
-        super().__init__(x, y, art, durability=250, speed=1.8, acceleration=0.2, handling=0.05)
+        super().__init__(x, y, art, durability=250, speed=2.7 * GLOBAL_SPEED_MULTIPLIER, acceleration=0.2, handling=0.05)
         self.name = "Armored Truck"
         self.xp_value = 50
         self.cash_value = 100

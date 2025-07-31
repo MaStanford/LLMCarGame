@@ -14,6 +14,7 @@ class GameState:
         self.car_color_names = car_color_names
         self.factions = factions
         self.theme = theme if theme is not None else {"name": "Default", "description": "A standard wasteland adventure."}
+        self.story_intro = ""
         
         # --- Player Actions ---
         self.pedal_position = 0.0  # -1.0 for full brake, 1.0 for full accelerator
@@ -169,7 +170,7 @@ class GameState:
     def apply_level_bonuses(self):
         level_bonus_multiplier = 1.0 + (self.player_level - 1) * 0.1 # Placeholder
 
-        self.max_speed = self.base_max_speed * level_bonus_multiplier
+        self.max_speed = self.base_max_speed * level_bonus_multiplier * GLOBAL_SPEED_MULTIPLIER
         self.acceleration_factor = self.base_acceleration_factor * level_bonus_multiplier
         self.turn_rate = self.base_turn_rate * level_bonus_multiplier
         self.braking_power = self.base_braking_power * level_bonus_multiplier
@@ -192,12 +193,6 @@ class GameState:
 
     def to_dict(self):
         """Serializes the game state to a dictionary."""
-        # Player car is reconstructed on load, so we only need its class name
-        player_car_dict = {
-            "class_name": self.player_car.__class__.__name__,
-        }
-        
-        # Convert complex objects to serializable formats
         inventory_dict = [item.to_dict() for item in self.player_inventory]
         mounted_weapons_dict = {
             mount: weapon.to_dict() if weapon else None
@@ -210,7 +205,7 @@ class GameState:
             "difficulty": self.difficulty,
             "car_color_names": self.car_color_names,
             "theme": self.theme,
-            "factions": self.factions,
+            "story_intro": self.story_intro,
             
             # Player State
             "player_cash": self.player_cash,
@@ -234,57 +229,58 @@ class GameState:
             # Quest & Faction State
             "faction_reputation": self.faction_reputation,
             "faction_control": self.faction_control,
-            "defeated_bosses": list(self.defeated_bosses), # Convert set to list
-            # TODO: Save current_quest
+            "defeated_bosses": list(self.defeated_bosses),
         }
 
     @classmethod
-    def from_dict(cls, data, factions_data):
+    def from_dict(cls, data):
         """Deserializes a dictionary back into a GameState object."""
-        # We need the difficulty modifiers to create the initial object
         difficulty = data.get("difficulty", "Normal")
         difficulty_mods = DIFFICULTY_MODIFIERS.get(difficulty, DIFFICULTY_MODIFIERS["Normal"])
         
-        # Create a new GameState instance
+        # The data_loader ensures the correct faction data is loaded from temp/
+        from .logic.data_loader import FACTION_DATA
+        
         gs = cls(
-            selected_car_index=data["selected_car_index"],
+            selected_car_index=data.get("selected_car_index", 0),
             difficulty=difficulty,
             difficulty_mods=difficulty_mods,
-            car_color_names=data["car_color_names"],
-            theme=data.get("theme"),
-            factions=factions_data,
+            car_color_names=data.get("car_color_names", ["CAR_RED"]),
+            theme=data.get("theme", {"name": "Default", "description": "A standard wasteland adventure."}),
+            factions=FACTION_DATA,
         )
         
+        gs.story_intro = data.get("story_intro", "The wasteland awaits.")
+        
         # --- Restore Player State ---
-        gs.player_cash = data["player_cash"]
-        gs.player_level = data["player_level"]
-        gs.current_xp = data["current_xp"]
-        gs.xp_to_next_level = data["xp_to_next_level"]
-        gs.apply_level_bonuses() # Recalculate derived stats
+        gs.player_cash = data.get("player_cash", 100)
+        gs.player_level = data.get("player_level", 1)
+        gs.current_xp = data.get("current_xp", 0)
+        gs.xp_to_next_level = data.get("xp_to_next_level", 100)
+        gs.apply_level_bonuses()
 
         # --- Restore Car State ---
-        gs.car_world_x = data["car_world_x"]
-        gs.car_world_y = data["car_world_y"]
-        gs.car_angle = data["car_angle"]
+        gs.car_world_x = data.get("car_world_x", 0.0)
+        gs.car_world_y = data.get("car_world_y", 0.0)
+        gs.car_angle = data.get("car_angle", 0.0)
         gs.player_car.x = gs.car_world_x
         gs.player_car.y = gs.car_world_y
         gs.player_car.angle = gs.car_angle
-        gs.current_durability = data["current_durability"]
-        gs.current_gas = data["current_gas"]
-        gs.distance_traveled = data["distance_traveled"]
+        gs.current_durability = data.get("current_durability", gs.max_durability)
+        gs.current_gas = data.get("current_gas", gs.gas_capacity)
+        gs.distance_traveled = data.get("distance_traveled", 0.0)
         
         # --- Restore Inventory & Weapons ---
-        gs.player_inventory = [Weapon.from_dict(item_data) for item_data in data["player_inventory"]]
+        gs.player_inventory = [Weapon.from_dict(item_data) for item_data in data.get("player_inventory", [])]
         gs.mounted_weapons = {
             mount: Weapon.from_dict(weapon_data) if weapon_data else None
-            for mount, weapon_data in data["mounted_weapons"].items()
+            for mount, weapon_data in data.get("mounted_weapons", {}).items()
         }
-        gs.ammo_counts = data["ammo_counts"]
+        gs.ammo_counts = data.get("ammo_counts", {})
         
         # --- Restore Quest & Faction State ---
-        gs.faction_reputation = data["faction_reputation"]
-        gs.faction_control = data["faction_control"]
-        gs.defeated_bosses = set(data["defeated_bosses"]) # Convert list back to set
-        # TODO: Load current_quest
+        gs.faction_reputation = data.get("faction_reputation", {})
+        gs.faction_control = data.get("faction_control", {})
+        gs.defeated_bosses = set(data.get("defeated_bosses", []))
         
         return gs

@@ -68,7 +68,7 @@ class Hotrod(PlayerCar):
         super().__init__(
             x, y, art,
             durability=70,
-            speed=6.8,
+            speed=10.2,
             acceleration=1.0,
             handling=0.2,
             braking_power=0.8,

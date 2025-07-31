@@ -68,7 +68,7 @@ class Sedan(PlayerCar):
         super().__init__(
             x, y, art,
             durability=100,
-            speed=5.0,
+            speed=7.5,
             acceleration=0.6,
             handling=0.1,
             braking_power=0.7,

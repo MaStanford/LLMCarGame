@@ -2,6 +2,8 @@ import random
 from ..vehicle import Vehicle
 from ...logic.ai_behaviors import _execute_chase_behavior, _execute_stationary_behavior
 
+from ...data.game_constants import GLOBAL_SPEED_MULTIPLIER
+
 class GuardTruck(Vehicle):
     """
     A slow but sturdy truck used by the Blue Syndicate for defensive purposes.
@@ -14,7 +16,7 @@ class GuardTruck(Vehicle):
             "█████████",
             " (●)═(●) "
         ]
-        super().__init__(x, y, art, durability=150, speed=2.5, acceleration=0.2, handling=0.2)
+        super().__init__(x, y, art, durability=150, speed=3.75 * GLOBAL_SPEED_MULTIPLIER, acceleration=0.2, handling=0.2)
         self.name = "Guard Truck"
         self.xp_value = 30
         self.cash_value = 50

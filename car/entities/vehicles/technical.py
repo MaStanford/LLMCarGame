@@ -2,6 +2,8 @@ import random
 from ..vehicle import Vehicle
 from ...logic.ai_behaviors import _execute_chase_behavior, _execute_strafe_behavior
 
+from ...data.game_constants import GLOBAL_SPEED_MULTIPLIER
+
 class Technical(Vehicle):
     """
     A versatile, gun-mounted pickup used by the Salvage Core.
@@ -13,7 +15,7 @@ class Technical(Vehicle):
             " █ ▆ █═╦╗",
             " (●)═(●) "
         ]
-        super().__init__(x, y, art, durability=70, speed=5.5, acceleration=0.5, handling=0.6)
+        super().__init__(x, y, art, durability=70, speed=8.25 * GLOBAL_SPEED_MULTIPLIER, acceleration=0.5, handling=0.6)
         self.name = "Technical"
         self.xp_value = 25
         self.cash_value = 40

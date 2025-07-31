@@ -69,6 +69,7 @@ class LoadGameScreen(Screen):
             self.app.game_state = loaded_game_state
             self.app.world = World(seed=int(time.time()))
             self.app.switch_screen(WorldScreen())
-            self.app.game_loop = self.app.set_interval(1 / 30, self.app.update_game)
+            self.app.start_game_loop()
+            self.app.trigger_initial_quest_cache()
         else:
             logging.error(f"Failed to load game state for '{save_name}'.")

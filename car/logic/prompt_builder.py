@@ -2,7 +2,7 @@ import json
 import os
 import logging
 from ..logic.data_loader import FACTION_DATA as GLOBAL_FACTION_DATA
-from ..logic.entity_loader import ALL_VEHICLES
+from ..logic.entity_loader import ALL_VEHICLES, get_enemy_vehicle_list, get_character_list, get_obstacle_list
 
 def _format_player_state(game_state):
     """Formats the player's current status into a string for the LLM."""
@@ -100,13 +100,17 @@ def build_quest_prompt(game_state, quest_giver_faction_id, faction_data_override
         prompt_template = f.read()
         
     prompt = prompt_template.replace("{{ game_summary }}", game_summary)
+    prompt = prompt.replace("{{ story_intro }}", game_state.story_intro)
     prompt = prompt.replace("{{ player_state }}", player_state)
     prompt = prompt.replace("{{ world_state }}", world_state)
     prompt = prompt.replace("{{ narrative_history }}", narrative_history)
     prompt = prompt.replace("{{ theme }}", theme_str)
     prompt = prompt.replace("{{ quest_context }}", quest_context)
+    prompt = prompt.replace("{{ enemy_vehicle_list }}", ", ".join(get_enemy_vehicle_list()))
+    prompt = prompt.replace("{{ character_list }}", ", ".join(get_character_list()))
+    prompt = prompt.replace("{{ obstacle_list }}", ", ".join(get_obstacle_list()))
     
-    logging.info(f"--- BUILT QUEST PROMPT ---\n{prompt}\n--------------------------")
+    logging.info(f"--- BUILT QUEST PROMPT FOR {quest_giver_faction['name']} ---")
     return prompt
 
 def build_faction_prompt(theme: dict):
@@ -121,6 +125,23 @@ def build_faction_prompt(theme: dict):
     prompt = prompt_template.replace("{{ game_context }}", game_context)
     prompt = prompt.replace("{{ vehicle_list }}", _get_vehicle_list())
     prompt = prompt.replace("{{ theme }}", theme_str)
+    prompt = prompt.replace("{{ enemy_vehicle_list }}", ", ".join(get_enemy_vehicle_list()))
+    prompt = prompt.replace("{{ character_list }}", ", ".join(get_character_list()))
+    prompt = prompt.replace("{{ obstacle_list }}", ", ".join(get_obstacle_list()))
 
-    logging.info(f"--- BUILT FACTION PROMPT ---\n{prompt}\n--------------------------")
+    logging.info(f"--- BUILT FACTION PROMPT FOR THEME {theme['name']} ---")
+    return prompt
+
+def build_city_hall_dialog_prompt(theme: dict, faction_name: str, faction_vibe: str, player_reputation: int):
+    """Builds the prompt for generating city hall dialog."""
+    with open("prompts/city_hall_dialog_prompt.txt", "r") as f:
+        prompt_template = f.read()
+    
+    theme_str = f"The chosen theme for this world is '{theme['name']}': {theme['description']}"
+    prompt = prompt_template.replace("{{ theme }}", theme_str)
+    prompt = prompt.replace("{{ faction_name }}", faction_name)
+    prompt = prompt.replace("{{ faction_vibe }}", faction_vibe)
+    prompt = prompt.replace("{{ player_reputation }}", str(player_reputation))
+    
+    logging.info(f"--- BUILT CITY HALL DIALOG PROMPT FOR {faction_name} ---")
     return prompt

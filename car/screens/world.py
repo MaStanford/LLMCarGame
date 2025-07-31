@@ -59,6 +59,12 @@ class WorldScreen(Screen):
         if not self.app.dev_mode:
             self.query_one("#fps_counter").display = False
 
+    def on_screen_resume(self) -> None:
+        """Called when the screen is resumed."""
+        self.app.game_state.pause_menu_open = False
+        self.app.game_state.menu_open = False
+        self.app.start_game_loop()
+
     def action_accelerate(self) -> None:
         gs = self.app.game_state
         gs.pedal_position = min(1.0, gs.pedal_position + 0.2)
@@ -95,6 +101,7 @@ class WorldScreen(Screen):
         if self.app.game_state.pause_menu_open:
             self.app.pop_screen()
         else:
+            self.app.stop_game_loop()
             self.app.game_state.pause_menu_open = True
             self.app.push_screen(PauseScreen())
 
@@ -108,6 +115,7 @@ class WorldScreen(Screen):
 
     def action_show_map(self) -> None:
         """Pushes the map screen."""
+        self.app.stop_game_loop()
         self.app.push_screen(MapScreen())
         
     def action_show_factions(self) -> None:

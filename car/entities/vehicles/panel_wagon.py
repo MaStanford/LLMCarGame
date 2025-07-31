@@ -68,7 +68,7 @@ class PanelWagon(PlayerCar):
         super().__init__(
             x, y, art,
             durability=140,
-            speed=3.0,
+            speed=4.5,
             acceleration=0.55,
             handling=0.09,
             braking_power=0.55,

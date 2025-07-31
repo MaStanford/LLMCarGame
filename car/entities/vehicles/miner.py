@@ -1,4 +1,5 @@
 from ..vehicle import Vehicle
+from ...data.game_constants import GLOBAL_SPEED_MULTIPLIER
 
 class Miner(Vehicle):
     """
@@ -12,7 +13,7 @@ class Miner(Vehicle):
                 " \\MM/ "
             ]
         }
-        super().__init__(x, y, art, durability=150, speed=1.9, acceleration=0.3, handling=0.05)
+        super().__init__(x, y, art, durability=150, speed=2.85 * GLOBAL_SPEED_MULTIPLIER, acceleration=0.3, handling=0.05)
         self.name = "Miner"
         self.is_major_enemy = True
         self.ai_state = {

@@ -2,6 +2,8 @@ import random
 from ..vehicle import Vehicle
 from ...logic.ai_behaviors import _execute_patrol_behavior, _execute_chase_behavior
 
+from ...data.game_constants import GLOBAL_SPEED_MULTIPLIER
+
 class Peacekeeper(Vehicle):
     """
     A standard patrol vehicle from The Junction.
@@ -13,7 +15,7 @@ class Peacekeeper(Vehicle):
             " ▂▃▅█▅▃▂ ",
             " (●)═(●) "
         ]
-        super().__init__(x, y, art, durability=80, speed=3.2, acceleration=0.5, handling=0.7)
+        super().__init__(x, y, art, durability=80, speed=4.8 * GLOBAL_SPEED_MULTIPLIER, acceleration=0.5, handling=0.7)
         self.name = "Peacekeeper"
         self.xp_value = 10
         self.cash_value = 15

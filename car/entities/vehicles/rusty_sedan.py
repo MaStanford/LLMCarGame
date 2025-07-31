@@ -2,16 +2,18 @@ import random
 from ..vehicle import Vehicle
 from ...logic.ai_behaviors import _execute_chase_behavior, _execute_strafe_behavior, _execute_evade_behavior
 
+from ...data.game_constants import GLOBAL_SPEED_MULTIPLIER
+
 class RustySedan(Vehicle):
     def __init__(self, x, y):
         art = [
             "   ____   ",
-            "  / __ \\  ",
+            "  / __ \  ",
             " | |  | | ",
             " | |__| | ",
-            "  \\____/  ",
+            "  \____/  ",
         ]
-        super().__init__(x, y, art, durability=20, speed=4.5, acceleration=0.5, handling=0.5)
+        super().__init__(x, y, art, durability=20, speed=6.75 * GLOBAL_SPEED_MULTIPLIER, acceleration=0.5, handling=0.5)
         self.name = "Rusty Sedan"
         self.xp_value = 5
         self.cash_value = 10

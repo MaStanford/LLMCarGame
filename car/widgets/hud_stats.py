@@ -27,7 +27,7 @@ class StatsHUD(Static):
         """Render the stats display."""
 
         top_stats = Text.from_markup(
-            f"[b]Cash:[/b] ${self.cash} | [b]Speed:[/b] {int((self.speed / 7.0) * 100)} mph | [b]Level:[/b] {self.level}"
+            f"[b]Cash:[/b] ${self.cash} | [b]Speed:[/b] {int((self.speed / 10.5) * 100)} mph | [b]Level:[/b] {self.level}"
         )
 
         progress_table = Table.grid(padding=(0, 1), expand=True)

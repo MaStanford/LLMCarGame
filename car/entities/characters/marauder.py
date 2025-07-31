@@ -1,6 +1,7 @@
 import random
 from ..character import Character
 from ...logic.ai_behaviors import _execute_chase_behavior, _execute_strafe_behavior
+from ...data.game_constants import GLOBAL_SPEED_MULTIPLIER
 
 class Marauder(Character):
     def __init__(self, x, y):
@@ -10,7 +11,7 @@ class Marauder(Character):
             "| > <|",
             " \\__/ ",
         ]
-        super().__init__(x, y, art, durability=40, speed=0.35)
+        super().__init__(x, y, art, durability=40, speed=0.35 * GLOBAL_SPEED_MULTIPLIER)
         self.xp_value = 20
         self.cash_value = 25
         self.drop_item = "ammo_bullet"

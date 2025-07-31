@@ -10,7 +10,7 @@ from ..widgets.item_list import ItemListWidget
 from ..widgets.item_info import ItemInfoWidget
 from ..widgets.menu_stats_hud import MenuStatsHUD
 from ..logic.shop_logic import get_shop_inventory, purchase_item, calculate_sell_price
-from ..world.generation import get_city_faction
+from ..world.generation import get_city_faction, get_buildings_in_city, find_safe_spawn_point
 from ..data.game_constants import CITY_SPACING
 from ..workers.dialog_generator import generate_dialog_worker
 
@@ -42,6 +42,7 @@ class ShopScreen(Screen):
 
     def on_mount(self) -> None:
         """Called when the screen is mounted."""
+        self.add_class(self.shop_type.replace("_", "-"))
         self.update_displays()
         self.update_focus()
         self.generate_dialog()
@@ -65,7 +66,7 @@ class ShopScreen(Screen):
             faction_vibe=faction_vibe,
             player_reputation=player_rep
         )
-        self.run_worker(worker_callable, exclusive=True, name="DialogGenerator")
+        self.run_worker(worker_callable, exclusive=True, name="DialogGenerator", thread=True)
 
     def on_worker_state_changed(self, event: Worker.StateChanged) -> None:
         """Handle completed dialog worker."""
@@ -77,7 +78,25 @@ class ShopScreen(Screen):
         """Called when the screen is unmounted."""
         gs = self.app.game_state
         gs.menu_open = False
-        # ... (rest of the unmount logic is the same)
+        
+        grid_x = round(gs.car_world_x / CITY_SPACING)
+        grid_y = round(gs.car_world_y / CITY_SPACING)
+        buildings = get_buildings_in_city(grid_x, grid_y)
+        
+        current_building = next((b for b in buildings if b.get("type") == self.shop_type), None)
+        
+        if current_building:
+            exit_x = current_building['x'] + current_building['w'] / 2
+            exit_y = current_building['y'] + current_building['h'] + 2
+            
+            safe_x, safe_y = find_safe_spawn_point(exit_x, exit_y, buildings, gs.player_car)
+            
+            gs.car_world_x = safe_x
+            gs.car_world_y = safe_y
+            gs.car_angle = math.pi * 1.5 # Face down (South)
+            gs.player_car.x = gs.car_world_x
+            gs.player_car.y = gs.car_world_y
+            gs.player_car.angle = gs.car_angle
 
     def update_displays(self) -> None:
         """Update all display widgets."""

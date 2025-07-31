@@ -1,5 +1,6 @@
 import random
 from ..character import Character
+from ...data.game_constants import GLOBAL_SPEED_MULTIPLIER
 
 class Cat(Character):
     def __init__(self, x, y):
@@ -8,7 +9,7 @@ class Cat(Character):
             "( o.o )",
             " > ^ < ",
         ]
-        super().__init__(x, y, art, durability=5, speed=0.75)
+        super().__init__(x, y, art, durability=5, speed=0.75 * GLOBAL_SPEED_MULTIPLIER)
 
     def update(self, game_state, world, dt):
         # Simple wandering AI

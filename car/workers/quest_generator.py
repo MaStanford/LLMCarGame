@@ -3,7 +3,7 @@ from typing import Any, Dict, List
 
 from ..logic.llm_quest_generator import generate_quest_from_llm
 
-def generate_quests_worker(app: Any, city_id: str, city_faction_id: str, theme: dict, faction_data: Dict) -> List:
+def generate_quests_worker(app: Any, city_id: str, city_faction_id: str, theme: dict, faction_data: Dict, story_intro: str) -> List:
     """
     A worker that generates a set of quests for a specific city.
     """
@@ -17,6 +17,7 @@ def generate_quests_worker(app: Any, city_id: str, city_faction_id: str, theme: 
         faction_control={},
         quest_log=[],
         theme=theme,
+        story_intro=story_intro,
         # The prompt builder doesn't need difficulty mods for quest gen
         difficulty_mods={}, 
     )
@@ -34,4 +35,5 @@ def generate_quests_worker(app: Any, city_id: str, city_faction_id: str, theme: 
             generated_quests.append(quest)
 
     logging.info(f"Quest generator worker for {city_id} finished with {len(generated_quests)} quests.")
+    logging.info(f"Generated quests: {generated_quests}")
     return generated_quests

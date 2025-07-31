@@ -2,6 +2,8 @@ import random
 from ..vehicle import Vehicle
 from ...logic.ai_behaviors import _execute_chase_behavior, _execute_strafe_behavior, _execute_ram_behavior
 
+from ...data.game_constants import GLOBAL_SPEED_MULTIPLIER
+
 class RaiderBuggy(Vehicle):
     """
     A fast, aggressive buggy used by the Crimson Cartel.
@@ -13,7 +15,7 @@ class RaiderBuggy(Vehicle):
             " ▗█-█-█▖ ",
             "(●)---(●)"
         ]
-        super().__init__(x, y, art, durability=40, speed=6.0, acceleration=0.7, handling=0.8)
+        super().__init__(x, y, art, durability=40, speed=9.0 * GLOBAL_SPEED_MULTIPLIER, acceleration=0.7, handling=0.8)
         self.name = "Raider Buggy"
         self.xp_value = 15
         self.cash_value = 20

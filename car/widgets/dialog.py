@@ -12,4 +12,3 @@ class Dialog(Static):
         with Vertical(id="dialog-box"):
             for line in self.text_lines:
                 yield Static(line)
-            yield Static("(Press any key to continue)", id="dialog-prompt")

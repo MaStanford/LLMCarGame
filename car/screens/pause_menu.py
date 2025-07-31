@@ -12,7 +12,7 @@ class PauseScreen(ModalScreen):
     BINDINGS = [
         Binding("up", "focus_previous", "Up"),
         Binding("down", "focus_next", "Down"),
-        Binding("escape", "app.toggle_pause", "Back"),
+        Binding("escape", "resume_game", "Back"),
     ]
 
     def __init__(self) -> None:
@@ -51,6 +51,10 @@ class PauseScreen(ModalScreen):
         """Focus the next widget."""
         self.current_focus_index = (self.current_focus_index + 1) % len(self.focusable_widgets)
         self.update_focus()
+
+    def action_resume_game(self) -> None:
+        """Resume the game."""
+        self.app.pop_screen()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press events."""

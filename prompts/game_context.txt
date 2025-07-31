@@ -19,3 +19,8 @@ There are 5 major factions vying for control of the wasteland.
 *   **Reputation:** The player's personal standing with each faction. High reputation unlocks better opportunities. Low reputation can lead to being attacked on sight.
 *   **Hub Cities:** Each faction has a central, static Hub City that serves as their capital. All other cities are procedurally generated, and their allegiance is determined by which Hub City is closest.
 *   **Conquest:** A faction can be taken over. This requires the player to first reduce the target faction's Control score below 20, then accept a special "Decisive Battle" quest from a rival to destroy the target's Faction Boss.
+
+**Available Entities:**
+- Enemy Vehicles: {{ enemy_vehicle_list }}
+- Characters: {{ character_list }}
+- Obstacles: {{ obstacle_list }}

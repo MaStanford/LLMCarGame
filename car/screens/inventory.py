@@ -11,7 +11,7 @@ class InventoryScreen(ModalScreen):
     """The inventory screen."""
 
     BINDINGS = [
-        Binding("escape", "app.pop_screen", "Back"),
+        Binding("escape", "cancel_equip", "Back"),
         Binding("up", "move_selection(-1)", "Up"),
         Binding("down", "move_selection(1)", "Down"),
         Binding("left", "switch_focus", "Switch"),
@@ -94,9 +94,11 @@ class InventoryScreen(ModalScreen):
 
     def _overlay_attachment_points(self, art_str: str, car_instance) -> str:
         """Overlays attachment point indicators onto the car art."""
-        art_lines = art_str.split("\n")
+        from rich.text import Text
+        art_text = Text.from_markup(art_str)
+        art_lines = art_text.wrap(self.app.console, width=999)
         art_height = len(art_lines)
-        art_width = max(len(line.replace(f"[{'yellow'}]", "").replace("[/]", "")) for line in art_lines) if art_lines else 0
+        art_width = max(line.cell_len for line in art_lines) if art_lines else 0
         
         # Create a mutable grid of characters
         grid = [list(line) for line in art_lines]
@@ -117,7 +119,7 @@ class InventoryScreen(ModalScreen):
                 
                 grid[py][px] = f"[yellow]{marker}[/]"
         
-        return "\n".join("".join(row) for row in grid)
+        return "\n".join("".join(map(str, row)) for row in grid)
 
     def update_focus(self) -> None:
         """Update the visual focus indicator."""
@@ -157,6 +159,19 @@ class InventoryScreen(ModalScreen):
                 item_to_display = self.app.game_state.mounted_weapons[slot_name]
 
         self.query_one(ItemInfoWidget).display_item(item_to_display)
+        self._update_inventory_prompt()
+
+    def _update_inventory_prompt(self):
+        """Update the contextual prompt based on the current state."""
+        prompt_widget = self.query_one("#inventory_prompt")
+        if self.selected_weapon_to_mount:
+            prompt_widget.update(f"Select a slot to equip [yellow]{self.selected_weapon_to_mount.name}[/yellow]...")
+        elif self.selected_slot_to_fill:
+            prompt_widget.update(f"Select a weapon for [yellow]{self.selected_slot_to_fill}[/yellow]...")
+        elif self.unequip_confirmation_slot:
+            prompt_widget.update(f"Press Enter again to unequip from [yellow]{self.unequip_confirmation_slot}[/yellow].")
+        else:
+            prompt_widget.update("Navigate with Arrows. Enter to Select.")
 
     def action_rotate_preview(self, direction: int) -> None:
         """Rotate the car preview."""
@@ -170,6 +185,19 @@ class InventoryScreen(ModalScreen):
             return
         self.focused_list = "attachments" if self.focused_list == "inventory" else "inventory"
         self.update_focus()
+        self._update_inventory_prompt()
+
+    def action_cancel_equip(self) -> None:
+        """Cancel the current equip/unequip action."""
+        if self.selected_weapon_to_mount or self.selected_slot_to_fill:
+            self.selected_weapon_to_mount = None
+            self.selected_slot_to_fill = None
+            self.unequip_confirmation_slot = None
+            self.focused_list = "inventory" if self.focused_list == "attachments" else "attachments"
+            self.update_focus()
+            self._update_inventory_prompt()
+        else:
+            self.app.pop_screen()
 
     def action_select_item(self) -> None:
         """Select an item to mount or a slot to mount it to."""
@@ -234,6 +262,7 @@ class InventoryScreen(ModalScreen):
 
         self.update_inventory()
         self.update_focus()
+        self._update_inventory_prompt()
 
     def compose(self):
         """Compose the layout of the screen."""
@@ -245,6 +274,7 @@ class InventoryScreen(ModalScreen):
             with Vertical():
                 with ScrollableContainer():
                     yield ItemListWidget(id="inventory")
+                yield Static(id="inventory_prompt", classes="panel")
                 yield ItemInfoWidget(id="item_info")
                 yield MenuStatsHUD(id="stats")
         yield Footer()

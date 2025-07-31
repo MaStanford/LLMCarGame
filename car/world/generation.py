@@ -54,6 +54,22 @@ def get_city_name(grid_x, grid_y, faction_data):
         name = alphabet[rem] + name
     return f"City {name}"
 
+def does_city_exist_at(grid_x, grid_y, seed, factions):
+    """Deterministically checks if a city exists at a given grid coordinate."""
+    # Hub cities always exist
+    for faction in factions.values():
+        if faction.get("hub_city_coordinates") == [grid_x, grid_y]:
+            return True
+        
+    # Use a deterministic random number generator based on the world seed and coordinates
+    local_random = random.Random(f"{seed}-{grid_x}-{grid_y}")
+    
+    # Adjust probability based on distance from the center (0,0)
+    distance = math.sqrt(grid_x**2 + grid_y**2)
+    probability = max(0.1, 0.8 - distance * 0.02) # Decrease probability farther out
+    
+    return local_random.random() < probability
+
 def generate_building_name(local_random, max_width_chars):
     """Generates a short random name for a generic building."""
     name_len = local_random.randint(max(1, max_width_chars - 4), max_width_chars - 1)
@@ -141,3 +157,40 @@ def get_buildings_in_city(grid_x, grid_y):
     if cache_key not in building_cache:
         building_cache[cache_key] = generate_city(grid_x, grid_y)
     return building_cache[cache_key]
+
+def find_safe_spawn_point(start_x, start_y, buildings, player_car, max_radius=20):
+    """
+    Finds a safe spawn point near a building, ensuring the entire player vehicle
+    area (plus a buffer) is clear of other buildings.
+    """
+    car_w = player_car.width + 2  # Add a 1-char buffer on each side
+    car_h = player_car.height + 2 # Add a 1-char buffer on each side
+
+    for r in range(1, max_radius + 1):
+        for dx in range(-r, r + 1):
+            for dy in range(-r, r + 1):
+                if abs(dx) + abs(dy) != r: continue
+
+                check_x = start_x + dx
+                check_y = start_y + dy
+                
+                # Define the bounding box of the potential spawn area
+                spawn_box = {
+                    "x": check_x - car_w / 2, "y": check_y - car_h / 2,
+                    "w": car_w, "h": car_h
+                }
+
+                is_safe = True
+                for building in buildings:
+                    # Simple AABB collision check
+                    if (spawn_box["x"] < building["x"] + building["w"] and
+                        spawn_box["x"] + spawn_box["w"] > building["x"] and
+                        spawn_box["y"] < building["y"] + building["h"] and
+                        spawn_box["y"] + spawn_box["h"] > building["y"]):
+                        is_safe = False
+                        break
+                
+                if is_safe:
+                    return check_x, check_y
+    
+    return start_x, start_y + 2

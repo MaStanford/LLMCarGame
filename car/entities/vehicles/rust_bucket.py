@@ -2,6 +2,8 @@ import random
 from ..vehicle import Vehicle
 from ...logic.ai_behaviors import _execute_ram_behavior
 
+from ...data.game_constants import GLOBAL_SPEED_MULTIPLIER
+
 class RustBucket(Vehicle):
     """
     A volatile, ram-focused vehicle of the Rust Prophets.
@@ -15,7 +17,7 @@ class RustBucket(Vehicle):
             " ██▄▄▄▄▄▄██ ",
             " (O)▀▀▀▀▀(X) "
         ]
-        super().__init__(x, y, art, durability=45, speed=6.2, acceleration=0.4, handling=0.08)
+        super().__init__(x, y, art, durability=45, speed=9.3 * GLOBAL_SPEED_MULTIPLIER, acceleration=0.4, handling=0.08)
         self.name = "Rust Bucket"
         self.phases = [
             {"name": "Kamikaze", "duration": (10, 10), "behavior": "RAM", "next_phases": {"Kamikaze": 1.0}}
