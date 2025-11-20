@@ -32,7 +32,7 @@ class NewGameScreen(Screen):
 
     def compose(self) -> ComposeResult:
         """Compose the layout of the screen."""
-        yield Header(show_clock=True)
+        yield Header(show_clock=True, name="New Game")
         with Vertical(id="new-game-container"):
             with Horizontal(id="new-game-layout"):
                 # --- LEFT COLUMN ---

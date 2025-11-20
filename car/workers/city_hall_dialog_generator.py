@@ -38,6 +38,6 @@ class CityHallDialogWorker(Worker):
             logging.error(f"Error in CityHallDialogWorker: {e}", exc_info=True)
             return "Welcome, traveler."
 
-def generate_dialog_worker(*args, **kwargs):
+def generate_dialog_worker(app, theme, faction_name, faction_vibe, player_reputation):
     """Callable for running the worker."""
-    return CityHallDialogWorker(*args, **kwargs).action()
+    return CityHallDialogWorker(app, theme, faction_name, faction_vibe, player_reputation).action()

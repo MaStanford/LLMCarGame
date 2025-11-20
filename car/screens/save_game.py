@@ -1,5 +1,5 @@
 from textual.screen import ModalScreen
-from textual.widgets import Header, Footer, Static, Button, Input
+from textual.widgets import Header, Footer, Static, Button, Input, Footer
 from textual.containers import Vertical
 from textual.binding import Binding
 from ..logic.save_load import save_game
@@ -17,6 +17,7 @@ class SaveGameScreen(ModalScreen):
             yield Static("Enter Save Name:", id="save_prompt")
             yield Input(placeholder="Wasteland Adventure", id="save_name_input")
             yield Button("Save", id="save_button", variant="primary")
+        yield Footer(show_command_palette=True)
 
     def on_mount(self) -> None:
         """Called when the screen is mounted."""

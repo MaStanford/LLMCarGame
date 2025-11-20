@@ -1,6 +1,6 @@
 from textual.app import ComposeResult
 from textual.screen import ModalScreen
-from textual.widgets import Button, Static, Input
+from textual.widgets import Button, Static, Input, Footer
 from textual.containers import Vertical
 
 class MechanicShopScreen(ModalScreen):
@@ -16,6 +16,7 @@ class MechanicShopScreen(ModalScreen):
             yield Button("Purchase New Attachment Point", id="purchase-attachment")
             yield Button("Upgrade Attachment Point", id="upgrade-attachment")
             yield Button("Back", id="back")
+        yield Footer(show_command_palette=True)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "back":

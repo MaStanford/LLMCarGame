@@ -1,5 +1,5 @@
 from textual.screen import ModalScreen
-from textual.widgets import Button
+from textual.widgets import Button, Footer
 from textual.binding import Binding
 from ..logic.save_load import save_game
 from .main_menu import MainMenuScreen
@@ -27,6 +27,7 @@ class PauseScreen(ModalScreen):
         yield Button("Save Game", id="save_game", variant="default")
         yield Button("Main Menu", id="main_menu", variant="default")
         yield Button("Quit", id="quit", variant="error")
+        yield Footer(show_command_palette=True)
 
     def on_mount(self) -> None:
         """Set up the focusable widgets."""

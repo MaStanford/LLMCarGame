@@ -256,6 +256,7 @@ class GenesisModuleApp(App):
                 
                 from .screens.city_hall import CityHallScreen, QuestsLoaded
                 if isinstance(self.screen, CityHallScreen) and self.screen.current_city_id == city_id:
+                    logging.info(f"Posting QuestsLoaded message to CityHallScreen for city {city_id}")
                     self.screen.post_message(QuestsLoaded(quests or []))
 
     def trigger_initial_quest_cache(self):

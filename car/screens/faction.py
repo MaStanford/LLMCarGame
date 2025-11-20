@@ -44,7 +44,7 @@ class FactionScreen(ModalScreen):
                 yield ReputationBar(id="faction_rep_bar", total=200, show_eta=False)
                 yield Static(id="faction_description")
                 yield Static(id="faction_relationships")
-        yield Footer()
+        yield Footer(show_command_palette=True)
 
     def on_mount(self) -> None:
         """Called when the screen is mounted."""

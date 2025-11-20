@@ -20,7 +20,7 @@ class LoadGameScreen(Screen):
         """Compose the layout of the screen."""
         yield Header(show_clock=True)
         yield DataTable(id="load_game_table")
-        yield Footer()
+        yield Footer(show_command_palette=True)
 
     def on_mount(self):
         """Called when the screen is mounted."""

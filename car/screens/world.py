@@ -138,7 +138,7 @@ class WorldScreen(Screen):
 
         """Modal for showing notifications like "x item picked up"""""
         yield Notifications(id="notifications")
-        yield Footer()
+        yield Footer(show_command_palette=True)
 
     def update_widgets(self):
         """Update the screen widgets."""

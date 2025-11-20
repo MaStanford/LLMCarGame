@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script provides a convenient way to run the Car RPG.
+# This script provides a convenient way to run The Genesis Module.
 # It handles platform-specific details, such as the LD_PRELOAD issue on Linux.
 
 if [ ! -f ".installed" ]; then

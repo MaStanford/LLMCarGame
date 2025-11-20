@@ -27,7 +27,7 @@ class MainMenuScreen(Screen):
 
     def compose(self) -> ComposeResult:
         """Compose the layout of the screen."""
-        yield Header(show_clock=True)
+        yield Header(show_clock=True, name="The Genesis Module")
         with Vertical(id="main-menu-container"):
             with Vertical(id="main-menu-buttons"):
                 yield Button("New Game", id="new_game", variant="primary", disabled=True)

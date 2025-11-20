@@ -27,7 +27,7 @@ class SettingsScreen(Screen):
                 yield Button(self.get_mode_label(), id="toggle_mode")
 
                 yield Button("Back", id="back", variant="primary")
-        yield Footer()
+        yield Footer(show_command_palette=True)
 
     def get_mode_label(self) -> str:
         """Returns the display label for the current generation mode."""

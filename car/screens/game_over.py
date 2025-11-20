@@ -1,5 +1,5 @@
 from textual.screen import ModalScreen
-from textual.widgets import Button, Static
+from textual.widgets import Button, Static, Footer
 from textual.containers import Vertical
 from .new_game import NewGameScreen
 from .load_game import LoadGameScreen
@@ -17,6 +17,7 @@ class GameOverScreen(ModalScreen):
             yield Button("Load Game", id="load_game", variant="default")
             yield Button("Main Menu", id="main_menu", variant="default")
             yield Button("Quit", id="quit", variant="error")
+        yield Footer(show_command_palette=True)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press events."""

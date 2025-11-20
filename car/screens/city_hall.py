@@ -71,7 +71,7 @@ class CityHallScreen(ModalScreen):
 
     def on_quests_loaded(self, message: QuestsLoaded) -> None:
         """Handle the QuestsLoaded message."""
-        logging.info(f"QuestsLoaded message received with {len(message.quests)} quests.")
+        logging.info(f"CityHallScreen received QuestsLoaded message with {len(message.quests)} quests.")
         self.available_quests = message.quests or []
         self.update_quest_display()
 
@@ -96,9 +96,12 @@ class CityHallScreen(ModalScreen):
     def on_worker_state_changed(self, event: Worker.StateChanged) -> None:
         """Handle completed dialog worker."""
         logging.info(f"Worker {event.worker.name} changed state to {event.worker.state}")
-        if event.worker.name == "CityHallDialogGenerator" and event.worker.state == WorkerState.SUCCESS:
-            dialog = event.worker.result
-            self.query_one(Dialog).update(dialog)
+        if event.worker.name == "CityHallDialogGenerator":
+            if event.worker.state == WorkerState.SUCCESS:
+                dialog = event.worker.result
+                self.query_one(Dialog).update(dialog)
+            elif event.worker.state == WorkerState.ERROR:
+                logging.error(f"CityHallDialogGenerator worker failed: {event.worker.error}")
         elif event.worker.name.startswith("QuestGenerator"):
             if event.worker.state == WorkerState.SUCCESS:
                 quests = event.worker.result
@@ -136,6 +139,7 @@ class CityHallScreen(ModalScreen):
 
     def update_quest_display(self) -> None:
         """Update the quest display."""
+        logging.info(f"Updating quest display. {len(self.available_quests)} quests available.")
         challenge_button = self.query_one("#challenge_boss", Button)
         challenge_button.display = self.can_challenge
         loading_container = self.query_one("#loading_container")
@@ -219,4 +223,4 @@ class CityHallScreen(ModalScreen):
             with Vertical():
                 yield Button("Accept", id="accept_quest", variant="primary")
                 yield Button("Challenge Faction Leader", id="challenge_boss", variant="error")
-        yield Footer()
+        yield Footer(show_command_palette=True)
