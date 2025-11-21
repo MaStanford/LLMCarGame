@@ -1,11 +1,13 @@
 import logging
 import time
+import json
 from types import SimpleNamespace
 from typing import Any, Dict
 from textual.message import Message
 
 from ..logic.llm_faction_generator import generate_factions_from_llm, _get_fallback_factions
 from ..logic.llm_quest_generator import generate_quest_from_llm, _get_fallback_quest
+from ..logic.llm_world_details_generator import generate_world_details_from_llm
 from ..logic.prompt_builder import _format_world_state
 from ..logic.gemini_cli import generate_with_gemini_cli
 
@@ -30,7 +32,6 @@ def _generate_story_intro(app, theme, factions, neutral_faction_name):
 
     if app.generation_mode == "gemini_cli":
         response = generate_with_gemini_cli(prompt, parse_json=False)
-        # The CLI often returns just the string, which is what we want.
         return response if isinstance(response, str) else "Welcome to the wasteland."
     else:
         return "You arrive at the neutral city of The Junction, a beacon of tense neutrality in a world torn apart by warring factions. Your goal is simple: find the Genesis Module and escape. The road will be long and dangerous. Good luck."
@@ -64,7 +65,13 @@ def generate_initial_world_worker(app: Any, new_game_settings: dict) -> Dict:
             raise ValueError("Could not find a neutral faction at (0,0) in the generated data.")
         neutral_faction_name = factions[neutral_faction_id]['name']
 
-        # Stage 2: Generate Initial Quests
+        # Stage 2: Generate World Details
+        app.post_message(StageUpdate(("stage", "Naming the dust bowls...")))
+        time.sleep(0.25)
+        world_details = generate_world_details_from_llm(app, theme, factions)
+
+
+        # Stage 3: Generate Initial Quests
         app.post_message(StageUpdate(("stage", f"Populating the {theme['name']}...")))
         time.sleep(0.25)
         initial_quests = []
@@ -84,7 +91,7 @@ def generate_initial_world_worker(app: Any, new_game_settings: dict) -> Dict:
             if quest:
                 initial_quests.append(quest)
 
-        # Stage 3: Generate Story Intro
+        # Stage 4: Generate Story Intro
         app.post_message(StageUpdate(("stage", "A poet is writing how it begins...")))
         time.sleep(0.25)
         story_intro = _generate_story_intro(app, theme, factions, neutral_faction_name)
@@ -96,7 +103,8 @@ def generate_initial_world_worker(app: Any, new_game_settings: dict) -> Dict:
             "factions": factions,
             "quests": initial_quests,
             "neutral_city_id": neutral_faction_id,
-            "story_intro": story_intro
+            "story_intro": story_intro,
+            "world_details": world_details
         }
 
     except Exception as e:

@@ -3,7 +3,7 @@ from .weapon_systems import update_weapon_systems
 from .collision_detection import handle_collisions
 import math
 
-def update_physics_and_collisions(game_state, world, audio_manager, dt):
+def update_physics_and_collisions(game_state, world, audio_manager, dt, app):
     """
     Handles all physics updates, weapon systems, and collision detection
     by coordinating calls to specialized modules.
@@ -34,7 +34,7 @@ def update_physics_and_collisions(game_state, world, audio_manager, dt):
     game_state.active_particles = particles_to_keep
 
     # 4. Process all collisions and their effects
-    notifications = handle_collisions(game_state, world, audio_manager)
+    notifications = handle_collisions(game_state, world, audio_manager, app)
 
     # 5. Update AI and movement for all non-player entities
     for enemy in game_state.active_enemies:

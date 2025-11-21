@@ -64,6 +64,11 @@ class WorldScreen(Screen):
         self.app.game_state.pause_menu_open = False
         self.app.game_state.menu_open = False
         self.app.start_game_loop()
+        
+        # Update FPS counter visibility in case Dev Mode changed
+        fps_counter = self.query_one("#fps_counter")
+        if fps_counter:
+            fps_counter.display = self.app.dev_mode
 
     def action_accelerate(self) -> None:
         gs = self.app.game_state

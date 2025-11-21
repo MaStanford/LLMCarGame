@@ -2,11 +2,13 @@ import uuid
 from ..data.weapons import WEAPONS_DATA
 
 class Weapon:
-    def __init__(self, weapon_type_id, modifiers=None, instance_id=None):
+    def __init__(self, weapon_type_id, modifiers=None, instance_id=None, custom_name=None, custom_description=None):
         self.weapon_type_id = weapon_type_id
         self.base_stats = WEAPONS_DATA[self.weapon_type_id]
         self.modifiers = modifiers if modifiers else {}
         self.instance_id = instance_id if instance_id else str(uuid.uuid4())
+        self.custom_name = custom_name
+        self.custom_description = custom_description
 
     @property
     def type(self):
@@ -14,7 +16,11 @@ class Weapon:
 
     @property
     def name(self):
-        return self.base_stats["name"]
+        return self.custom_name or self.base_stats["name"]
+
+    @property
+    def description(self):
+        return self.custom_description or self.base_stats.get("description", "A standard weapon.")
 
     @property
     def price(self):
@@ -78,6 +84,8 @@ class Weapon:
             "weapon_type_id": self.weapon_type_id,
             "modifiers": self.modifiers,
             "instance_id": self.instance_id,
+            "custom_name": self.custom_name,
+            "custom_description": self.custom_description,
         }
 
     @classmethod
@@ -87,4 +95,6 @@ class Weapon:
             weapon_type_id=data["weapon_type_id"],
             modifiers=data.get("modifiers"),
             instance_id=data.get("instance_id"),
+            custom_name=data.get("custom_name"),
+            custom_description=data.get("custom_description"),
         )

@@ -119,9 +119,11 @@ class WorldBuildingScreen(Screen):
     def start_game(self) -> None:
         """Finalizes game state and switches to the intro cutscene."""
         from .intro_cutscene import IntroCutsceneScreen
+        from ..logic.save_load import load_triggers
         import os
         import shutil
         import pprint
+        import json
 
         # Save the new faction data
         if os.path.exists("temp"):
@@ -130,6 +132,10 @@ class WorldBuildingScreen(Screen):
         with open("temp/factions.py", "w") as f:
             f.write("FACTION_DATA = ")
             pprint.pprint(self.world_data["factions"], stream=f, indent=4)
+            
+        # Save the new world details
+        with open("temp/world_details.json", "w") as f:
+            json.dump(self.world_data["world_details"], f, indent=4)
 
         # CRITICAL: Reload the data modules to load the new factions
         self.app.reload_dynamic_data()
@@ -145,6 +151,7 @@ class WorldBuildingScreen(Screen):
             theme=self.new_game_settings["theme"],
             factions=self.world_data["factions"],
         )
+        game_state.world_details = self.world_data["world_details"]
         
         # Save the generated story intro to the game state
         game_state.story_intro = self.world_data["story_intro"]
@@ -152,6 +159,9 @@ class WorldBuildingScreen(Screen):
         # Pre-populate the quest cache
         neutral_city_id = self.world_data["neutral_city_id"]
         game_state.quest_cache[neutral_city_id] = self.world_data["quests"]
+        
+        # Load triggers
+        load_triggers(game_state)
         
         # Set player position
         game_state.car_world_x = 10.0

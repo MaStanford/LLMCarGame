@@ -14,6 +14,9 @@ Your task is to generate a new, compelling quest that fits the current state of 
 WASTELAND STATUS REPORT:
 {{ world_state }}
 ---
+WORLD MAP:
+{{ world_details }}
+---
 PREVIOUSLY...
 {{ narrative_history }}
 ---

@@ -38,22 +38,6 @@ def get_city_faction(x, y, faction_data):
             closest_faction = faction_id
     return closest_faction
 
-def get_city_name(grid_x, grid_y, faction_data):
-    """Generates a city name based on grid coordinates."""
-    for faction_id, faction_info in faction_data.items():
-        if (grid_x, grid_y) == faction_info["hub_city_coordinates"]:
-            return faction_info["name"]
-
-    name = ""
-    index = abs(grid_x * 31 + grid_y * 17 + (grid_x ^ grid_y))
-    if index == 0: return "City Prime"
-    alphabet = string.ascii_uppercase
-    base = len(alphabet)
-    while index > 0:
-        index, rem = divmod(index - 1, base)
-        name = alphabet[rem] + name
-    return f"City {name}"
-
 def does_city_exist_at(grid_x, grid_y, seed, factions):
     """Deterministically checks if a city exists at a given grid coordinate."""
     # Hub cities always exist

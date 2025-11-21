@@ -26,13 +26,21 @@ class SettingsScreen(Screen):
                 yield Static("World Generation Mode", classes="setting-label")
                 yield Button(self.get_mode_label(), id="toggle_mode")
 
+                yield Static("Dev Mode", classes="setting-label")
+                yield Button(self.get_dev_mode_label(), id="toggle_dev_mode")
+
                 yield Button("Back", id="back", variant="primary")
-        yield Footer(show_command_palette=True)
+        yield Footer()
 
     def get_mode_label(self) -> str:
         """Returns the display label for the current generation mode."""
         mode = self.settings.get("generation_mode", "local")
         return f"Mode: {mode.replace('_', ' ').title()}"
+
+    def get_dev_mode_label(self) -> str:
+        """Returns the display label for the dev mode."""
+        dev_mode = self.settings.get("dev_mode", False)
+        return f"Dev Mode: {'On' if dev_mode else 'Off'}"
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button presses."""
@@ -50,5 +58,12 @@ class SettingsScreen(Screen):
             save_settings(self.settings)
             event.button.label = self.get_mode_label()
             self.app.generation_mode = new_mode # Update the app instance
+        elif event.button.id == "toggle_dev_mode":
+            current_dev_mode = self.settings.get("dev_mode", False)
+            new_dev_mode = not current_dev_mode
+            self.settings["dev_mode"] = new_dev_mode
+            save_settings(self.settings)
+            event.button.label = self.get_dev_mode_label()
+            self.app.dev_mode = new_dev_mode # Update the app instance
         elif event.button.id == "back":
             self.app.pop_screen()

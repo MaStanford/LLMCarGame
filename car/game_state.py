@@ -15,6 +15,11 @@ class GameState:
         self.factions = factions
         self.theme = theme if theme is not None else {"name": "Default", "description": "A standard wasteland adventure."}
         self.story_intro = ""
+        self.world_details = {}
+        
+        # --- Triggers ---
+        self.active_triggers = []
+        self.activated_triggers = set()
         
         # --- Player Actions ---
         self.pedal_position = 0.0  # -1.0 for full brake, 1.0 for full accelerator
@@ -144,6 +149,9 @@ class GameState:
         self.closest_entity_info = None
         self.compass_info = {"target_angle": 0, "player_angle": 0, "target_name": ""}
 
+        self.world_triggers = []
+        self.triggered_triggers = set()
+
         self.apply_level_bonuses()
 
     @property
@@ -206,6 +214,7 @@ class GameState:
             "car_color_names": self.car_color_names,
             "theme": self.theme,
             "story_intro": self.story_intro,
+            "world_details": self.world_details,
             
             # Player State
             "player_cash": self.player_cash,
@@ -230,6 +239,7 @@ class GameState:
             "faction_reputation": self.faction_reputation,
             "faction_control": self.faction_control,
             "defeated_bosses": list(self.defeated_bosses), # Convert set to list
+            "activated_triggers": list(self.activated_triggers),
             "current_quest": self.current_quest.to_dict() if self.current_quest else None,
         }
 
@@ -240,7 +250,7 @@ class GameState:
         difficulty_mods = DIFFICULTY_MODIFIERS.get(difficulty, DIFFICULTY_MODIFIERS["Normal"])
         
         # The data_loader ensures the correct faction data is loaded from temp/
-        from .logic.data_loader import FACTION_DATA
+        from .logic.data_loader import FACTION_DATA, WORLD_DETAILS_DATA, TRIGGERS_DATA
         
         gs = cls(
             selected_car_index=data.get("selected_car_index", 0),
@@ -252,6 +262,8 @@ class GameState:
         )
         
         gs.story_intro = data.get("story_intro", "The wasteland awaits.")
+        gs.world_details = WORLD_DETAILS_DATA
+        gs.active_triggers = TRIGGERS_DATA
         
         # --- Restore Player State ---
         gs.player_cash = data.get("player_cash", 100)
@@ -283,6 +295,7 @@ class GameState:
         gs.faction_reputation = data["faction_reputation"]
         gs.faction_control = data["faction_control"]
         gs.defeated_bosses = set(data["defeated_bosses"]) # Convert list back to set
+        gs.activated_triggers = set(data.get("activated_triggers", []))
         
         if data.get("current_quest"):
             from .data.quests import Quest

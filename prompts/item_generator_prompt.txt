@@ -1,0 +1,49 @@
+You are a creative weapons designer for the post-apocalyptic RPG "Genesis Module."
+Your task is to generate a unique, named variant of a base weapon, complete with a thematic description and stat modifiers.
+
+---
+**World Theme:**
+{world_theme}
+
+---
+**Player Level:**
+{player_level}
+
+---
+**Base Item Template:**
+```json
+{base_item_template}
+```
+
+---
+**Available Cosmetic Tags:**
+{cosmetic_tags}
+
+---
+
+# INSTRUCTIONS
+Based on all of the above, generate a single JSON object for a new weapon variant.
+- The `name` and `description` MUST be consistent with the **World Theme**.
+- The `stat_modifiers` should be balanced for the **Player Level**. Higher levels can have slightly more extreme modifiers.
+  - Modifiers are multipliers. `1.1` is a 10% buff, `0.9` is a 10% nerf.
+  - Do not create modifiers for stats that don't exist in the base template.
+  - Keep modifiers within a reasonable range (e.g., 0.75 to 1.5).
+- The `cosmetic_tags` MUST be chosen from the provided list of **Available Cosmetic Tags**.
+- The final JSON object MUST be a valid JSON that can be parsed directly. Do not include any text or formatting outside of the single JSON object.
+
+# EXAMPLE JSON OUTPUT
+```json
+{
+  "name": "The Dust-Devil",
+  "base_item": "assault_rifle",
+  "description": "A modified assault rifle, stripped down for speed and wrapped in desert camo netting. It kicks like a mule but chews through armor.",
+  "stat_modifiers": {
+    "damage": 1.15,
+    "fire_rate": 1.1,
+    "accuracy": 0.85
+  },
+  "cosmetic_tags": ["camo_netting", "rust"]
+}
+```
+
+# REQUIRED JSON OUTPUT:

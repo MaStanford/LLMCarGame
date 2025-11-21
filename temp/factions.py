@@ -1,95 +1,75 @@
-FACTION_DATA = {   'haven': {   'control': 100,
-                 'description': 'A pocket of unnerving calm in the swirling '
-                                'madness. Haven is a sanctuary for those who '
-                                'have not yet succumbed to the whispers on the '
-                                'radio, a place where reality holds, however '
-                                'tenuously.',
-                 'faction_boss': None,
-                 'hub_city_coordinates': [0, 0],
-                 'name': 'Haven',
-                 'relationships': {   'the_glimmering_host': 'Neutral',
-                                      'the_road_wardens': 'Neutral',
-                                      'the_signal_keepers': 'Neutral',
-                                      'the_whispering_choir': 'Neutral'},
-                 'units': ['Sedan', 'Truck', 'Hatchback']},
-    'the_glimmering_host': {   'control': 50,
-                               'description': 'Victims of the cosmic horror '
-                                              'who have been warped into '
-                                              'something new. Their vehicles '
-                                              'are adorned with crystalline '
-                                              'growths and emit a strange, '
-                                              'hypnotic light, luring '
-                                              'travelers to their doom.',
-                               'faction_boss': {   'damage_multiplier': 3.5,
-                                                   'hp_multiplier': 3.5,
-                                                   'name': 'The Luminary',
-                                                   'vehicle': 'SportsCar'},
-                               'hub_city_coordinates': [30, 50],
-                               'name': 'The Glimmering Host',
-                               'relationships': {   'haven': 'Hostile',
-                                                    'the_road_wardens': 'Hostile',
-                                                    'the_signal_keepers': 'Hostile',
-                                                    'the_whispering_choir': 'Neutral'},
-                               'units': ['Sedan', 'SportsCar', 'Van']},
-    'the_road_wardens': {   'control': 50,
-                            'description': 'Grim survivalists who patrol the '
-                                           'shifting roads. They see the '
-                                           'cosmic horror as just another '
-                                           'predator and trust only in '
-                                           'firepower and fortified vehicles '
-                                           'to keep it at bay.',
-                            'faction_boss': {   'damage_multiplier': 2.0,
-                                                'hp_multiplier': 6.0,
-                                                'name': 'Warden SILAS',
-                                                'vehicle': 'Miner'},
-                            'hub_city_coordinates': [-20, -45],
-                            'name': 'The Road Wardens',
-                            'relationships': {   'haven': 'Neutral',
-                                                 'the_glimmering_host': 'Hostile',
-                                                 'the_signal_keepers': 'Allied',
-                                                 'the_whispering_choir': 'Hostile'},
-                            'units': ['Truck', 'Technical', 'WarRig']},
-    'the_signal_keepers': {   'control': 50,
-                              'description': 'A collective of scientists and '
-                                             'technicians desperately trying '
-                                             'to decipher the radio signals, '
-                                             'believing they hold the key to '
-                                             'stopping the encroaching '
-                                             'madness. They operate from '
-                                             'fortified radio towers.',
-                              'faction_boss': {   'damage_multiplier': 3.0,
-                                                  'hp_multiplier': 4.0,
-                                                  'name': 'Lead Researcher '
-                                                          'Aris',
-                                                  'vehicle': 'Van'},
-                              'hub_city_coordinates': [-50, 20],
-                              'name': 'The Signal Keepers',
-                              'relationships': {   'haven': 'Neutral',
-                                                   'the_glimmering_host': 'Hostile',
-                                                   'the_road_wardens': 'Allied',
-                                                   'the_whispering_choir': 'Hostile'},
-                              'units': [   'PanelWagon',
-                                           'Technical',
-                                           'Hatchback']},
-    'the_whispering_choir': {   'control': 50,
-                                'description': 'Devotees to the dissonant '
-                                               'symphony of the cosmos. They '
-                                               'believe the cryptic signals '
-                                               'are a holy text and seek to '
-                                               "'convert' others by shattering "
-                                               'their sanity through '
-                                               'broadcasts from their armored '
-                                               'vehicles.',
-                                'faction_boss': {   'damage_multiplier': 2.5,
-                                                    'hp_multiplier': 4.5,
-                                                    'name': 'The Conductor',
-                                                    'vehicle': 'WarRig'},
-                                'hub_city_coordinates': [40, -30],
-                                'name': 'The Whispering Choir',
-                                'relationships': {   'haven': 'Neutral',
-                                                     'the_glimmering_host': 'Neutral',
-                                                     'the_road_wardens': 'Hostile',
-                                                     'the_signal_keepers': 'Hostile'},
-                                'units': [   'Hotrod',
-                                             'RustySedan',
-                                             'RaiderBuggy']}}
+FACTION_DATA = {   'aegis_dynamics': {   'control': 50,
+                          'description': 'A militaristic corporation that '
+                                         'believes order can only be forged '
+                                         'through superior firepower and '
+                                         'absolute control.',
+                          'faction_boss': {   'damage_multiplier': 2.5,
+                                              'hp_multiplier': 6.0,
+                                              'name': 'Warlord Kael',
+                                              'vehicle': 'WarRig'},
+                          'hub_city_coordinates': [4000, 4000],
+                          'name': 'Aegis Dynamics',
+                          'relationships': {   'cog_lords': 'Hostile',
+                                               'omni_corp': 'Hostile',
+                                               'rust_devils': 'Hostile',
+                                               'the_exchange': 'Neutral'},
+                          'units': ['Technical', 'GuardTruck', 'WarRig']},
+    'cog_lords': {   'control': 50,
+                     'description': 'Master mechanics and engineers who have '
+                                    'turned scrap into monstrously powerful, '
+                                    'custom-built war machines.',
+                     'faction_boss': {   'damage_multiplier': 1.5,
+                                         'hp_multiplier': 7.0,
+                                         'name': 'The Foreman',
+                                         'vehicle': 'Miner'},
+                     'hub_city_coordinates': [-3000, 5000],
+                     'name': 'Cog Lords',
+                     'relationships': {   'aegis_dynamics': 'Hostile',
+                                          'omni_corp': 'Neutral',
+                                          'rust_devils': 'Neutral',
+                                          'the_exchange': 'Neutral'},
+                     'units': ['Truck', 'PanelWagon', 'Miner']},
+    'omni_corp': {   'control': 50,
+                     'description': 'A remnant corporation that hoards '
+                                    'pre-apocalypse technology, viewing '
+                                    'salvage as their exclusive right.',
+                     'faction_boss': {   'damage_multiplier': 2.0,
+                                         'hp_multiplier': 5.5,
+                                         'name': 'Director Valerius',
+                                         'vehicle': 'ArmoredTruck'},
+                     'hub_city_coordinates': [-4000, -4000],
+                     'name': 'OmniCorp',
+                     'relationships': {   'aegis_dynamics': 'Hostile',
+                                          'cog_lords': 'Neutral',
+                                          'rust_devils': 'Hostile',
+                                          'the_exchange': 'Neutral'},
+                     'units': ['Sedan', 'Peacekeeper', 'Hatchback']},
+    'rust_devils': {   'control': 50,
+                       'description': 'Territorial and fiercely independent '
+                                      'scavengers who thrive in the '
+                                      'scrapyards, seeing the corporations as '
+                                      'invaders.',
+                       'faction_boss': {   'damage_multiplier': 3.0,
+                                           'hp_multiplier': 3.5,
+                                           'name': 'Saw-Tooth',
+                                           'vehicle': 'RaiderBuggy'},
+                       'hub_city_coordinates': [3000, -3000],
+                       'name': 'Rust Devils',
+                       'relationships': {   'aegis_dynamics': 'Hostile',
+                                            'cog_lords': 'Neutral',
+                                            'omni_corp': 'Hostile',
+                                            'the_exchange': 'Neutral'},
+                       'units': ['RaiderBuggy', 'RustySedan', 'Technical']},
+    'the_exchange': {   'control': 100,
+                        'description': 'The last bastion of neutrality. A '
+                                       'sprawling, fortified marketplace built '
+                                       'around a salvaged comms tower, where '
+                                       'credits are the only true allegiance.',
+                        'faction_boss': None,
+                        'hub_city_coordinates': [0, 0],
+                        'name': 'The Exchange',
+                        'relationships': {   'aegis_dynamics': 'Neutral',
+                                             'cog_lords': 'Neutral',
+                                             'omni_corp': 'Neutral',
+                                             'rust_devils': 'Neutral'},
+                        'units': ['Sedan', 'Truck', 'Hatchback']}}

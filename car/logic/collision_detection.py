@@ -41,7 +41,7 @@ def check_collision(rect1, rect2):
             y1 < y2 + h2 and
             y1 + h1 > y2)
 
-def handle_collisions(game_state, world, audio_manager):
+def handle_collisions(game_state, world, audio_manager, app):
     """
     Handles all collision detection and resolution.
     Returns a list of notification messages.
@@ -70,7 +70,7 @@ def handle_collisions(game_state, world, audio_manager):
                 projectiles_to_remove.add(i)
                 if enemy.durability <= 0:
                     game_state.destroyed_this_frame.append(enemy)
-                    handle_enemy_loot_drop(game_state, enemy)
+                    handle_enemy_loot_drop(game_state, enemy, app)
                     notifications.append(f"Destroyed {enemy.__class__.__name__}!")
                     game_state.active_enemies.remove(enemy)
                 break # Projectile can only hit one enemy
@@ -94,7 +94,7 @@ def handle_collisions(game_state, world, audio_manager):
             
             if enemy.durability <= 0:
                 game_state.destroyed_this_frame.append(enemy)
-                handle_enemy_loot_drop(game_state, enemy)
+                handle_enemy_loot_drop(game_state, enemy, app)
                 notifications.append(f"Destroyed {enemy.__class__.__name__}!")
                 game_state.active_enemies.remove(enemy)
 
@@ -126,7 +126,11 @@ def handle_collisions(game_state, world, audio_manager):
             elif pickup["type"] == "weapon":
                 game_state.player_inventory.append(pickup["weapon"])
                 notifications.append(f"Picked up {pickup['weapon'].name}!")
-            
+            elif pickup["type"] == "narrative":
+                from ..screens.narrative_dialog import NarrativeDialogScreen
+                game_state.menu_open = True
+                game_state.player_car.app.push_screen(NarrativeDialogScreen(pickup["data"]))
+
             pickups_to_remove.append(pickup_id)
 
     for pickup_id in pickups_to_remove:

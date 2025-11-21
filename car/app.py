@@ -15,6 +15,7 @@ from .world import World
 from .logic.spawning import spawn_enemy, spawn_fauna, spawn_obstacle
 from .logic.physics import update_physics_and_collisions
 from .logic.quest_logic import update_quests
+from .logic.trigger_logic import check_triggers
 from .audio.audio import AudioManager
 from .data.game_constants import CUTSCENE_RADIUS
 from .widgets.entity_modal import EntityModal
@@ -29,6 +30,7 @@ import math
 import time
 import importlib
 from . import data as game_data
+from .screens.dialog import DialogScreen
 
 class GenesisModuleApp(App):
     """The main application class for the Genesis Module RPG."""
@@ -46,7 +48,7 @@ class GenesisModuleApp(App):
         self.frame_count = 0
         self.last_update_time = time.time()
         self.game_loop = None
-        self.dev_mode = False
+        self.dev_mode = self.settings.get("dev_mode", False)
         self.data = game_data
         self.settings = load_settings()
         self.generation_mode = self.settings.get("generation_mode", "local")
@@ -109,7 +111,7 @@ class GenesisModuleApp(App):
                 self.push_screen(GameOverScreen())
                 return
 
-            notifications = update_physics_and_collisions(gs, self.world, self.audio_manager, dt)
+            notifications = update_physics_and_collisions(gs, self.world, self.audio_manager, dt, self)
             for notification in notifications:
                 self.screen.query_one("#notifications", Notifications).add_notification(notification)
 
@@ -158,6 +160,9 @@ class GenesisModuleApp(App):
 
             # Check for building interactions
             self.check_building_interaction()
+            
+            # Check for world triggers
+            check_triggers(self, gs)
 
             # --- Reset one-time actions ---
             gs.actions["fire"] = False

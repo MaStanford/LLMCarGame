@@ -67,6 +67,29 @@ def _format_narrative_history(game_state):
         + "\n".join(history)
     )
 
+def _format_world_details(world_details):
+    """Formats the world details (cities, roads, landmarks) into a string."""
+    if not world_details:
+        return "No specific world details available."
+    
+    details = []
+    if "cities" in world_details and world_details["cities"]:
+        details.append("Known Cities:")
+        for name in world_details["cities"].values():
+            details.append(f"- {name}")
+            
+    if "roads" in world_details and world_details["roads"]:
+        details.append("\nMajor Roads:")
+        for road in world_details["roads"]:
+            details.append(f"- {road.get('name', 'Unnamed Road')}")
+
+    if "landmarks" in world_details and world_details["landmarks"]:
+        details.append("\nLandmarks:")
+        for landmark in world_details["landmarks"]:
+            details.append(f"- {landmark.get('name', 'Unnamed Landmark')}")
+            
+    return "\n".join(details)
+
 
 def _get_vehicle_list():
     """Returns a formatted string of available vehicles for prompts."""
@@ -90,22 +113,29 @@ def build_quest_prompt(game_state, quest_giver_faction_id, faction_data_override
 
     with open("prompts/game_context.txt", "r") as f:
         game_summary = f.read()
+        # Replace placeholders within game_summary itself
+        game_summary = game_summary.replace("{{ enemy_vehicle_list }}", ", ".join(get_enemy_vehicle_list()))
+        game_summary = game_summary.replace("{{ character_list }}", ", ".join(get_character_list()))
+        game_summary = game_summary.replace("{{ obstacle_list }}", ", ".join(get_obstacle_list()))
         
     player_state = _format_player_state(game_state)
     world_state = _format_world_state(faction_data, game_state)
     narrative_history = _format_narrative_history(game_state)
+    world_details_str = _format_world_details(getattr(game_state, 'world_details', {}))
     theme_str = f"The current theme is '{theme['name']}': {theme['description']}"
     
     with open("prompts/quest_prompt.txt", "r") as f:
         prompt_template = f.read()
         
     prompt = prompt_template.replace("{{ game_summary }}", game_summary)
-    prompt = prompt.replace("{{ story_intro }}", game_state.story_intro)
-    prompt = prompt.replace("{{ player_state }}", player_state)
-    prompt = prompt.replace("{{ world_state }}", world_state)
-    prompt = prompt.replace("{{ narrative_history }}", narrative_history)
-    prompt = prompt.replace("{{ theme }}", theme_str)
-    prompt = prompt.replace("{{ quest_context }}", quest_context)
+    prompt = prompt_template.replace("{{ story_intro }}", game_state.story_intro)
+    prompt = prompt_template.replace("{{ player_state }}", player_state)
+    prompt = prompt_template.replace("{{ world_state }}", world_state)
+    prompt = prompt_template.replace("{{ world_details }}", world_details_str)
+    prompt = prompt_template.replace("{{ narrative_history }}", narrative_history)
+    prompt = prompt_template.replace("{{ theme }}", theme_str)
+    prompt = prompt_template.replace("{{ quest_context }}", quest_context)
+    # These are now handled within game_summary, but we keep them for safety if quest_prompt.txt uses them directly
     prompt = prompt.replace("{{ enemy_vehicle_list }}", ", ".join(get_enemy_vehicle_list()))
     prompt = prompt.replace("{{ character_list }}", ", ".join(get_character_list()))
     prompt = prompt.replace("{{ obstacle_list }}", ", ".join(get_obstacle_list()))
@@ -117,6 +147,10 @@ def build_faction_prompt(theme: dict):
     """Builds the complete, dynamic prompt for faction generation."""
     with open("prompts/game_context.txt", "r") as f:
         game_context = f.read()
+        # Replace placeholders within game_context itself
+        game_context = game_context.replace("{{ enemy_vehicle_list }}", ", ".join(get_enemy_vehicle_list()))
+        game_context = game_context.replace("{{ character_list }}", ", ".join(get_character_list()))
+        game_context = game_context.replace("{{ obstacle_list }}", ", ".join(get_obstacle_list()))
 
     with open("prompts/faction_generation_prompt.txt", "r") as f:
         prompt_template = f.read()
@@ -125,6 +159,7 @@ def build_faction_prompt(theme: dict):
     prompt = prompt_template.replace("{{ game_context }}", game_context)
     prompt = prompt.replace("{{ vehicle_list }}", _get_vehicle_list())
     prompt = prompt.replace("{{ theme }}", theme_str)
+    # These are now handled within game_context, but we keep them for safety if faction_generation_prompt.txt uses them directly
     prompt = prompt.replace("{{ enemy_vehicle_list }}", ", ".join(get_enemy_vehicle_list()))
     prompt = prompt.replace("{{ character_list }}", ", ".join(get_character_list()))
     prompt = prompt.replace("{{ obstacle_list }}", ", ".join(get_obstacle_list()))

@@ -10,6 +10,7 @@ GAME_STATE_FILE = "game_state.json"
 FACTIONS_FILE = "factions.py"
 QUEST_LOG_FILE = "quest_log.json"
 WORLD_DETAILS_FILE = "world_details.json"
+TRIGGERS_FILE = "triggers.json"
 
 def get_save_slots():
     """Returns a list of available save slot names (which are directories)."""
@@ -88,4 +89,22 @@ def load_game(save_name):
     # The GameState's from_dict method will handle loading the factions
     # via the data_loader, which now correctly points to temp/
     logging.info("Loading GameState from dictionary...")
-    return GameState.from_dict(game_state_dict)
+    game_state = GameState.from_dict(game_state_dict)
+    if game_state:
+        load_triggers(game_state)
+    return game_state
+
+def load_triggers(game_state):
+    """Loads world triggers from the temp file into the game state."""
+    triggers_path = os.path.join(TEMP_DIR, TRIGGERS_FILE)
+    if os.path.exists(triggers_path):
+        try:
+            with open(triggers_path, 'r') as f:
+                game_state.world_triggers = json.load(f)
+            logging.info(f"Loaded {len(game_state.world_triggers)} world triggers.")
+        except (json.JSONDecodeError, IOError) as e:
+            logging.error(f"Failed to load or parse {TRIGGERS_FILE}: {e}")
+            game_state.world_triggers = []
+    else:
+        logging.info(f"{TRIGGERS_FILE} not found in temp directory. No triggers loaded.")
+        game_state.world_triggers = []

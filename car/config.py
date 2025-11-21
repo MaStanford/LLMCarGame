@@ -5,7 +5,8 @@ import logging
 SETTINGS_FILE = "settings.json"
 
 DEFAULT_SETTINGS = {
-    "generation_mode": "local"  # "local" or "gemini_cli"
+    "generation_mode": "local",  # "local" or "gemini_cli"
+    "dev_mode": False
 }
 
 def save_settings(settings: dict):
