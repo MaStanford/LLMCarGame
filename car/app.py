@@ -50,6 +50,7 @@ class GenesisModuleApp(App):
         self.data = game_data
         self.settings = load_settings()
         self.generation_mode = self.settings.get("generation_mode", "local")
+        self.last_grid_pos = (None, None)
 
     def reload_dynamic_data(self):
         """Forces a reload of the data modules to pick up generated content."""
@@ -141,7 +142,15 @@ class GenesisModuleApp(App):
                 self.update_compass_data()
 
             # --- Proximity Quest Generation ---
-            if self.frame_count % 90 == 0: # Every 3 seconds
+            # Check if we've moved to a new grid cell
+            current_grid_x = round(gs.car_world_x / 1000)
+            current_grid_y = round(gs.car_world_y / 1000)
+            if (current_grid_x, current_grid_y) != self.last_grid_pos:
+                self.check_and_cache_quests_for_nearby_cities()
+                self.last_grid_pos = (current_grid_x, current_grid_y)
+            
+            # Fallback timer to retry failed generations or catch edge cases
+            if self.frame_count % 300 == 0: # Every 10 seconds (assuming 30 FPS)
                 self.check_and_cache_quests_for_nearby_cities()
 
             # --- Update UI Widgets ---

@@ -1,8 +1,11 @@
 import logging
+import os
 from functools import partial
 from typing import Any
 
-MODEL_ID = "google/gemma-2b-it"
+# Updated to Gemma 2 (Unsloth variant for easier access)
+MODEL_ID = "unsloth/gemma-2-2b-it"
+LOCAL_MODEL_DIR = "models/unsloth-gemma-2-2b-it"
 
 def load_pipeline() -> Any:
     """
@@ -14,11 +17,19 @@ def load_pipeline() -> Any:
         from transformers import pipeline
         import torch
 
+        # Check if we have a local copy first
+        model_path = MODEL_ID
+        if os.path.exists(LOCAL_MODEL_DIR):
+            logging.info(f"Found local model at {LOCAL_MODEL_DIR}, using it.")
+            model_path = LOCAL_MODEL_DIR
+        else:
+            logging.warning(f"Local model not found at {LOCAL_MODEL_DIR}. Downloading/using cache from Hub.")
+
         # This is a blocking call. The transformers library handles caching on disk.
         pipeline_callable = partial(
             pipeline,
             "text-generation",
-            model=MODEL_ID,
+            model=model_path,
             model_kwargs={"torch_dtype": torch.bfloat16},
             device="cuda" if torch.cuda.is_available() else "cpu",
         )

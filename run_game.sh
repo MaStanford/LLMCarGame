@@ -25,7 +25,8 @@ case $OS in
     ;;
   'Darwin') 
     # macOS
-    python3 -m car "$@"
+    # macOS
+    ./venv/bin/python -m car "$@"
     ;;
   'Windows_NT')
     # Windows

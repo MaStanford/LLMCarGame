@@ -1,6 +1,6 @@
 textual
-torch==2.4.0
-transformers==4.41.2
+torch==2.6.0
+transformers
 accelerate
 huggingface-hub
 Pillow==10.4.0

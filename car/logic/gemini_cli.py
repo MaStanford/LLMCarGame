@@ -7,6 +7,26 @@ def is_gemini_installed():
     """Checks if the Gemini CLI is installed and in the system's PATH."""
     return shutil.which("gemini") is not None
 
+def check_gemini_auth() -> bool:
+    """
+    Checks if the Gemini CLI is authenticated by running a simple command.
+    Returns True if authenticated, False otherwise.
+    """
+    if not is_gemini_installed():
+        return False
+    
+    try:
+        # 'gemini models list' is a quick read-only command that requires auth
+        subprocess.run(
+            ["gemini", "models", "list"], 
+            capture_output=True, 
+            check=True,
+            timeout=10 # Don't hang forever
+        )
+        return True
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError):
+        return False
+
 def generate_with_gemini_cli(prompt: str, parse_json: bool = True) -> dict:
     """
     Calls the Gemini CLI with the given prompt.

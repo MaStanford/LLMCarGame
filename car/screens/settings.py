@@ -39,6 +39,13 @@ class SettingsScreen(Screen):
         if event.button.id == "toggle_mode":
             current_mode = self.settings.get("generation_mode", "local")
             new_mode = "gemini_cli" if current_mode == "local" else "local"
+            
+            # Check auth if switching TO Gemini CLI
+            if new_mode == "gemini_cli":
+                from ..logic.gemini_cli import check_gemini_auth
+                if not check_gemini_auth():
+                    self.notify("Warning: Gemini CLI not authenticated! Run 'gemini auth' in terminal.", severity="warning", timeout=5.0)
+
             self.settings["generation_mode"] = new_mode
             save_settings(self.settings)
             event.button.label = self.get_mode_label()

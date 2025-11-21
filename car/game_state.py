@@ -229,7 +229,8 @@ class GameState:
             # Quest & Faction State
             "faction_reputation": self.faction_reputation,
             "faction_control": self.faction_control,
-            "defeated_bosses": list(self.defeated_bosses),
+            "defeated_bosses": list(self.defeated_bosses), # Convert set to list
+            "current_quest": self.current_quest.to_dict() if self.current_quest else None,
         }
 
     @classmethod
@@ -279,8 +280,12 @@ class GameState:
         gs.ammo_counts = data.get("ammo_counts", {})
         
         # --- Restore Quest & Faction State ---
-        gs.faction_reputation = data.get("faction_reputation", {})
-        gs.faction_control = data.get("faction_control", {})
-        gs.defeated_bosses = set(data.get("defeated_bosses", []))
+        gs.faction_reputation = data["faction_reputation"]
+        gs.faction_control = data["faction_control"]
+        gs.defeated_bosses = set(data["defeated_bosses"]) # Convert list back to set
+        
+        if data.get("current_quest"):
+            from .data.quests import Quest
+            gs.current_quest = Quest.from_dict(data["current_quest"])
         
         return gs

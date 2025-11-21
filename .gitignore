@@ -140,3 +140,10 @@ saves/
 *.sav
 .installed
 temp/
+
+# System files
+.DS_Store
+
+# Local configuration
+settings.json
+models/

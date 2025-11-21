@@ -1,3 +1,5 @@
 {
-  "preferredEditor": "vscode"
+  "general": {
+    "preferredEditor": "vscode"
+  }
 }

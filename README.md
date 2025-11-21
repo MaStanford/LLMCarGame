@@ -90,14 +90,16 @@ First, install the necessary Python packages. The exact requirements vary by ope
     ```
 
 **2. Download the Language Model (for Local Mode)**
-
+ 
 If you plan to play in the offline "Local Mode", you need to download the model file.
-
-Run the following command from the project's root directory:
+ 
+The installation script (`install.sh` or `install.bat`) will ask if you want to download the model automatically.
+ 
+If you skipped it during installation, you can run the downloader manually at any time:
 ```bash
 python download_model.py
 ```
-This will download the `gemma-2b-it.gguf` file (which is several gigabytes) and place it in the `models/` directory. You only need to do this once.
+This will download the model (approx. 2GB) to the `models/` directory.
 
 **3. Run the Game**
 
