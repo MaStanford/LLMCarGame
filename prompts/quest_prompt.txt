@@ -1,5 +1,4 @@
-You are a quest designer for the post-apocalyptic RPG "Genesis Module."
-Your task is to generate a new, compelling quest that fits the current state of the game world.
+You are a quest designer for a post-apocalyptic RPG. Your task is to generate a new, compelling quest that fits the current state of the game world.
 
 ---
 **Game Summary:**
@@ -21,7 +20,9 @@ PREVIOUSLY...
 {{ narrative_history }}
 ---
 QUEST CONTEXT:
-{{ quest_context }}
+You are generating a quest for the city of 'The Junction'.
+This city is controlled by the 'The Junction' faction.
+Their vibe is: A neutral oasis of commerce and diplomacy in the heart of the wasteland.
 ---
 
 # INSTRUCTIONS
@@ -30,7 +31,7 @@ Based on all of the above, generate a new quest.
 - The quest should be relevant to the current political landscape (especially the "vibe" of the factions) and the player's status.
 - The quest's difficulty and rewards should be appropriate for a player who has completed a number of quests (as noted in the "PREVIOUSLY..." section).
 - The quest must have a clear `name`, a `description` for the player, and some `dialog` for the quest giver.
-- The quest must have one of the following objective types: `KillCountObjective`, `KillBossObjective`, or `SurvivalObjective`.
+- The quest must have one of the following objective types: `KillCountObjective`, `KillBossObjective`, `SurvivalObjective`, `DeliverPackageObjective`, or `DefendLocationObjective`.
 - The `target_vehicle` for `KillBossObjective` objectives MUST be chosen from the `Enemy Vehicles` list in the **Available Entities** section of the game context.
 - The `enemy_types` for `KillCountObjective` and `SurvivalObjective` objectives MUST be chosen from the `Enemy Vehicles` and `Characters` lists in the **Available Entities** section of the game context.
 - Do NOT invent new entities. Use only the provided lists.
@@ -72,7 +73,42 @@ Based on all of the above, generate a new quest.
 }
 ```
 
+# EXAMPLE 3 (Delivery)
+```json
+{
+  "name": "Urgent Delivery",
+  "description": "Deliver a sensitive package to a neighboring city.",
+  "dialog": "We've got a package that needs to get to Rust-Tusk Outpost, and it needs to get there yesterday. Keep it safe. We're counting on you.",
+  "objectives": [
+    ["DeliverPackageObjective", ["Rust-Tusk Outpost"]]
+  ],
+  "rewards": {
+    "xp": 200,
+    "cash": 1000
+  },
+  "target_faction": null
+}
+```
+
+# EXAMPLE 4 (Defend)
+```json
+{
+  "name": "Hold the Line",
+  "description": "Defend our forward outpost from an imminent attack.",
+  "dialog": "The War Pigs are testing our defenses, trying to push us out of the Grey Wastes. We need someone to hold the line at our eastern outpost until reinforcements arrive. Can you do it?",
+  "objectives": [
+    ["DefendLocationObjective", ["Eastern Outpost", 120]]
+  ],
+  "rewards": {
+    "xp": 1000,
+    "cash": 2000
+  },
+  "target_faction": "war_pigs"
+}
+```
+
 # REQUIRED JSON FORMAT
+Your output must be a single, valid JSON object and nothing else. Do not include any conversational text, explanations, or markdown formatting (like ```json).
 ```json
 {
   "name": "<Quest Name>",

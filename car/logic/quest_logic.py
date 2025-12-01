@@ -1,5 +1,5 @@
 import random
-from ..data.quests import Quest, KillBossObjective, KillCountObjective, SurvivalObjective, QUEST_TEMPLATES
+from ..data.quests import Quest, KillBossObjective, KillCountObjective, SurvivalObjective, DeliverPackageObjective, DefendLocationObjective, QUEST_TEMPLATES
 from ..logic.entity_loader import PLAYER_CARS
 from ..entities.base import Entity
 from ..data.game_constants import CITY_SPACING
@@ -84,6 +84,53 @@ def update_quests(game_state, audio_manager, app):
     """
     notifications = []
     if game_state.current_quest:
+        # --- Handle Package Delivery Objective ---
+        for objective in game_state.current_quest.objectives:
+            if isinstance(objective, DeliverPackageObjective):
+                # Check if the player is in any city
+                grid_x = round(game_state.car_world_x / CITY_SPACING)
+                grid_y = round(game_state.car_world_y / CITY_SPACING)
+                city_key = f"{grid_x},{grid_y}"
+                
+                if city_key in game_state.world_details.get("cities", {}):
+                    city_name = game_state.world_details["cities"][city_key]
+                    if city_name == objective.destination:
+                        # Check if player is physically in the city bounds
+                        half_city = CITY_SPACING / 2
+                        city_world_x = grid_x * CITY_SPACING
+                        city_world_y = grid_y * CITY_SPACING
+                        if (abs(game_state.car_world_x - city_world_x) < half_city and
+                            abs(game_state.car_world_y - city_world_y) < half_city):
+                            objective.completed = True
+                            notifications.append(f"Package delivered to {city_name}!")
+            elif isinstance(objective, DefendLocationObjective):
+                # Find the location coordinates from world_details
+                location_coords = None
+                for landmark in game_state.world_details.get("landmarks", []):
+                    if landmark["name"] == objective.location:
+                        location_coords = (landmark["x"], landmark["y"])
+                        break
+                
+                if location_coords:
+                    # Check if player is near the location
+                    player_x = game_state.car_world_x
+                    player_y = game_state.car_world_y
+                    dist_sq = (player_x - location_coords[0])**2 + (player_y - location_coords[1])**2
+                    
+                    # Define a radius for the defense area (e.g., 50 units)
+                    defense_radius_sq = 50**2
+                    
+                    if dist_sq <= defense_radius_sq:
+                        if objective.timer > 0:
+                            objective.timer -= 1
+                            if objective.timer % 30 == 0: # Notify every second
+                                notifications.append(f"Defending {objective.location}... {objective.timer // 30}s remaining.")
+                        else:
+                            objective.completed = True
+                            notifications.append(f"Successfully defended {objective.location}!")
+                    else:
+                        notifications.append(f"Return to {objective.location} to defend it!")
+        
         if not game_state.current_quest.ready_to_turn_in:
             game_state.current_quest.update(game_state)
 

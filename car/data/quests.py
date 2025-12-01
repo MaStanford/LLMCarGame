@@ -169,6 +169,56 @@ class SurvivalObjective(Objective):
         obj.completed = data["completed"]
         return obj
 
+class DeliverPackageObjective(Objective):
+    def __init__(self, destination):
+        super().__init__()
+        self.destination = destination
+
+    def update(self, game_state):
+        # This will be updated by an external event in game.py
+        pass
+
+    def to_dict(self):
+        data = super().to_dict()
+        data.update({
+            "destination": self.destination
+        })
+        return data
+
+    @classmethod
+    def from_dict(cls, data):
+        obj = cls(data["destination"])
+        obj.completed = data["completed"]
+        return obj
+
+
+class DefendLocationObjective(Objective):
+    def __init__(self, location, duration):
+        super().__init__()
+        self.location = location
+        self.duration = duration
+        self.timer = duration
+
+    def update(self, game_state):
+        # This will be updated by an external event in game.py
+        pass
+
+    def to_dict(self):
+        data = super().to_dict()
+        data.update({
+            "location": self.location,
+            "duration": self.duration,
+            "timer": self.timer
+        })
+        return data
+
+    @classmethod
+    def from_dict(cls, data):
+        obj = cls(data["location"], data["duration"])
+        obj.timer = data["timer"]
+        obj.completed = data["completed"]
+        return obj
+
 class Quest:
     def __init__(self, name, description, objectives, rewards, city_id=None, quest_giver_faction=None, target_faction=None, time_limit=None, next_quest_id=None, requires_turn_in=True, dialog=None, is_conquest_quest=False):
         self.name = name
@@ -226,6 +276,10 @@ class Quest:
                 objectives.append(KillCountObjective.from_dict(obj_data))
             elif obj_type == "SurvivalObjective":
                 objectives.append(SurvivalObjective.from_dict(obj_data))
+            elif obj_type == "DeliverPackageObjective":
+                objectives.append(DeliverPackageObjective.from_dict(obj_data))
+            elif obj_type == "DefendLocationObjective":
+                objectives.append(DefendLocationObjective.from_dict(obj_data))
         
         quest = cls(
             name=data["name"],
