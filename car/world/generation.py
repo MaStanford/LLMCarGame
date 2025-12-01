@@ -38,6 +38,24 @@ def get_city_faction(x, y, faction_data):
             closest_faction = faction_id
     return closest_faction
 
+def get_city_name(grid_x, grid_y, faction_data):
+    """Generates a consistent name for a city at the given grid coordinates."""
+    # Check if it's a hub city
+    for faction_id, data in faction_data.items():
+        hub_coords = data.get("hub_city_coordinates")
+        if hub_coords:
+            hub_x, hub_y = hub_coords
+            # Coordinates in faction_data are world coords, compare with grid coords * spacing
+            if hub_x == grid_x * CITY_SPACING and hub_y == grid_y * CITY_SPACING:
+                 return f"{data['name']} Hub"
+
+    # Procedural name for non-hub cities
+    local_random = random.Random(f"city_name_{grid_x}_{grid_y}")
+    prefixes = ["New", "Old", "Fort", "Mount", "Lake", "Iron", "Rust", "Dust", "Scrap"]
+    suffixes = ["ton", "ville", "burg", "haven", " City", " Outpost", " Junction"]
+    
+    return f"{local_random.choice(prefixes)}{local_random.choice(suffixes)}"
+
 def does_city_exist_at(grid_x, grid_y, seed, factions):
     """Deterministically checks if a city exists at a given grid coordinate."""
     # Hub cities always exist
