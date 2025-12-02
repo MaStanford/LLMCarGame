@@ -42,8 +42,9 @@ def generate_themes_from_llm(app) -> List[Dict[str, str]]:
             os.environ.pop("TOKENIZERS_PARALLELISM", None)
 
     # --- Process the response (from either source) ---
-    if not theme_data or "error" in theme_data:
-        logging.error(f"Theme generation failed: {theme_data.get('details', 'No details')}")
+    if not isinstance(theme_data, dict) or "error" in theme_data:
+        details = theme_data.get('details', 'No details') if isinstance(theme_data, dict) else "Non-dict response"
+        logging.error(f"Theme generation failed: {details}")
         return _get_fallback_themes()
 
     if "themes" in theme_data and isinstance(theme_data["themes"], list) and len(theme_data["themes"]) == 3:

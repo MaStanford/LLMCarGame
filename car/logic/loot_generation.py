@@ -9,7 +9,7 @@ def handle_enemy_loot_drop(game_state, enemy, app):
     """
     Handles the loot drop for a defeated enemy.
     """
-    # Cash Drop
+    # --- Cash Drop ---
     cash_dropped = int(enemy.cash_value * game_state.player_level * game_state.difficulty_mods.get("xp_mult", 1.0))
     game_state.active_pickups[game_state.next_pickup_id] = {
         "type": "cash",
@@ -21,39 +21,39 @@ def handle_enemy_loot_drop(game_state, enemy, app):
     }
     game_state.next_pickup_id += 1
 
-    # Weapon Drop
-    if random.random() < 0.1: # 10% chance to drop a weapon
-        # LLM-Generated Weapon Drop
-        if random.random() < 0.2: # 20% of weapon drops are LLM-generated
+    # --- Item Drop ---
+    luck_factor = 1.0
+    if hasattr(enemy, "is_boss") and enemy.is_boss:
+        luck_factor = 5.0
+
+    # Determine if we should try to drop a weapon at all
+    if random.random() < (0.1 * luck_factor): # 10% base chance, increased by luck
+        
+        # Decide whether to generate a special LLM item or a standard one
+        if random.random() < (0.2 * luck_factor): # 20% base chance for special item
             base_weapon_id = random.choice(list(WEAPONS_DATA.keys()))
             item_data = generate_item_from_llm(app, game_state, "weapon", base_weapon_id)
+            
+            # If LLM generation succeeds (or provides a valid fallback)
             if item_data:
                 weapon = Weapon(
-                    weapon_type_id=item_data["base_item"],
-                    modifiers=item_data["stat_modifiers"]
+                    weapon_type_id=item_data["base_item_id"],
+                    modifiers=item_data["stat_modifiers"],
+                    name=item_data["name"],
+                    description=item_data["description"],
+                    rarity=item_data["rarity"]
                 )
-                # We can't easily set the name and description on the weapon object yet,
-                # but this will be addressed in a future refactor.
-                game_state.active_pickups[game_state.next_pickup_id] = {
-                    "type": "weapon",
-                    "x": enemy.x + 1,
-                    "y": enemy.y,
-                    "weapon": weapon,
-                    "char": "W",
-                    "color": "PICKUP_GUN"
-                }
-                game_state.next_pickup_id += 1
-                return # We've dropped a special weapon, so we're done
+            else: # Fallback to a standard weapon if LLM fails completely
+                modifiers = generate_weapon_modifiers(game_state.player_level, luck_factor)
+                weapon_id = random.choice(list(WEAPONS_DATA.keys()))
+                weapon = Weapon(weapon_id, modifiers)
 
-        # Fallback to standard weapon drop
-        luck_factor = 1.0
-        if hasattr(enemy, "is_boss") and enemy.is_boss:
-            luck_factor = 5.0 # Bosses have a much higher chance of dropping good loot
-        
-        modifiers = generate_weapon_modifiers(game_state.player_level, luck_factor)
-        weapon_id = random.choice(list(WEAPONS_DATA.keys()))
-        weapon = Weapon(weapon_id, modifiers)
-        
+        else: # Generate a standard, non-LLM weapon
+            modifiers = generate_weapon_modifiers(game_state.player_level, luck_factor)
+            weapon_id = random.choice(list(WEAPONS_DATA.keys()))
+            weapon = Weapon(weapon_id, modifiers)
+
+        # Add the created weapon to the world as a pickup
         game_state.active_pickups[game_state.next_pickup_id] = {
             "type": "weapon",
             "x": enemy.x + 1,
@@ -64,7 +64,8 @@ def handle_enemy_loot_drop(game_state, enemy, app):
         }
         game_state.next_pickup_id += 1
 
-    # Narrative Item Drop
+
+    # --- Narrative Item Drop ---
     if random.random() < 0.05: # 5% chance to drop a narrative item
         game_state.active_pickups[game_state.next_pickup_id] = {
             "type": "narrative",

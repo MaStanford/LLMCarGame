@@ -30,7 +30,6 @@ import math
 import time
 import importlib
 from . import data as game_data
-from .screens.dialog import DialogScreen
 
 class GenesisModuleApp(App):
     """The main application class for the Genesis Module RPG."""
@@ -48,9 +47,9 @@ class GenesisModuleApp(App):
         self.frame_count = 0
         self.last_update_time = time.time()
         self.game_loop = None
+        self.settings = load_settings()
         self.dev_mode = self.settings.get("dev_mode", False)
         self.data = game_data
-        self.settings = load_settings()
         self.generation_mode = self.settings.get("generation_mode", "local")
         self.last_grid_pos = (None, None)
 

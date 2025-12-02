@@ -2,12 +2,8 @@ You are a world-building AI for the post-apocalyptic RPG "Genesis Module."
 Your task is to generate thematic names and details for the game world based on a given theme and a set of factions.
 
 ---
-**World Theme:**
-{world_theme}
-
----
-**Faction Data:**
-{faction_data}
+**World Theme: {{ theme }}
+Faction Data: {{ factions }}
 
 ---
 

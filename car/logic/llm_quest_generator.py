@@ -40,8 +40,9 @@ def generate_quest_from_llm(game_state, quest_giver_faction_id, app, faction_dat
             os.environ.pop("TOKENIZERS_PARALLELISM", None)
 
     # --- Process the response (from either source) ---
-    if not quest_data or "error" in quest_data:
-        logging.error(f"Quest generation failed: {quest_data.get('details', 'No details')}")
+    if not isinstance(quest_data, dict) or "error" in quest_data:
+        details = quest_data.get('details', 'No details') if isinstance(quest_data, dict) else "Non-dict response"
+        logging.error(f"Quest generation failed: {details}")
         return _get_fallback_quest(quest_giver_faction_id)
 
     try:

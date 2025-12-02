@@ -1,7 +1,7 @@
 import logging
 import json
-from typing import Any, Dict, List, Optional
-from ..logic.gemini_cli import generate_with_gemini_cli
+from typing import Any, Dict, Optional
+from .gemini_cli import generate_with_gemini_cli
 from ..data.cosmetics import COSMETIC_TAGS
 from ..data.weapons import WEAPONS_DATA
 
@@ -13,7 +13,7 @@ def validate_generated_item(item_data: Dict, base_item_template: Dict) -> bool:
         logging.error(f"Validation failed: Generated item is not a dictionary.")
         return False
 
-    required_keys = ["name", "base_item", "description", "stat_modifiers", "cosmetic_tags"]
+    required_keys = ["name", "base_item_id", "description", "stat_modifiers", "cosmetic_tags", "rarity"]
     for key in required_keys:
         if key not in item_data:
             logging.error(f"Validation failed: Missing required key '{key}'.")
@@ -23,8 +23,9 @@ def validate_generated_item(item_data: Dict, base_item_template: Dict) -> bool:
         logging.error(f"Validation failed: 'name' must be a non-empty string.")
         return False
         
-    if item_data["base_item"] != base_item_template["id"]:
-        logging.error(f"Validation failed: 'base_item' ({item_data['base_item']}) does not match template ({base_item_template['id']}).")
+    # Check base_item_id instead of base_item
+    if item_data["base_item_id"] != base_item_template["id"]:
+        logging.error(f"Validation failed: 'base_item_id' ({item_data['base_item_id']}) does not match template ({base_item_template['id']}).")
         return False
 
     if not isinstance(item_data["stat_modifiers"], dict):
@@ -32,9 +33,7 @@ def validate_generated_item(item_data: Dict, base_item_template: Dict) -> bool:
         return False
 
     for stat, value in item_data["stat_modifiers"].items():
-        if stat not in base_item_template:
-            logging.warning(f"Validation warning: Generated item has a modifier for a stat ('{stat}') that doesn't exist in the base template.")
-            continue
+        # Relaxed check for stats, as they might vary
         if not isinstance(value, (int, float)) or not (0.5 <= value <= 2.0):
             logging.error(f"Validation failed: Modifier for '{stat}' ({value}) is not a number or is out of the acceptable range (0.5-2.0).")
             return False
@@ -42,10 +41,6 @@ def validate_generated_item(item_data: Dict, base_item_template: Dict) -> bool:
     if not isinstance(item_data["cosmetic_tags"], list):
         logging.error(f"Validation failed: 'cosmetic_tags' must be a list.")
         return False
-
-    for tag in item_data["cosmetic_tags"]:
-        if tag not in COSMETIC_TAGS:
-            logging.warning(f"Validation warning: Generated tag '{tag}' is not in the list of available cosmetic tags.")
             
     return True
 
@@ -68,12 +63,15 @@ def generate_item_from_llm(app: Any, theme: Dict, player_level: int, base_item_i
         with open("prompts/item_generator_prompt.txt", "r") as f:
             prompt_template = f.read()
 
-        prompt = prompt_template.format(
-            world_theme=f"'{theme['name']}': {theme['description']}",
-            player_level=player_level,
-            base_item_template=json.dumps(base_item_template, indent=2),
-            cosmetic_tags=", ".join(COSMETIC_TAGS)
-        )
+        # Build game summary for context
+        game_summary = "A post-apocalyptic automotive RPG where players survive and upgrade their vehicles."
+        
+        # Format the prompt using the new placeholders
+        # Note: We need to escape curly braces in the JSON examples in the prompt if we were using .format(),
+        # but here we are using replace for safety and simplicity given the mixed content.
+        prompt = prompt_template.replace("{{ game_summary }}", game_summary)
+        prompt = prompt.replace("{{ theme }}", f"'{theme['name']}': {theme['description']}")
+        prompt = prompt.replace("{{ base_item_data }}", json.dumps(base_item_template, indent=2))
         
         if app.generation_mode == "gemini_cli":
             response = generate_with_gemini_cli(prompt)

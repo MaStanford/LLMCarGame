@@ -170,15 +170,18 @@ class NewGameScreen(Screen):
         
         # Handle both dict (directional) and list (non-directional) art
         if isinstance(car_instance.art, dict):
-            colored_art_dict = {}
-            for direction, art_lines in car_instance.art.items():
-                colored_art_dict[direction] = [f"[{color}]{line}[/]" for line in art_lines]
-            car_instance.art = colored_art_dict
+            art_dict = car_instance.art
         else:
-            car_instance.art = [f"[{color}]{line}[/]" for line in car_instance.art]
+            art_dict = {"N": car_instance.art} # Fallback for non-directional
 
-        art = self.get_art_for_angle(car_instance, self.preview_angle)
-        self.query_one("#car-preview", Static).update(art)
+        # Get the art for the current angle
+        if isinstance(car_instance.art, dict):
+            art_lines = self.get_art_for_angle(car_instance, self.preview_angle).split("\n")
+        else:
+            art_lines = car_instance.art
+
+        art = "\n".join(art_lines)
+        self.query_one("#car-preview", Static).update(f"[{color}]{art}[/]")
 
         color_widget = self.query_one("#color_select", CycleWidget)
         color_name = self.selected_color_name.replace("CAR_", "").replace("_", " ").title()

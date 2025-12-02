@@ -1,5 +1,10 @@
 You are a JSON data generator. Your only task is to create a valid JSON object based on the rules provided.
 
+---
+**Game Context:**
+{{ game_context }}
+---
+
 # RULES
 1.  The JSON object must contain exactly 5 top-level keys.
 2.  Each top-level key must be a unique, snake_case string representing a faction's ID.

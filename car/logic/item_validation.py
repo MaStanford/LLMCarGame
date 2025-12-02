@@ -1,65 +1,56 @@
-import logging
-from ..data.cosmetics import COSMETIC_TAGS
-from ..data.weapons import WEAPONS_DATA
-from ..logic.entity_loader import get_vehicle_class_by_name
+# car/logic/item_validation.py
 
-def validate_generated_item(item_data, item_type):
+from car.data.item_modifiers import STAT_MODIFIERS, COSMETIC_TAGS, RARITY_LEVELS
+
+def validate_generated_item(item_data: dict) -> bool:
     """
-    Rigorously validates the JSON data for a generated item.
-    Returns True if valid, False otherwise.
+    Validates a generated item against the defined data structures.
+
+    Args:
+        item_data: A dictionary representing the generated item.
+
+    Returns:
+        True if the item is valid, False otherwise.
     """
-    if not isinstance(item_data, dict):
-        logging.error(f"Validation failed: item_data is not a dictionary.")
+    # Validate top-level keys
+    required_keys = ["name", "base_item_id", "description", "rarity", "stat_modifiers", "cosmetic_tags"]
+    if not all(key in item_data for key in required_keys):
+        # logging.error(f"Missing required key in item data: {item_data}")
         return False
 
-    # --- Check for required keys ---
-    required_keys = ["name", "base_item", "description", "stat_modifiers", "cosmetic_tags"]
-    for key in required_keys:
-        if key not in item_data:
-            logging.error(f"Validation failed: Missing required key '{key}'.")
-            return False
-
-    # --- Validate data types ---
+    # Validate data types
     if not isinstance(item_data["name"], str) or not item_data["name"]:
-        logging.error(f"Validation failed: 'name' must be a non-empty string.")
         return False
-    if not isinstance(item_data["base_item"], str):
-        logging.error(f"Validation failed: 'base_item' must be a string.")
+    if not isinstance(item_data["base_item_id"], str) or not item_data["base_item_id"]:
         return False
-    if not isinstance(item_data["description"], str):
-        logging.error(f"Validation failed: 'description' must be a string.")
+    if not isinstance(item_data["description"], str) or not item_data["description"]:
+        return False
+    if not isinstance(item_data["rarity"], str):
         return False
     if not isinstance(item_data["stat_modifiers"], dict):
-        logging.error(f"Validation failed: 'stat_modifiers' must be a dictionary.")
         return False
     if not isinstance(item_data["cosmetic_tags"], list):
-        logging.error(f"Validation failed: 'cosmetic_tags' must be a list.")
         return False
 
-    # --- Validate base_item existence ---
-    if item_type == "weapon":
-        if item_data["base_item"] not in WEAPONS_DATA:
-            logging.error(f"Validation failed: base_item '{item_data['base_item']}' not found in WEAPONS_DATA.")
-            return False
-    elif item_type == "vehicle":
-        if get_vehicle_class_by_name(item_data["base_item"]) is None:
-            logging.error(f"Validation failed: base_item '{item_data['base_item']}' is not a valid vehicle class.")
-            return False
+    # Validate rarity
+    if item_data["rarity"] not in RARITY_LEVELS:
+        return False
 
-    # --- Validate stat_modifiers ---
-    for key, value in item_data["stat_modifiers"].items():
+    # Validate stat modifiers
+    for stat, value in item_data["stat_modifiers"].items():
+        if stat not in STAT_MODIFIERS:
+            return False
         if not isinstance(value, (int, float)):
-            logging.error(f"Validation failed: stat_modifier '{key}' has non-numeric value '{value}'.")
             return False
-        if not 0.5 <= value <= 1.5:
-            logging.error(f"Validation failed: stat_modifier '{key}' value '{value}' is out of range (0.5-1.5).")
+        min_mod, max_mod = STAT_MODIFIERS[stat]
+        if not (min_mod <= value <= max_mod):
             return False
 
-    # --- Validate cosmetic_tags ---
+    # Validate cosmetic tags
     for tag in item_data["cosmetic_tags"]:
+        if not isinstance(tag, str):
+            return False
         if tag not in COSMETIC_TAGS:
-            logging.warning(f"Validation warning: cosmetic_tag '{tag}' is not in the predefined list.")
-            # This is a warning, not a failure, to allow for creative LLM outputs.
+            return False
 
-    logging.info(f"Successfully validated generated item: {item_data['name']}")
     return True

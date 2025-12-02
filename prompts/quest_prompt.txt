@@ -1,4 +1,5 @@
-You are a quest designer for a post-apocalyptic RPG. Your task is to generate a new, compelling quest that fits the current state of the game world.
+You are a quest designer for the post-apocalyptic RPG "Genesis Module."
+Your task is to generate a new, compelling quest that fits the current state of the game world.
 
 ---
 **Game Summary:**
@@ -20,9 +21,7 @@ PREVIOUSLY...
 {{ narrative_history }}
 ---
 QUEST CONTEXT:
-You are generating a quest for the city of 'The Junction'.
-This city is controlled by the 'The Junction' faction.
-Their vibe is: A neutral oasis of commerce and diplomacy in the heart of the wasteland.
+{{ quest_context }}
 ---
 
 # INSTRUCTIONS

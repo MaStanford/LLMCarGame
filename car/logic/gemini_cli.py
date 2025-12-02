@@ -27,7 +27,7 @@ def check_gemini_auth() -> bool:
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError):
         return False
 
-def generate_with_gemini_cli(prompt: str, parse_json: bool = True) -> dict:
+def generate_with_gemini_cli(prompt: str, parse_json: bool = True, timeout: int = 120) -> dict:
     """
     Calls the Gemini CLI with the given prompt.
     If parse_json is True, returns the parsed JSON output.
@@ -40,8 +40,8 @@ def generate_with_gemini_cli(prompt: str, parse_json: bool = True) -> dict:
     command = ["gemini", "--yolo", "-p", prompt]
     
     try:
-        logging.info("Calling Gemini CLI...")
-        result = subprocess.run(command, capture_output=True, text=True, check=True)
+        logging.info(f"Calling Gemini CLI (timeout={timeout}s)...")
+        result = subprocess.run(command, capture_output=True, text=True, check=True, timeout=timeout)
         
         raw_output = result.stdout
         logging.info(f"--- RAW GEMINI CLI RESPONSE ---\n{raw_output}\n-----------------------------")
@@ -52,6 +52,9 @@ def generate_with_gemini_cli(prompt: str, parse_json: bool = True) -> dict:
         cleaned_json = raw_output.strip().replace("```json", "").replace("```", "")
         return json.loads(cleaned_json)
 
+    except subprocess.TimeoutExpired as e:
+        logging.error(f"Gemini CLI call timed out after {timeout} seconds.")
+        return {"error": "Timeout", "details": f"Gemini CLI timed out after {timeout} seconds."}
     except subprocess.CalledProcessError as e:
         logging.error(f"Gemini CLI call failed with exit code {e.returncode}.")
         logging.error(f"Stderr: {e.stderr}")

@@ -37,8 +37,9 @@ def generate_factions_from_llm(app, theme: dict):
             os.environ.pop("TOKENIZERS_PARALLELISM", None)
 
     # --- Process the response (from either source) ---
-    if not faction_data or "error" in faction_data:
-        logging.error(f"Faction generation failed: {faction_data.get('details', 'No details')}")
+    if not isinstance(faction_data, dict) or "error" in faction_data:
+        details = faction_data.get('details', 'No details') if isinstance(faction_data, dict) else "Non-dict response"
+        logging.error(f"Faction generation failed: {details}")
         return _get_fallback_factions()
 
     return faction_data

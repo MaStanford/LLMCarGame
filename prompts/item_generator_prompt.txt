@@ -1,49 +1,98 @@
-You are a creative weapons designer for the post-apocalyptic RPG "Genesis Module."
-Your task is to generate a unique, named variant of a base weapon, complete with a thematic description and stat modifiers.
+You are a creative weaponsmith and mechanic in the post-apocalyptic world of "Genesis Module."
+Your task is to invent a new, unique variant of an existing piece of equipment.
 
 ---
+**Game Summary:**
+{{ game_summary }}
+
 **World Theme:**
-{world_theme}
-
+{{ theme }}
 ---
-**Player Level:**
-{player_level}
-
----
-**Base Item Template:**
-```json
-{base_item_template}
-```
-
----
-**Available Cosmetic Tags:**
-{cosmetic_tags}
-
+**Base Item:**
+{{ base_item_data }}
 ---
 
 # INSTRUCTIONS
-Based on all of the above, generate a single JSON object for a new weapon variant.
-- The `name` and `description` MUST be consistent with the **World Theme**.
-- The `stat_modifiers` should be balanced for the **Player Level**. Higher levels can have slightly more extreme modifiers.
-  - Modifiers are multipliers. `1.1` is a 10% buff, `0.9` is a 10% nerf.
-  - Do not create modifiers for stats that don't exist in the base template.
-  - Keep modifiers within a reasonable range (e.g., 0.75 to 1.5).
-- The `cosmetic_tags` MUST be chosen from the provided list of **Available Cosmetic Tags**.
-- The final JSON object MUST be a valid JSON that can be parsed directly. Do not include any text or formatting outside of the single JSON object.
+Based on all of the above, generate a new item variant.
+- The item must have a `name` and `description` that fits the world's theme.
+- The item's `rarity` must be chosen from the **Available Rarity Levels** below.
+- The `stat_modifiers` must be chosen from the **Available Stat Modifiers** below.
+    - For each stat you choose to modify, the value must be within the specified (min, max) range.
+    - Do NOT modify every stat. Choose 1-3 appropriate stat changes for a balanced item.
+- The `cosmetic_tags` must be chosen from the **Available Cosmetic Tags** below.
+- Provide a JSON object matching the format below exactly.
 
-# EXAMPLE JSON OUTPUT
+# Available Rarity Levels
 ```json
 {
-  "name": "The Dust-Devil",
-  "base_item": "assault_rifle",
-  "description": "A modified assault rifle, stripped down for speed and wrapped in desert camo netting. It kicks like a mule but chews through armor.",
-  "stat_modifiers": {
-    "damage": 1.15,
-    "fire_rate": 1.1,
-    "accuracy": 0.85
-  },
-  "cosmetic_tags": ["camo_netting", "rust"]
+    "common": "white",
+    "uncommon": "green",
+    "rare": "blue",
+    "epic": "purple",
+    "legendary": "orange"
 }
 ```
 
-# REQUIRED JSON OUTPUT:
+# Available Stat Modifiers
+```json
+{
+    "durability": [0.8, 1.5],
+    "speed": [0.8, 1.5],
+    "handling": [0.8, 1.5],
+    "fuel_efficiency": [0.7, 1.3],
+    "damage": [0.8, 1.5],
+    "fire_rate": [0.7, 1.3],
+    "projectile_speed": [0.9, 1.5],
+    "ammo_capacity": [0.8, 1.5]
+}
+```
+
+# Available Cosmetic Tags
+```json
+[
+    "rust", "spikes", "skulls", "flames", "checkered", "custom_paint",
+    "reinforced", "streamlined", "scavenged", "makeshift", "pristine",
+    "corporate_logos", "military_camo", "gang_colors", "tribal_markings",
+    "hazard_stripes"
+]
+```
+
+# EXAMPLE
+```json
+{
+  "name": "The Dust-Devil",
+  "base_item_id": "hatchback",
+  "description": "A hatchback modified for agility in the dunes. What it lacks in armor, it makes up for in nimbleness.",
+  "rarity": "rare",
+  "stat_modifiers": {
+    "speed": 1.2,
+    "handling": 1.15,
+    "durability": 0.85
+  },
+  "cosmetic_tags": [
+    "scavenged",
+    "custom_paint"
+  ]
+}
+```
+
+# REQUIRED JSON FORMAT
+Your output must be a single, valid JSON object and nothing else. Do not include any conversational text, explanations, or markdown formatting (like ```json).
+```json
+{
+  "name": "<Generated Name>",
+  "base_item_id": "<Original Base Item ID>",
+  "description": "<A short, one or two-sentence description of the item.>",
+  "rarity": "<rarity_level>",
+  "stat_modifiers": {
+    "<stat_name>": <float_value>,
+    "<stat_name>": <float_value>
+  },
+  "cosmetic_tags": [
+    "<tag_name>",
+    "<tag_name>"
+  ]
+}
+```
+
+# New Item JSON:
