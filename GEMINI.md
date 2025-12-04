@@ -40,7 +40,7 @@ This project is a terminal-based, open-world, automotive RPG survival game. Play
     -   **Ammo:** Required for weapons, purchased at weapon shops.
 - **Quests:**
     -   **Town Hall:** Each cities town will offer a quest. 
-    -   **Quest types:** There are 4 quest types, kill n, survive n time, kill boss, defend location
+    -   **Quest types:** There are 4 quest types, kill n, survive n time, kill boss, defend location, deliver package
     -   **Progression:** Quests get harder the more you complete and the higher you level up
     -   **Town reputation:** Completing quests increses town reputation up to a limit of 100, a reputation is a modifier for town prices and drops for quests and enemies in the town.  
 - **Shops:** (Price determined by town reputation)
@@ -341,7 +341,7 @@ The game is built around the **Textual TUI framework**, which provides an event-
     - [ ] Swivel speed will be related to level
     - [ ] Mouse can be used, cursor is where projectile will be shot at, so figure out angle to hit the cursor location and mouse click to shoot. 
 - [ ] **Add quest type:** 
-    - [ ] Deliver package: Deliver a package to a towns city hall
+    - [x] Deliver package: Deliver a package to a towns city hall
     - [x] Defend location: Defend a location for n seconds
 - [ ] **Hub city static defense:**
     - [ ] Hub cities will have static defenses

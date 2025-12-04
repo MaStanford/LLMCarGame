@@ -16,6 +16,8 @@ There are 5 major factions vying for control of the wasteland.
     *   `KILL_BOSS`: Hunt down and destroy a specific, powerful enemy vehicle.
     *   `DESTROY_CONVOY`: Ambush and destroy a group of weaker enemy vehicles.
     *   `SURVIVE_WAVE`: Survive an onslaught of enemies for a set amount of time.
+    *   `DELIVER_PACKAGE`: Transport a package to a specific location.
+    *   `DEFEND_LOCATION`: Defend a location from waves of enemies.
 *   **Reputation:** The player's personal standing with each faction. High reputation unlocks better opportunities. Low reputation can lead to being attacked on sight.
 *   **Hub Cities:** Each faction has a central, static Hub City that serves as their capital. All other cities are procedurally generated, and their allegiance is determined by which Hub City is closest.
 *   **Conquest:** A faction can be taken over. This requires the player to first reduce the target faction's Control score below 20, then accept a special "Decisive Battle" quest from a rival to destroy the target's Faction Boss.

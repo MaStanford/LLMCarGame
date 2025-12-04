@@ -164,8 +164,16 @@ class WorldBuildingScreen(Screen):
         load_triggers(game_state)
         
         # Set player position
-        game_state.car_world_x = 10.0
-        game_state.car_world_y = 10.0
+        # Find a safe spawn point in the starting city (0, 0)
+        from ..world.generation import get_buildings_in_city, find_safe_spawn_point
+        
+        buildings = get_buildings_in_city(0, 0)
+        # Try to spawn near the center but safe
+        start_x, start_y = 0.0, 0.0
+        safe_x, safe_y = find_safe_spawn_point(start_x, start_y, buildings, game_state.player_car, max_radius=100)
+        
+        game_state.car_world_x = safe_x
+        game_state.car_world_y = safe_y
         game_state.player_car.x = game_state.car_world_x
         game_state.player_car.y = game_state.car_world_y
         

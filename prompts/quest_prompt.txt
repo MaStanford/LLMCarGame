@@ -106,6 +106,23 @@ Based on all of the above, generate a new quest.
 }
 ```
 
+# EXAMPLE 5 (Survival)
+```json
+{
+  "name": "Survive the Swarm",
+  "description": "A horde of frenzied marauders is closing in on our position. Hold them off until extraction arrives.",
+  "dialog": "Our scouts just tripped a wire they shouldn't have. We've got a whole swarm of marauders coming down on this position, and we're pinned down. Hold them off for just two minutes—that's all we need for the evac vehicle to get here.",
+  "objectives": [
+    ["SurvivalObjective", [120]]
+  ],
+  "rewards": {
+    "xp": 1200,
+    "cash": 1800
+  },
+  "target_faction": null
+}
+```
+
 # REQUIRED JSON FORMAT
 Your output must be a single, valid JSON object and nothing else. Do not include any conversational text, explanations, or markdown formatting (like ```json).
 ```json
