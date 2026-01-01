@@ -368,5 +368,19 @@ QUEST_TEMPLATES = {
             "xp": 1000,
             "cash": 500,
         }
+    },
+    "defend_convoy": {
+        "name": "Convoy Guardian",
+        "description": "A supply convoy is heading to a nearby settlement, but intelligence reports a planned ambush by Marauders. Protect the convoy and ensure the supplies get through.",
+        "offer_dialog": "We've got a convoy of essential supplies heading for the settlement at Echo Creek. Our scouts spotted a Marauder war party gathering along the route, planning to hit them at the old overpass. We need a seasoned driver to run escort and make sure that convoy arrives in one piece. Can you handle it?",
+        "detail_dialog": "The convoy will be passing through the Old Overpass. Get there and hold off any attackers until the convoy is clear. It should take a couple of minutes.",
+        "completion_dialog": "The convoy made it through safely. You've saved a lot of lives today. Here's your payment.",
+        "objectives": [
+            (DefendLocationObjective, ["Old Overpass", 3600]),
+        ],
+        "rewards": {
+            "xp": 1000,
+            "cash": 2000,
+        }
     }
 }

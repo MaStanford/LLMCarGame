@@ -1,56 +1,58 @@
-# car/logic/item_validation.py
-
-from car.data.item_modifiers import STAT_MODIFIERS, COSMETIC_TAGS, RARITY_LEVELS
+import logging
+from ..data.item_modifiers import RARITY_LEVELS, STAT_MODIFIERS, COSMETIC_TAGS
 
 def validate_generated_item(item_data: dict) -> bool:
     """
-    Validates a generated item against the defined data structures.
+    Rigorously checks every key and value in the JSON returned by the LLM.
 
     Args:
-        item_data: A dictionary representing the generated item.
+        item_data: The dictionary representing the generated item.
 
     Returns:
-        True if the item is valid, False otherwise.
+        True if the item data is valid, False otherwise.
     """
-    # Validate top-level keys
     required_keys = ["name", "base_item_id", "description", "rarity", "stat_modifiers", "cosmetic_tags"]
-    if not all(key in item_data for key in required_keys):
-        # logging.error(f"Missing required key in item data: {item_data}")
-        return False
+    for key in required_keys:
+        if key not in item_data:
+            logging.error(f"Generated item missing required key: {key}")
+            return False
 
-    # Validate data types
     if not isinstance(item_data["name"], str) or not item_data["name"]:
+        logging.error("Generated item 'name' must be a non-empty string.")
         return False
+
     if not isinstance(item_data["base_item_id"], str) or not item_data["base_item_id"]:
-        return False
-    if not isinstance(item_data["description"], str) or not item_data["description"]:
-        return False
-    if not isinstance(item_data["rarity"], str):
-        return False
-    if not isinstance(item_data["stat_modifiers"], dict):
-        return False
-    if not isinstance(item_data["cosmetic_tags"], list):
+        logging.error("Generated item 'base_item_id' must be a non-empty string.")
         return False
 
-    # Validate rarity
+    if not isinstance(item_data["description"], str):
+        logging.error("Generated item 'description' must be a string.")
+        return False
+
     if item_data["rarity"] not in RARITY_LEVELS:
+        logging.error(f"Generated item 'rarity' is not a valid rarity level: {item_data['rarity']}")
         return False
 
-    # Validate stat modifiers
+    if not isinstance(item_data["stat_modifiers"], dict):
+        logging.error("Generated item 'stat_modifiers' must be a dictionary.")
+        return False
+
     for stat, value in item_data["stat_modifiers"].items():
         if stat not in STAT_MODIFIERS:
+            logging.error(f"Generated item has an invalid stat modifier: {stat}")
             return False
-        if not isinstance(value, (int, float)):
-            return False
-        min_mod, max_mod = STAT_MODIFIERS[stat]
-        if not (min_mod <= value <= max_mod):
+        min_val, max_val = STAT_MODIFIERS[stat]
+        if not isinstance(value, (int, float)) or not (min_val <= value <= max_val):
+            logging.error(f"Generated item stat '{stat}' has an invalid value: {value}")
             return False
 
-    # Validate cosmetic tags
+    if not isinstance(item_data["cosmetic_tags"], list):
+        logging.error("Generated item 'cosmetic_tags' must be a list.")
+        return False
+
     for tag in item_data["cosmetic_tags"]:
-        if not isinstance(tag, str):
-            return False
         if tag not in COSMETIC_TAGS:
+            logging.error(f"Generated item has an invalid cosmetic tag: {tag}")
             return False
 
     return True

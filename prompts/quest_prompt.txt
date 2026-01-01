@@ -3,25 +3,72 @@ Your task is to generate a new, compelling quest that fits the current state of 
 
 ---
 **Game Summary:**
-{{ game_summary }}
+This project is a terminal-based, open-world, automotive RPG survival game. Players select a starting vehicle and embark on an adventure in an infinitely-generated, random world, driven by a singular goal: to find the legendary "Genesis Module." This piece of pre-apocalypse technology is rumored to be the only thing powerful enough to allow a vehicle to escape the wasteland's harsh environment. The player's journey will involve navigating the complex political landscape of warring factions, taking on quests, and upgrading their vehicle in hopes of finally tracking down the module and winning their freedom.
 
 **Story Intro:**
-{{ story_intro }}
+Awaiting story intro.
 
 **Player State:**
-{{ player_state }}
+New game state.
 ---
 WASTELAND STATUS REPORT:
-{{ world_state }}
+{
+  "nova_syndicate": {
+    "name": "Nova Syndicate",
+    "description": "A ruthless corporation specializing in illicit pre-war technology. Their freighters are slow but heavily armed.",
+    "hub_city_coordinates": [-4000, 4000],
+    "control": 50,
+    "relationships": { "star_serpents": "Hostile", "aetherian_guild": "Hostile", "solstice_traders": "Neutral", "the_void_port": "Neutral" },
+    "units": ["ArmoredTruck", "GuardTruck", "Technical"],
+    "faction_boss": { "name": "Director Kaelen", "vehicle": "WarRig", "hp_multiplier": 6.0, "damage_multiplier": 2.8 }
+  },
+  "star_serpents": {
+    "name": "Star Serpents",
+    "description": "Daring pirates and smugglers known for their lightning-fast blockade runs and hit-and-run tactics.",
+    "hub_city_coordinates": [3000, -3000],
+    "control": 50,
+    "relationships": { "nova_syndicate": "Hostile", "aetherian_guild": "Hostile", "solstice_traders": "Allied", "the_void_port": "Neutral" },
+    "units": ["RaiderBuggy", "MuscleCar", "RustySedan"],
+    "faction_boss": { "name": "Captain Vex", "vehicle": "MuscleCar", "hp_multiplier": 4.0, "damage_multiplier": 3.5 }
+  },
+  "aetherian_guild": {
+    "name": "Aetherian Guild",
+    "description": "A mysterious collective of explorers and information brokers who trade in secrets and rare materials.",
+    "hub_city_coordinates": [5000, 5000],
+    "control": 50,
+    "relationships": { "nova_syndicate": "Hostile", "star_serpents": "Hostile", "solstice_traders": "Hostile", "the_void_port": "Neutral" },
+    "units": ["Technical", "RustySedan", "GuardTruck"],
+    "faction_boss": { "name": "The Oracle", "vehicle": "Peacekeeper", "hp_multiplier": 4.5, "damage_multiplier": 3.0 }
+  },
+  "solstice_traders": {
+    "name": "Solstice Traders",
+    "description": "Independent merchants and prospectors focused on rebuilding trade routes and galactic commerce.",
+    "hub_city_coordinates": [-5000, -5000],
+    "control": 50,
+    "relationships": { "nova_syndicate": "Neutral", "star_serpents": "Allied", "aetherian_guild": "Hostile", "the_void_port": "Neutral" },
+    "units": ["Miner", "Technical", "RustBucket"],
+    "faction_boss": { "name": "Matron Helia", "vehicle": "Miner", "hp_multiplier": 7.0, "damage_multiplier": 1.5 }
+  },
+  "the_void_port": {
+    "name": "The Void Port",
+    "description": "A neutral deep-space station, a haven for smugglers, bounty hunters, and those avoiding the corporate war.",
+    "hub_city_coordinates": [0, 0],
+    "control": 100,
+    "relationships": { "nova_syndicate": "Neutral", "star_serpents": "Neutral", "aetherian_guild": "Neutral", "solstice_traders": "Neutral" },
+    "units": ["RustySedan", "Technical"],
+    "faction_boss": null
+  }
+}
 ---
 WORLD MAP:
-{{ world_details }}
+No world details available.
 ---
 PREVIOUSLY...
-{{ narrative_history }}
+No narrative history available.
 ---
-QUEST CONTEXT:
-{{ quest_context }}
+You are generating a quest for the city of 'The Void Port'.
+This city is controlled by the 'The Void Port' faction.
+Their vibe is: A neutral deep-space station, a haven for smugglers, bounty hunters, and those avoiding the corporate war.
 ---
 
 # INSTRUCTIONS

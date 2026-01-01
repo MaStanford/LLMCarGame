@@ -318,19 +318,19 @@ The game is built around the **Textual TUI framework**, which provides an event-
 
 *   **[x] Create Base Templates:**
     *   Formalize our existing Python classes for `Weapon` and `Vehicle` as the definitive "base templates."
-*   **[ ] Develop a "Modifier" Data Structure:**
-    *   Define a clear JSON structure for how the LLM can specify modifications.
+*   **[x] Develop a "Modifier" Data Structure:**
+    *   Defined a clear data structure for item modifiers in `car/data/item_modifiers.py`. This file contains rarity levels, stat modifier ranges, and cosmetic tags that the LLM can use to generate unique item variants.
     *   **Example:** `{"name": "The Dust-Devil", "base_item": "hatchback", "description": "A modified hatchback built for speed on rough terrain.", "stat_modifiers": {"speed": 1.1, "durability": 0.9, "handling": 1.05}, "cosmetic_tags": ["spikes", "rust"]}`.
-*   **[ ] Create `item_generator_prompt.txt`:**
+*   **[x] Create `item_generator_prompt.txt`:**
     *   This prompt will be used to generate new items as quest rewards or rare loot.
     *   **Input:** The world theme, player level, and the base item template.
     *   **Output:** A single, validated JSON object representing the new item variant.
-*   **[ ] Implement a Strict Validation System:**
-    *   Create a new function, `validate_generated_item(item_data)`, that rigorously checks every key and value in the JSON returned by the LLM.
-    *   It must check data types, ensure stat modifiers are within a reasonable range, and verify that cosmetic tags exist in our pre-defined library.
+*   **[x] Implement a Strict Validation System:**
+    *   Created a new function, `validate_generated_item(item_data)`, in `car/logic/item_validation.py` that rigorously checks every key and value in the JSON returned by the LLM.
+    *   It checks data types, ensures stat modifiers are within a reasonable range, and verifies that cosmetic tags exist in our pre-defined library.
     *   **Crucially:** If validation fails, the system must log the error and fall back to a standard, non-generated item to prevent crashes.
-*   **[ ] Integrate into Loot System:**
-    *   Update the loot generation logic to have a chance to call the `item_generator` instead of dropping a standard item, especially for boss fights or high-level quests.
+*   **[x] Integrate into Loot System:**
+    *   Updated the loot generation logic in `car/logic/loot_generation.py` to have a chance to call the `generate_item_from_llm` function instead of dropping a standard item, especially for boss fights or high-level quests. This functionality can be expanded to other loot sources in the future.
 
 ### General Tasks
 - [x] **Gemini CLI Integration:**
