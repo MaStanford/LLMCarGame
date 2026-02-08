@@ -1,26 +1,29 @@
 import logging
+from typing import Dict, Tuple
 from .prompt_builder import build_faction_prompt
 from .llm_inference import generate_json
 from .llm_schemas import FACTION_SCHEMA
 
-def generate_factions_from_llm(app, theme: dict):
+def generate_factions_from_llm(app, theme: dict) -> Tuple[Dict, bool]:
     """
     Generates a new set of factions by calling the language model, guided by a theme.
+    Returns (factions_dict, is_fallback) where is_fallback=True if LLM generation failed.
     """
     prompt = build_faction_prompt(theme)
 
     faction_data = generate_json(app, prompt, json_schema=FACTION_SCHEMA, max_tokens=2048, temperature=0.8)
 
     if faction_data is None:
-        return _get_fallback_factions()
+        logging.warning("Faction generation returned None — using fallback factions.")
+        return _get_fallback_factions(), True
 
     # --- Process the response ---
     if not isinstance(faction_data, dict) or "error" in faction_data:
         details = faction_data.get('details', 'No details') if isinstance(faction_data, dict) else "Non-dict response"
         logging.error(f"Faction generation failed: {details}")
-        return _get_fallback_factions()
+        return _get_fallback_factions(), True
 
-    return faction_data
+    return faction_data, False
 
 def _get_fallback_factions():
     """Returns a hardcoded fallback response for testing or when the LLM is unavailable."""

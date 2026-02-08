@@ -6,14 +6,14 @@ class MapScreen(ModalScreen):
     """The map screen."""
 
     BINDINGS = [
-        Binding("escape", "app.pop_screen", "Back"),
-        Binding("m", "app.pop_screen", "Back"),
-        Binding("up", "scroll_map(0, -1)", "Up"),
-        Binding("down", "scroll_map(0, 1)", "Down"),
-        Binding("left", "scroll_map(-1, 0)", "Left"),
-        Binding("right", "scroll_map(1, 0)", "Right"),
-        Binding("c", "center_map", "Center"),
-        Binding("enter", "select_waypoint", "Select"),
+        Binding("escape", "app.pop_screen", "Back", show=True),
+        Binding("m", "app.pop_screen", "Back", show=True),
+        Binding("up", "scroll_map(0, -1)", "Up", show=True),
+        Binding("down", "scroll_map(0, 1)", "Down", show=True),
+        Binding("left", "scroll_map(-1, 0)", "Left", show=True),
+        Binding("right", "scroll_map(1, 0)", "Right", show=True),
+        Binding("c", "center_map", "Center", show=True),
+        Binding("enter", "select_waypoint", "Select", show=True),
     ]
 
     def compose(self):

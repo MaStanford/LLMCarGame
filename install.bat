@@ -64,8 +64,8 @@ call venv\Scripts\activate.bat
 REM --- Install base requirements ---
 echo.
 echo Installing base requirements...
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+%PYTHON% -m pip install --upgrade pip
+%PYTHON% -m pip install -r requirements.txt
 
 REM --- llama-cpp-python ---
 echo.
@@ -77,21 +77,21 @@ if %ERRORLEVEL% EQU 0 (
     echo   This requires the CUDA toolkit. Download from:
     echo   https://developer.nvidia.com/cuda-downloads
     set CMAKE_ARGS=-DGGML_CUDA=on
-    python -m pip install llama-cpp-python --force-reinstall --no-cache-dir
+    %PYTHON% -m pip install llama-cpp-python --force-reinstall --no-cache-dir
     if %ERRORLEVEL% NEQ 0 (
         echo.
         echo WARNING: CUDA build failed. Falling back to CPU-only build.
         set CMAKE_ARGS=
-        python -m pip install llama-cpp-python --force-reinstall --no-cache-dir
+        %PYTHON% -m pip install llama-cpp-python --force-reinstall --no-cache-dir
     )
 ) else (
     echo No NVIDIA GPU detected — installing CPU-only build.
-    python -m pip install llama-cpp-python --force-reinstall --no-cache-dir
+    %PYTHON% -m pip install llama-cpp-python --force-reinstall --no-cache-dir
 )
 
 REM Install Windows-specific extras if file is non-empty
 for %%A in (requirements-windows.txt) do if %%~zA GTR 2 (
-    python -m pip install -r requirements-windows.txt
+    %PYTHON% -m pip install -r requirements-windows.txt
 )
 
 echo.
@@ -102,9 +102,9 @@ REM --- Offer model download ---
 echo.
 set /P "DOWNLOAD_MODEL=Download an AI model now? (Required for local mode) [y/N] "
 if /I "%DOWNLOAD_MODEL%"=="y" (
-    python download_model.py
+    %PYTHON% download_model.py
 ) else (
-    echo Skipping model download. Run 'python download_model.py' later.
+    echo Skipping model download. Run '%PYTHON% download_model.py' later.
 )
 
 echo.

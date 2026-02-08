@@ -14,8 +14,6 @@ class SettingsScreen(Screen):
         Binding("escape", "app.pop_screen", "Back"),
     ]
 
-    CLI_PRESET_CYCLE = ["gemini", "claude", "custom"]
-
     def __init__(self) -> None:
         super().__init__()
         self.settings = load_settings()
@@ -26,47 +24,55 @@ class SettingsScreen(Screen):
             with Vertical(id="settings-container"):
                 yield Static("[bold]Settings[/bold]", id="title")
 
-                yield Static("World Generation Mode", classes="setting-label")
-                yield Button(self.get_mode_label(), id="toggle_mode")
+                yield Static("LLM Engine", classes="setting-label")
+                yield Button(self._mode_label(), id="toggle_mode")
 
-                yield Static("Local Model Size", classes="setting-label")
-                yield Button(self.get_model_size_label(), id="toggle_model_size")
-
-                yield Static("CLI LLM Tool (for CLI mode)", classes="setting-label")
-                yield Button(self.get_cli_preset_label(), id="toggle_cli_preset")
+                yield Static("", id="sub_option_label", classes="setting-label")
+                yield Button("", id="toggle_sub_option")
 
                 yield Static("Dev Mode", classes="setting-label")
-                yield Button(self.get_dev_mode_label(), id="toggle_dev_mode")
+                yield Button(self._dev_mode_label(), id="toggle_dev_mode")
 
                 yield Button("Back", id="back", variant="primary")
         yield Footer()
 
-    def get_mode_label(self) -> str:
-        """Returns the display label for the current generation mode."""
+    def on_mount(self) -> None:
+        """Update the sub-option to match the current mode."""
+        self._refresh_sub_option()
+
+    # --- Label helpers ---
+
+    def _mode_label(self) -> str:
+        mode = self.settings.get("generation_mode", "local")
+        return "Engine: Local (On-Device)" if mode == "local" else "Engine: Command Line"
+
+    def _sub_option_label_text(self) -> str:
         mode = self.settings.get("generation_mode", "local")
         if mode == "local":
-            return "Mode: Local LLM"
-        return "Mode: CLI LLM"
+            return "Model Size"
+        return "CLI Provider"
 
-    def get_model_size_label(self) -> str:
-        """Returns the display label for the model size."""
-        size = self.settings.get("model_size", "small")
-        names = {"small": "Small (Qwen3-4B)", "large": "Large (Qwen3-8B)"}
-        return f"Model: {names.get(size, size)}"
+    def _sub_option_button_label(self) -> str:
+        mode = self.settings.get("generation_mode", "local")
+        if mode == "local":
+            size = self.settings.get("model_size", "small")
+            names = {"small": "Small (Qwen3-4B)", "large": "Large (Qwen3-8B)"}
+            return names.get(size, size)
+        else:
+            preset = self.settings.get("cli_preset", "gemini")
+            labels = {"gemini": "Google Gemini", "claude": "Anthropic Claude"}
+            return labels.get(preset, preset)
 
-    def get_cli_preset_label(self) -> str:
-        """Returns the display label for the CLI LLM preset."""
-        preset = self.settings.get("cli_preset", "gemini")
-        if preset == "custom":
-            cmd = self.settings.get("custom_cli_command", "") or "not set"
-            return f"CLI Tool: Custom ({cmd})"
-        desc = CLI_PRESETS.get(preset, {}).get("description", preset)
-        return f"CLI Tool: {desc}"
-
-    def get_dev_mode_label(self) -> str:
-        """Returns the display label for the dev mode."""
+    def _dev_mode_label(self) -> str:
         dev_mode = self.settings.get("dev_mode", False)
         return f"Dev Mode: {'On' if dev_mode else 'Off'}"
+
+    def _refresh_sub_option(self) -> None:
+        """Update the sub-option label and button to match the current mode."""
+        self.query_one("#sub_option_label", Static).update(self._sub_option_label_text())
+        self.query_one("#toggle_sub_option", Button).label = self._sub_option_button_label()
+
+    # --- Button handlers ---
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button presses."""
@@ -74,57 +80,53 @@ class SettingsScreen(Screen):
             current_mode = self.settings.get("generation_mode", "local")
             new_mode = "gemini_cli" if current_mode == "local" else "local"
 
-            # Check auth if switching TO CLI mode
             if new_mode == "gemini_cli":
                 preset = self.settings.get("cli_preset", "gemini")
                 if not check_cli_auth(preset):
-                    tool_name = CLI_PRESETS.get(preset, {}).get("description", preset)
-                    self.notify(f"Warning: {tool_name} not found or not authenticated!", severity="warning", timeout=5.0)
+                    tool_name = {"gemini": "Google Gemini", "claude": "Anthropic Claude"}.get(preset, preset)
+                    self.notify(f"Warning: {tool_name} CLI not found or not authenticated!", severity="warning", timeout=5.0)
 
             self.settings["generation_mode"] = new_mode
             save_settings(self.settings)
-            event.button.label = self.get_mode_label()
+            event.button.label = self._mode_label()
             self.app.generation_mode = new_mode
-        elif event.button.id == "toggle_model_size":
-            current = self.settings.get("model_size", "small")
-            new_size = "large" if current == "small" else "small"
-            self.settings["model_size"] = new_size
-            save_settings(self.settings)
-            event.button.label = self.get_model_size_label()
-            self.app.model_size = new_size
-            # Force model reload on next main menu visit
-            self.app.llm_pipeline = None
-            self.notify("Model size changed. Will reload on return to main menu.", severity="information", timeout=3.0)
-        elif event.button.id == "toggle_cli_preset":
-            current = self.settings.get("cli_preset", "gemini")
-            try:
-                idx = self.CLI_PRESET_CYCLE.index(current)
-            except ValueError:
-                idx = -1
-            new_preset = self.CLI_PRESET_CYCLE[(idx + 1) % len(self.CLI_PRESET_CYCLE)]
+            self._refresh_sub_option()
 
-            self.settings["cli_preset"] = new_preset
-            save_settings(self.settings)
-            event.button.label = self.get_cli_preset_label()
-            self.app.cli_preset = new_preset
+        elif event.button.id == "toggle_sub_option":
+            mode = self.settings.get("generation_mode", "local")
 
-            # Validate the new preset
-            if new_preset == "custom":
-                cmd = self.settings.get("custom_cli_command", "")
-                if not cmd:
-                    self.notify("Custom CLI: Set 'custom_cli_command' in settings.json", severity="warning", timeout=5.0)
-            elif not check_cli_auth(new_preset):
-                tool_name = CLI_PRESETS.get(new_preset, {}).get("description", new_preset)
-                self.notify(f"{tool_name} not found or not authenticated.", severity="warning", timeout=5.0)
+            if mode == "local":
+                # Toggle between small and large
+                current = self.settings.get("model_size", "small")
+                new_size = "large" if current == "small" else "small"
+                self.settings["model_size"] = new_size
+                save_settings(self.settings)
+                self.app.model_size = new_size
+                self.app.llm_pipeline = None
+                self.notify("Model size changed. Will reload on return to main menu.", severity="information", timeout=3.0)
             else:
-                tool_name = CLI_PRESETS.get(new_preset, {}).get("description", new_preset)
-                self.notify(f"CLI tool set to {tool_name}.", severity="information", timeout=3.0)
+                # Toggle between gemini and claude
+                current = self.settings.get("cli_preset", "gemini")
+                new_preset = "claude" if current == "gemini" else "gemini"
+                self.settings["cli_preset"] = new_preset
+                save_settings(self.settings)
+                self.app.cli_preset = new_preset
+
+                tool_name = {"gemini": "Google Gemini", "claude": "Anthropic Claude"}.get(new_preset, new_preset)
+                if not check_cli_auth(new_preset):
+                    self.notify(f"{tool_name} CLI not found or not authenticated.", severity="warning", timeout=5.0)
+                else:
+                    self.notify(f"CLI provider set to {tool_name}.", severity="information", timeout=3.0)
+
+            event.button.label = self._sub_option_button_label()
+
         elif event.button.id == "toggle_dev_mode":
             current_dev_mode = self.settings.get("dev_mode", False)
             new_dev_mode = not current_dev_mode
             self.settings["dev_mode"] = new_dev_mode
             save_settings(self.settings)
-            event.button.label = self.get_dev_mode_label()
+            event.button.label = self._dev_mode_label()
             self.app.dev_mode = new_dev_mode
+
         elif event.button.id == "back":
             self.app.pop_screen()

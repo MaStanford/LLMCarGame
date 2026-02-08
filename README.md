@@ -78,15 +78,15 @@ First, install the necessary Python packages. The exact requirements vary by ope
 
 *   **For Windows:**
     ```bash
-    pip install -r requirements-windows.txt
+    python3 -m pip install -r requirements-windows.txt
     ```
 *   **For macOS:**
     ```bash
-    pip install -r requirements-macos.txt
+    python3 -m pip install -r requirements-macos.txt
     ```
 *   **For Linux:**
     ```bash
-    pip install -r requirements-linux.txt
+    python3 -m pip install -r requirements-linux.txt
     ```
 
 **2. Download the Language Model (for Local Mode)**
@@ -97,7 +97,7 @@ The installation script (`install.sh` or `install.bat`) will ask if you want to 
  
 If you skipped it during installation, you can run the downloader manually at any time:
 ```bash
-python download_model.py
+python3 download_model.py
 ```
 This will download the model (approx. 2GB) to the `models/` directory.
 

@@ -11,14 +11,14 @@ class InventoryScreen(ModalScreen):
     """The inventory screen."""
 
     BINDINGS = [
-        Binding("escape", "cancel_equip", "Back"),
-        Binding("up", "move_selection(-1)", "Up"),
-        Binding("down", "move_selection(1)", "Down"),
-        Binding("left", "switch_focus", "Switch"),
-        Binding("right", "switch_focus", "Switch"),
-        Binding("a", "rotate_preview(-1)", "Rotate Left"),
-        Binding("d", "rotate_preview(1)", "Rotate Right"),
-        Binding("enter", "select_item", "Select"),
+        Binding("escape", "cancel_equip", "Back", show=True),
+        Binding("up", "move_selection(-1)", "Up", show=True),
+        Binding("down", "move_selection(1)", "Down", show=True),
+        Binding("left", "switch_focus", "Switch", show=True),
+        Binding("right", "switch_focus", "Switch", show=True),
+        Binding("a", "rotate_preview(-1)", "Rotate Left", show=True),
+        Binding("d", "rotate_preview(1)", "Rotate Right", show=True),
+        Binding("enter", "select_item", "Select", show=True),
     ]
 
     def __init__(self) -> None:

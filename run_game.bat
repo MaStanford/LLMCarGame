@@ -8,4 +8,10 @@ IF NOT EXIST .installed (
     pause
     exit /b
 )
-python -m car
+
+REM Activate venv if present
+if exist "venv\Scripts\activate.bat" (
+    call venv\Scripts\activate.bat
+)
+
+python3 -m car %*

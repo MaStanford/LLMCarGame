@@ -87,8 +87,23 @@ class WorldBuildingScreen(Screen):
             if event.worker.state == WorkerState.SUCCESS:
                 self.world_data = event.worker.result
                 if self.world_data:
-                    logging.info("World generation successful. Starting game.")
-                    self.start_game()
+                    if self.world_data.get("used_fallback"):
+                        logging.warning("World generation used fallback data — LLM was unavailable.")
+                        self.query_one("#status_message").update(
+                            "[bold yellow]Warning: LLM unavailable — using default world data.[/bold yellow]\n"
+                            "Check Settings > Generation Mode and ensure your LLM is configured.\n"
+                            "Press Retry to try again, or Continue to play with defaults."
+                        )
+                        self.query_one(ProgressBar).display = False
+                        self.query_one("#world-building-container").mount(
+                            Button("Continue Anyway", id="continue_fallback", variant="warning")
+                        )
+                        self.query_one("#world-building-container").mount(
+                            Button("Retry", id="retry", variant="error")
+                        )
+                    else:
+                        logging.info("World generation successful. Starting game.")
+                        self.start_game()
                 else:
                     logging.error("World generation failed: No data returned.")
                     self.query_one("#status_message").update("[bold red]Error: LLM returned no data.[/bold red]")
@@ -108,12 +123,17 @@ class WorldBuildingScreen(Screen):
             self.query_one("#title", Static).update(f"[bold]{text}[/bold]")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Handle retry button press."""
+        """Handle retry or continue button press."""
         if event.button.id == "retry":
-            event.button.remove()
+            # Remove all dynamic buttons
+            for btn in self.query("#retry, #continue_fallback"):
+                btn.remove()
             self.query_one(ProgressBar).display = True
             self.query_one("#status_message").update(self.status_messages[0])
-            self.on_mount() # Re-run the generation
+            self.on_mount()
+        elif event.button.id == "continue_fallback":
+            logging.info("User chose to continue with fallback data.")
+            self.start_game()
 
     def start_game(self) -> None:
         """Finalizes game state and switches to the intro cutscene."""

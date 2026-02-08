@@ -62,8 +62,17 @@ class ThemeSelectionScreen(Screen):
             if event.worker.state == WorkerState.SUCCESS:
                 loading_indicator.display = False
                 reincarnate_button.disabled = False
-                themes = event.worker.result
-                if themes:
+                result = event.worker.result
+                if result:
+                    themes, is_fallback = result
+                    if is_fallback:
+                        self.query_one("#subtitle").update(
+                            "[bold yellow]LLM unavailable — showing default themes.[/bold yellow]\n"
+                            "Check Settings > Generation Mode and ensure your LLM is configured.\n"
+                            "Press 'Reincarnate' to retry."
+                        )
+                    else:
+                        self.query_one("#subtitle").update("Choose your world's theme.")
                     for i, theme in enumerate(themes):
                         button = Button(f"{theme['name']}\n\n[italic]{theme['description']}[/italic]", id=f"theme_{i}", variant="primary")
                         button.theme_data = theme

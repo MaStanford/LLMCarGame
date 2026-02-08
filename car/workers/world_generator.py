@@ -42,6 +42,7 @@ def generate_initial_world_worker(app: Any, new_game_settings: dict) -> Dict:
     """
     logging.info("Initial world generation worker started.")
     start_time = time.time()
+    used_fallback = False
 
     try:
         theme = new_game_settings["theme"]
@@ -50,10 +51,12 @@ def generate_initial_world_worker(app: Any, new_game_settings: dict) -> Dict:
         # Stage 1: Generate Factions
         app.post_message(StageUpdate(("stage", "Stage 1: Forging Factions...")))
         time.sleep(0.25)
-        factions = generate_factions_from_llm(app, theme)
+        factions, factions_fallback = generate_factions_from_llm(app, theme)
+        if factions_fallback:
+            used_fallback = True
 
-        if not factions or "error" in factions:
-            raise ValueError(f"Faction generation failed: {factions.get('details', 'No details')}")
+        if not factions or (isinstance(factions, dict) and "error" in factions):
+            raise ValueError(f"Faction generation failed: {factions.get('details', 'No details') if isinstance(factions, dict) else 'No data'}")
 
         neutral_faction_id = next((fid for fid, data in factions.items() if data.get("hub_city_coordinates") == [0, 0]), None)
         if not neutral_faction_id:
@@ -96,7 +99,8 @@ def generate_initial_world_worker(app: Any, new_game_settings: dict) -> Dict:
             "quests": initial_quests,
             "neutral_city_id": neutral_faction_id,
             "story_intro": story_intro,
-            "world_details": world_details
+            "world_details": world_details,
+            "used_fallback": used_fallback,
         }
 
     except Exception as e:

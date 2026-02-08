@@ -79,6 +79,14 @@ class Weapon:
     def slots(self):
         return self.base_stats["slots"]
 
+    def __eq__(self, other):
+        if not isinstance(other, Weapon):
+            return False
+        return self.instance_id == other.instance_id
+
+    def __hash__(self):
+        return hash(self.instance_id)
+
     def to_dict(self):
         """Serializes the weapon to a dictionary."""
         return {

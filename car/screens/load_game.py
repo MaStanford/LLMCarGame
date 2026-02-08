@@ -12,7 +12,7 @@ class LoadGameScreen(Screen):
     """The load game screen."""
 
     BINDINGS = [
-        Binding("escape", "app.pop_screen", "Back"),
+        Binding("escape", "app.pop_screen", "Back", show=True),
         Binding("enter", "load_selected_game", "Load", show=True),
     ]
 

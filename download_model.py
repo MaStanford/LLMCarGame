@@ -6,12 +6,12 @@ from huggingface_hub import hf_hub_download
 MODELS = {
     "small": {
         "repo": "Qwen/Qwen3-4B-GGUF",
-        "filename": "qwen3-4b-q4_k_m.gguf",
+        "filename": "Qwen3-4B-Q4_K_M.gguf",
         "description": "Qwen3 4B (Q4_K_M) — ~2.5 GB, fast, good for most hardware",
     },
     "large": {
         "repo": "Qwen/Qwen3-8B-GGUF",
-        "filename": "qwen3-8b-q4_k_m.gguf",
+        "filename": "Qwen3-8B-Q4_K_M.gguf",
         "description": "Qwen3 8B (Q4_K_M) — ~5 GB, higher quality, needs more RAM",
     },
 }

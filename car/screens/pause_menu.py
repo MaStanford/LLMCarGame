@@ -4,15 +4,17 @@ from textual.binding import Binding
 from ..logic.save_load import save_game
 from .main_menu import MainMenuScreen
 from .quest_detail import QuestDetailScreen
+from .inventory import InventoryScreen
+from .faction import FactionScreen
 from .save_game import SaveGameScreen
 
 class PauseScreen(ModalScreen):
     """The pause menu screen."""
 
     BINDINGS = [
-        Binding("up", "focus_previous", "Up"),
-        Binding("down", "focus_next", "Down"),
-        Binding("escape", "resume_game", "Back"),
+        Binding("up", "focus_previous", "Up", show=True),
+        Binding("down", "focus_next", "Down", show=True),
+        Binding("escape", "resume_game", "Back", show=True),
     ]
 
     def __init__(self) -> None:
@@ -23,7 +25,9 @@ class PauseScreen(ModalScreen):
     def compose(self):
         """Compose the layout of the screen."""
         yield Button("Resume", id="resume", variant="primary")
+        yield Button("Inventory", id="inventory", variant="default")
         yield Button("Quests", id="quests", variant="default")
+        yield Button("Factions", id="factions", variant="default")
         yield Button("Save Game", id="save_game", variant="default")
         yield Button("Main Menu", id="main_menu", variant="default")
         yield Button("Quit", id="quit", variant="error")
@@ -61,8 +65,12 @@ class PauseScreen(ModalScreen):
         """Handle button press events."""
         if event.button.id == "resume":
             self.app.pop_screen()
+        elif event.button.id == "inventory":
+            self.app.push_screen(InventoryScreen())
         elif event.button.id == "quests":
             self.app.push_screen(QuestDetailScreen())
+        elif event.button.id == "factions":
+            self.app.push_screen(FactionScreen())
         elif event.button.id == "save_game":
             self.app.push_screen(SaveGameScreen())
         elif event.button.id == "main_menu":

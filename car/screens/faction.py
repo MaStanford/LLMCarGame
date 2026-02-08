@@ -24,7 +24,7 @@ class FactionScreen(ModalScreen):
     """A modal screen to display faction intelligence."""
 
     BINDINGS = [
-        Binding("escape", "app.pop_screen", "Back"),
+        Binding("escape", "app.pop_screen", "Back", show=True),
     ]
 
     def __init__(self) -> None:

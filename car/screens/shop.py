@@ -18,12 +18,12 @@ class ShopScreen(Screen):
     """The shop screen."""
 
     BINDINGS = [
-        Binding("escape", "app.pop_screen", "Back"),
-        Binding("up", "move_selection(-1)", "Up"),
-        Binding("down", "move_selection(1)", "Down"),
-        Binding("left", "switch_focus", "Switch"),
-        Binding("right", "switch_focus", "Switch"),
-        Binding("enter", "select_item", "Select"),
+        Binding("escape", "app.pop_screen", "Back", show=True),
+        Binding("up", "move_selection(-1)", "Up", show=True),
+        Binding("down", "move_selection(1)", "Down", show=True),
+        Binding("left", "switch_focus", "Switch", show=True),
+        Binding("right", "switch_focus", "Switch", show=True),
+        Binding("enter", "select_item", "Select", show=True),
     ]
 
     def __init__(self, shop_type: str, *args, **kwargs) -> None:

@@ -1,7 +1,7 @@
 {
     "generation_mode": "gemini_cli",
-    "model_size": "large",
-    "cli_preset": "gemini",
+    "model_size": "small",
+    "cli_preset": "claude",
     "custom_cli_command": "",
     "custom_cli_args": "",
     "dev_mode": false

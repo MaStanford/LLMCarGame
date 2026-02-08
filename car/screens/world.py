@@ -22,6 +22,7 @@ from .inventory import InventoryScreen
 from .pause_menu import PauseScreen
 from .map import MapScreen
 from .faction import FactionScreen
+from .quest_detail import QuestDetailScreen
 
 from textual.events import Key
 from textual.binding import Binding
@@ -38,9 +39,11 @@ class WorldScreen(Screen):
         Binding("right", "swivel_right", "Aim Right", show=True),
         Binding("space", "fire", "Fire", show=True),
         Binding("escape", "toggle_pause", "Pause", show=True),
-        Binding("tab", "toggle_inventory", "Inventory", show=True),
+        Binding("tab", "toggle_inventory", "Inventory", show=False),
+        Binding("i", "toggle_inventory", "Inventory", show=True),
         Binding("m", "show_map", "Map", show=True),
         Binding("f", "show_factions", "Factions", show=True),
+        Binding("q", "show_quests", "Quests", show=True),
     ]
 
     def on_mount(self) -> None:
@@ -127,6 +130,10 @@ class WorldScreen(Screen):
         """Pushes the faction screen."""
         self.app.push_screen(FactionScreen())
 
+    def action_show_quests(self) -> None:
+        """Pushes the quest detail screen."""
+        self.app.push_screen(QuestDetailScreen())
+
     def compose(self):
         """Compose the layout of the screen."""
         yield GameView(id="game_view", game_state=self.app.game_state, world=self.app.world)
@@ -136,8 +143,10 @@ class WorldScreen(Screen):
             yield HudLocation(id="location_hud")
             yield CompassHUD(id="compass_hud")
 
-        yield WeaponHUD(id="weapon_hud")
-        yield EntityModal(id="entity_modal")
+        with Vertical(id="right_hud"):
+            yield WeaponHUD(id="weapon_hud")
+            yield Static("", id="right_spacer")
+            yield EntityModal(id="entity_modal")
 
         with Horizontal(id="bottom_hud"):
             yield QuestHUD(id="quest_hud")

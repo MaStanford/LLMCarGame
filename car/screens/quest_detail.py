@@ -7,7 +7,7 @@ class QuestDetailScreen(ModalScreen):
     """A screen to display the details of the current quest."""
 
     BINDINGS = [
-        Binding("escape", "app.pop_screen", "Back"),
+        Binding("escape", "app.pop_screen", "Back", show=True),
     ]
 
     def compose(self):

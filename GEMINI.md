@@ -78,7 +78,7 @@ The game includes a logging system for debugging purposes. By default, logging i
 
 To use the Textual Devtools, you must first install the `textual-dev` package:
 ```bash
-pip install textual-dev
+python3 -m pip install textual-dev
 ```
 Then, run the game with the `--dev` flag:
 ```bash

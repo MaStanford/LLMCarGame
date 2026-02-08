@@ -1,12 +1,12 @@
 import logging
-from typing import List, Dict
+from typing import List, Dict, Tuple
 from .llm_inference import generate_json
 from .llm_schemas import THEME_SCHEMA
 
-def generate_themes_from_llm(app) -> List[Dict[str, str]]:
+def generate_themes_from_llm(app) -> Tuple[List[Dict[str, str]], bool]:
     """
-    Generates a list of three distinct themes for the game, using either the local
-    LLM pipeline or the Gemini CLI based on the current settings.
+    Generates a list of three distinct themes for the game.
+    Returns (themes, is_fallback) where is_fallback=True if LLM generation failed.
     """
     with open("prompts/theme_generation_prompt.txt", "r") as f:
         prompt = f.read()
@@ -16,22 +16,23 @@ def generate_themes_from_llm(app) -> List[Dict[str, str]]:
     theme_data = generate_json(app, prompt, json_schema=THEME_SCHEMA, max_tokens=512, temperature=0.9)
 
     if theme_data is None:
-        return _get_fallback_themes()
+        logging.warning("Theme generation returned None — using fallback themes.")
+        return _get_fallback_themes(), True
 
     # --- Process the response ---
     if not isinstance(theme_data, dict) or "error" in theme_data:
         details = theme_data.get('details', 'No details') if isinstance(theme_data, dict) else "Non-dict response"
         logging.error(f"Theme generation failed: {details}")
-        return _get_fallback_themes()
+        return _get_fallback_themes(), True
 
     if "themes" in theme_data and isinstance(theme_data["themes"], list) and len(theme_data["themes"]) == 3:
-        return theme_data["themes"]
+        return theme_data["themes"], False
     else:
         logging.error(f"LLM output for themes has incorrect structure: {theme_data}")
-        return _get_fallback_themes()
+        return _get_fallback_themes(), True
 
 def _get_fallback_themes() -> List[Dict[str, str]]:
-    """Returns a hardcoded list of themes for testing or when the LLM is unavailable."""
+    """Returns a hardcoded list of themes for when the LLM is unavailable."""
     return [
         {
             "name": "Classic Wasteland",
