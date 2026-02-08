@@ -4,13 +4,18 @@
 
 This project is a collaboration between two super-developers with a shared passion for creating awesome, retro-inspired games. We're channeling the spirit of an 80s buddy cop movie: we're the best in the business, we don't play by the rules, and we're here to get the job done. There's no room for ego or blame here—just pure, unadulterated coding and creative problem-solving. We're in this together, and we're going to make something totally radical. You, Gemini, take on the role of the older more experience super coder, who can solve any problem. 
 
-**Our Workflow:** For any new feature, bug fix, or refactor, our process is as follows:
-1.  **Discuss the Goal:** We'll first agree on what we're trying to achieve.
-2.  **Formulate a Plan:** Gemini will propose a clear, step-by-step plan outlining the necessary code changes, new files, and documentation updates.
-3.  **Approve and Execute:** Once the plan is approved, Gemini will execute it. This ensures we're always in sync and building with a shared vision.
-4.  **Update documentation and task list:** Context must be updated, tasks updated, architecture, and game overview. 
-5.  **Verify:** Verify the changes or fix or feature is working. 
-6.  **Commit Changes:** After the changes are made, and verified, Gemini will keep track of the modified files and prompt to either commit the changes or wait for more changes.
+**Our Workflow:** We are a high-performance team. Our development follows a strict issue-based workflow:
+1.  **Pull Issues:** All work is tracked in [GitHub Issues](https://github.com/MaStanford/LLMCarGame/issues). Check the backlog for what's next.
+2.  **Discuss & Plan:** Before starting, we discuss the goal and formulate a plan.
+3.  **Execute & PR:** Work is performed in a feature branch. Once verified, a Pull Request (PR) is created linking the issue. 
+4.  **Next Issue:** After creating the PR, we immediately transition to the next issue.
+5.  **Merge:** PRs are reviewed and merged into the main branch.
+
+**Our Preferred Process:**
+1.  Check GitHub for open issues.
+2.  Declare which issue we are starting.
+3.  Write the code, verify the fix/feature.
+4.  Create a PR and move on.
 
 **Preferred tools:**
 1. Git tools for reading files
@@ -196,194 +201,17 @@ The game is built around the **Textual TUI framework**, which provides an event-
     -   This ensures that the rendered position of the weapon and the logical origin of its projectiles are always identical, preventing visual disconnects. The `car/rendering/renderer.py` module is the source of truth for this calculation.
 
 
-## Tasks
+## Development Backlog
 
-### **Project: The Ghost in the Machine - A Dynamic, LLM-Powered World**
+All pending features, bug fixes, and refactors are now managed as **GitHub Issues**. 
 
-**Goal:** To overhaul the game's core progression by integrating a local LLM to generate quests and a new "Faction Control" system to make the world react to the player's choices.
+- **Current Backlog:** [GitHub Issues](https://github.com/MaStanford/LLMCarGame/issues)
+- **Sync Tool:** Use `scripts/sync_tasks_to_github.py` to upload any new tasks added to this file (under an "Open Tasks" section) to the repository.
 
-**Phase 1: Foundational Architecture & Data**
-- [x] **Create Directory Structure:** Create a new top-level directory named `prompts/` to store all our LLM-related templates and context files.
-- [x] **Create Prompt Context:** Inside `prompts/`, create a new file, `game_context.txt`. This file will contain a concise, LLM-friendly summary of the game's world, mechanics, and factions, distilled from `GEMINI.md`.
-- [x] **Create Quest Prompt Template:** Create `prompts/quest_prompt.txt`. This will be the master template for generating quests.
-- [x] **Update `GameState`:** Add the `faction_control` dictionary to `car/game_state.py`.
-- [x] **Update `FACTION_DATA`:** Add a default `control` value to each faction in `car/data/factions.py`.
-- [x] **Install LLM Library:** Add `llama-cpp-python` to `requirements.txt`.
+### Workflow reminder:
+- Pick an issue from the GitHub list.
+- Implement the solution.
+- Verify the work.
+- Create a PR referencing the issue (e.g., `Fixes #65`).
+- Move to the next task.
 
-**Phase 2: Logic Implementation**
-- [x] **Create `faction_logic.py`:** This new module will house the functions for increasing and decreasing Faction Control.
-- [x] **Create `llm_quest_generator.py`:** This new module will contain the core `generate_quest_from_llm` function.
-- [x] **Integrate Control with Quests:** Modify `car/logic/quest_logic.py` to call the new Faction Control functions upon quest completion or failure.
-- [x] **Implement Quest Log:** Update `car/logic/save_load.py` to manage the new `quest_log.json` file.
-
-**Phase 3: Making it All Matter (World Impact)**
-- [x] **Dynamic Shops & Spawning:** Modify `car/logic/shop_logic.py` and `car/logic/spawning.py` to read the Faction Control scores and adjust their behavior accordingly.
-- [x] **Implement Conquest:** Implement the "Decisive Battle" quest and the `handle_faction_takeover` logic.
-
-**Phase 4: UI, Documentation, and Final Integration**
-- [x] **Integrate LLM into City Hall:** Replace the old quest generation in `car/screens/city_hall.py` with a call to our new LLM-powered generator.
-- [x] **Update UI:** Update the Factions UI and the Quest Briefing screen to display the new Faction Control information.
-- [x] **Update Documentation:** Thoroughly update `README.md` and `GEMINI.md` to document this groundbreaking new system.
-
-### **Project: The Genesis Engine - LLM-Powered Faction Generation**
-
-**Goal:** To extend the "Ghost in the Machine" system to allow the LLM to generate the factions themselves at the start of a new game, with a robust save/load system to manage these unique worlds.
-
-**Phase 1: The "Live Session" Architecture**
-- [x] **Create Temporary Directory:** Create a `temp/` directory for live session data and add it to `.gitignore`.
-- [x] **Modify New Game Flow:** Update the `NewGameScreen` to generate factions and write them to `temp/factions.py`.
-- [x] **Create Dynamic Data Loader:** Create `car/logic/data_loader.py` to intelligently load session-specific data from `temp/`.
-- [x] **Refactor Imports:** Update all modules to use the new data loader instead of direct imports.
-
-**Phase 2: The "Save Slot" Architecture**
-- [x] **Create Save Game Directory:** Create a `saves/` directory to store all save game slots.
-- [x] **Implement "Save Game" Logic:** Overhaul `save_load.py` to save all session files from `temp/` into a named save slot directory.
-- [x] **Implement "Load Game" Logic:** Overhaul `save_load.py` to copy files from a named save slot into `temp/` and then load the game.
-- [x] **Update UI:** Refactor the `LoadGameScreen` and `PauseMenuScreen` to use the new save slot system.
-
-### **Project: The Living Context Engine**
-
-**Goal:** To create a system that dynamically builds a rich, stateful context prompt every time we need to generate content from the LLM.
-
-**Phase 1: Implementation**
-- [x] **Create `prompt_builder.py`:** Create a central module to assemble dynamic contexts.
-- [x] **Create `quest_log.json`:** Create the initial temporary quest log.
-- [x] **Update Prompt Templates:** Refactor prompt templates to use dynamic placeholders.
-- [x] **Integrate Prompt Builder:** Refactor the LLM generator modules to use the new builder.
-
-### **Project: The Commander's Dashboard - Polishing the Player Experience**
-
-**Goal:** To create all the necessary UI elements and feedback loops for the player to understand, track, and influence the dynamic faction and quest systems.
-
-**Phase 1: UI Implementation**
-- [x] **Create Faction Command Screen:** Build a dedicated modal screen, bound to the 'f' key, for viewing detailed faction intelligence.
-- [x] **Enhance HUD:** Integrate a territory display, boss compass, and quest objective tracker into the existing HUD elements.
-- [x] **Implement Immersive Quest Flow:** Create a quest briefing screen and a quest completion summary screen.
-- [x] **Build Save/Load UI:** Create a modal for naming save games.
-
-### **Project: The Living Wasteland - Dynamic World & Narrative Events**
-
-**Goal:** To transform the game from a series of static locations into a deeply immersive and reactive world. This will be achieved by expanding our generative systems to name the world's features, create unique equipment, and introduce a new layer of narrative delivery through world-based triggers and discoveries.
-
----
-
-#### **Phase 1: Dynamic Naming & World Details (The Cartographer)**
-
-**Objective:** To give every significant location a unique, theme-appropriate name, making the world feel authored and consistent.
-
-*   **[x] Create `world_details_prompt.txt`:**
-    *   This prompt will be triggered after faction generation.
-    *   **Input:** The world theme and the complete faction data (names, vibes, locations).
-    *   **Output:** A single, clean JSON object containing:
-        *   `cities`: A dictionary mapping city coordinates (e.g., `"0,0"`) to generated names (e.g., `"The Nexus"`).
-        *   `roads`: A list of objects, each defining a major road between two cities with a generated name (e.g., `{"from": "The Nexus", "to": "Rust-Tusk Outpost", "name": "The Ashen Highway"}`).
-        *   `landmarks`: A list of objects, each defining a point of interest with coordinates and a generated name (e.g., `{"x": 150, "y": -200, "name": "The Sunken Oasis"}`).
-*   **[x] Integrate into World Generation:**
-    *   Update the `generate_initial_world_worker` in `car/workers/world_generator.py` to call the new prompt.
-    *   The worker's final output dictionary will now include a `world_details` key.
-*   **[x] Update Save/Load System:**
-    *   Modify `save_game` and `load_game` in `car/logic/save_load.py` to handle a new `world_details.json` file within each save slot.
-    *   Update `GameState` to store this `world_details` data.
-*   **[x] Update UI and Game Logic:**
-    *   Refactor `car/widgets/hud_location.py` to display the generated city name instead of a generic ID.
-    *   Modify the `MapScreen` to display city and road names.
-    *   Update quest dialogs and descriptions to reference named locations (e.g., "Deliver this package to *Rust-Tusk Outpost* via *The Ashen Highway*").
-
----
-
-#### **Phase 2: Emergent Encounters & Narrative Triggers (The Storyteller)**
-
-**Objective:** To break the narrative out of the City Hall and have it unfold dynamically as the player explores the world. This introduces two new systems: "World Triggers" and "Narrative Discoveries."
-
-*   **[x] Implement World Trigger System:**
-    *   **Concept:** These are invisible, circular zones on the world map that trigger an event when the player enters them. This is perfect for ambushes, unique NPC encounters, or atmospheric story moments.
-    *   **Data Structure:** Define a `triggers.json` file, which can be generated or handwritten. Each trigger will have:
-        *   `id`: A unique identifier.
-        *   `x`, `y`, `radius`: The location and size of the trigger zone.
-        *   `type`: The type of event (`dialog`, `combat`, `quest`).
-        *   `data`: The specific content (e.g., the dialog to display, the enemies to spawn, the quest ID to grant).
-        *   `one_shot`: A boolean to determine if the trigger can be activated multiple times.
-    *   **Game Loop Integration:** In `car/app.py`, add a new function to the main `update_game` loop that checks the player's distance to all active triggers.
-*   **[x] Implement Narrative Discovery System:**
-    *   **Concept:** Allow certain in-world objects (initially, destroyed enemy vehicles and specific obstacles) to have a chance to drop a "lore item" or a "quest lead" instead of just loot.
-    *   **Loot Table Modification:** Update the loot generation logic in `car/logic/loot_generation.py` to include a new drop type: `narrative_item`.
-    *   **Item Interaction:** When a player picks up a `narrative_item`, it will trigger a simple dialog screen that displays a snippet of story or a rumor, potentially leading to a new, hidden quest.
-    *   **Example:** Destroying a "Scrap Barricade" might have a 5% chance to drop a "Tattered Journal." Picking it up reveals a dialog: *"The journal speaks of a hidden cache of pre-war tech in a cave to the east..."* and places a new waypoint on the player's map.
-
----
-
-#### **Phase 3: The Generative Armory (The Blacksmith)**
-
-**Objective:** To use the LLM to generate unique, named variants of existing weapons and vehicles, creating a much deeper and more rewarding loot system. This will use the "Template and Modifier" system we discussed.
-
-*   **[x] Create Base Templates:**
-    *   Formalize our existing Python classes for `Weapon` and `Vehicle` as the definitive "base templates."
-*   **[x] Develop a "Modifier" Data Structure:**
-    *   Defined a clear data structure for item modifiers in `car/data/item_modifiers.py`. This file contains rarity levels, stat modifier ranges, and cosmetic tags that the LLM can use to generate unique item variants.
-    *   **Example:** `{"name": "The Dust-Devil", "base_item": "hatchback", "description": "A modified hatchback built for speed on rough terrain.", "stat_modifiers": {"speed": 1.1, "durability": 0.9, "handling": 1.05}, "cosmetic_tags": ["spikes", "rust"]}`.
-*   **[x] Create `item_generator_prompt.txt`:**
-    *   This prompt will be used to generate new items as quest rewards or rare loot.
-    *   **Input:** The world theme, player level, and the base item template.
-    *   **Output:** A single, validated JSON object representing the new item variant.
-*   **[x] Implement a Strict Validation System:**
-    *   Created a new function, `validate_generated_item(item_data)`, in `car/logic/item_validation.py` that rigorously checks every key and value in the JSON returned by the LLM.
-    *   It checks data types, ensures stat modifiers are within a reasonable range, and verifies that cosmetic tags exist in our pre-defined library.
-    *   **Crucially:** If validation fails, the system must log the error and fall back to a standard, non-generated item to prevent crashes.
-*   **[x] Integrate into Loot System:**
-    *   Updated the loot generation logic in `car/logic/loot_generation.py` to have a chance to call the `generate_item_from_llm` function instead of dropping a standard item, especially for boss fights or high-level quests. This functionality can be expanded to other loot sources in the future.
-
-### General Tasks
-- [x] **Gemini CLI Integration:**
-- [x] **Neutral city**
-- [x] **Add shop keeper dialog:**
-- [ ] **Weapon swivel:**
-    - [ ] Allow weapons to swivel with key presses like car turns
-    - [ ] Swivel speed will be related to level
-    - [ ] Mouse can be used, cursor is where projectile will be shot at, so figure out angle to hit the cursor location and mouse click to shoot. 
-- [ ] **Add quest type:** 
-    - [x] Deliver package: Deliver a package to a towns city hall
-    - [x] Defend location: Defend a location for n seconds
-- [ ] **Hub city static defense:**
-    - [ ] Hub cities will have static defenses
-    - [ ] We need to define 2 or 3 static defenses such as machine gun tower, flame thrower tower, impassable barbed wire and so on
-    - [ ] How much static defenses is related to reputation.
-- [ ] **Buildings are destructible in stages:**
-    - [ ] Buildings are high health entities now
-    - [ ] We need 4-5 art for buildings at various stages of destruction
-    - [ ] At 0 HP, the building explodes and the faction loses reputation.
-    - [ ] Attacking buildings will trigger enemy vehicles periodically.
-- [ ] **Add offroad stat to cars:**
-    - [ ] Cars will have an offroad stat
-    - [ ] This is a modifier that allows better speed modifier in the wilderness
-    - [ ] This is a modifier that gives bad speed modifier for street and city
-    - [ ] This is a modifier that gives bad modifier for fuel consumption
-- [ ] **Add more terrain types:**
-    - [ ] Grass
-    - [ ] Desert
-    - [ ] Mud
-    - [ ] Sand
-    - [ ] Swamp
-    - [ ] Factions will determine the terrain type. It is immersive so the deserts rats always have a lot fo desert and sand
-    - [ ] Add Faction property that is terrain and percent chance
-- [ ] **Combat system** 
-    - [ ] For minor enemies open world combat. Running away just means getting out of aggro range. 
-    - [ ] For major enemioes, combat system modal when in range, short range like pokemon battles. 
-        - [ ] Phase based combat
-        - [ ] Enemy dialog in phases
-        - [ ] Enemy tactic and weapon changes in phases
-        - [ ] Phases based off enemy health, or player health, or time or other factors
-        - [ ] You can try to run, failing quest if in a quest, but otherwise surviving. 
-
-## Completed Tasks
-- [x] **Gemini CLI Integration:**
-    - [x] Create a new "Settings" screen accessible from the main menu.
-    - [x] Add a toggle to switch between "Local" and "Gemini CLI" for world generation.
-    - [x] Create a wrapper in `car/logic/gemini_cli.py` to execute `gemini --yolo -p "..."` commands.
-    - [x] Refactor the `llm_..._generator.py` modules to use the Gemini CLI wrapper when the setting is active.
-    - [x] When "Local" is selected, the generators should use the hardcoded fallback data to ensure a stable offline experience.
-    - [x] Add error handling for when the `gemini` command is not installed, guiding the user to install it.
-- [x] **Neutral city**
-    - [x] 0,0 is a neutral hub city. Quests help no faction. Shops don't have faction bonuses. This city will always be neutral and always have 0 spawn chance. 
-- [x] **Add shop keeper dialog:**, they will say something when we get in the shop. This is shop and faction specific and dynamically generated. 
-    - [x] When buying or selling high modifier equipment the shop keeper will make a comment, different comments based on the modifier. 
-    - [x] When you try to buy something without enough money, shop keeper makes a wise crack
