@@ -1,5 +1,7 @@
 from textual.widgets import Static
 from textual.reactive import reactive
+from rich.text import Text
+from rich.panel import Panel
 
 class QuestHUD(Static):
     can_focus = False
@@ -7,15 +9,10 @@ class QuestHUD(Static):
 
     quest_name = reactive("")
 
-    def on_mount(self) -> None:
-        """Called when the widget is mounted."""
-        self.update_quest()
-
-    def watch_quest_name(self, value: str) -> None:
-        """Called when the quest_name attribute changes."""
-        self.update_quest()
-
-    def update_quest(self) -> None:
-        """Update the quest display."""
-        self.update(f"Quest: {self.quest_name}")
+    def render(self) -> Panel:
+        """Render the quest display."""
+        if self.quest_name and self.quest_name != "None":
+            content = Text.from_markup(f"[bold]{self.quest_name}[/bold]", justify="center")
+            return Panel(content, title="Quest", border_style="white")
+        return Panel(Text("No active quest", justify="center", style="dim"), title="Quest", border_style="dim white")
 

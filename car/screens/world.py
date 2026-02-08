@@ -12,6 +12,7 @@ from ..widgets.hud_stats import StatsHUD
 from ..widgets.hud_location import HudLocation
 from ..widgets.hud_compass import CompassHUD
 from ..widgets.hud_quest import QuestHUD
+from ..widgets.hud_weapons import WeaponHUD
 from ..widgets.game_view import GameView
 from ..widgets.notifications import Notifications
 from ..widgets.fps_counter import FPSCounter
@@ -20,7 +21,6 @@ from ..logic.spawning import spawn_initial_entities
 from .inventory import InventoryScreen
 from .pause_menu import PauseScreen
 from .map import MapScreen
-from .faction import FactionScreen
 from .faction import FactionScreen
 
 from textual.events import Key
@@ -130,18 +130,19 @@ class WorldScreen(Screen):
     def compose(self):
         """Compose the layout of the screen."""
         yield GameView(id="game_view", game_state=self.app.game_state, world=self.app.world)
-        
+
         with Vertical(id="top_hud"):
             yield FPSCounter(id="fps_counter")
             yield HudLocation(id="location_hud")
             yield CompassHUD(id="compass_hud")
 
+        yield WeaponHUD(id="weapon_hud")
+        yield EntityModal(id="entity_modal")
+
         with Horizontal(id="bottom_hud"):
             yield QuestHUD(id="quest_hud")
             yield StatsHUD(id="stats_hud")
-            yield EntityModal(id="entity_modal")
 
-        """Modal for showing notifications like "x item picked up"""""
         yield Notifications(id="notifications")
         yield Footer(show_command_palette=True)
 
@@ -163,15 +164,30 @@ class WorldScreen(Screen):
         stats_hud.xp = gs.current_xp
         stats_hud.xp_to_next_level = gs.xp_to_next_level
         stats_hud.pedal_position = gs.pedal_position
-        
-        # For now, just display the ammo for the first weapon
-        first_weapon = next(iter(gs.mounted_weapons.values()), None)
-        if first_weapon:
-            stats_hud.ammo = gs.ammo_counts.get(first_weapon.ammo_type, 0)
-            stats_hud.max_ammo = 999 # Placeholder for max ammo
-        else:
-            stats_hud.ammo = 0
-            stats_hud.max_ammo = 0
+
+        # Update Weapon HUD
+        weapon_hud = self.query_one("#weapon_hud", WeaponHUD)
+        weapons_info = []
+        for point_name, weapon in gs.mounted_weapons.items():
+            point_data = gs.attachment_points.get(point_name, {})
+            mount_label = point_data.get("name", point_name)
+            if weapon:
+                weapons_info.append({
+                    "mount_name": mount_label,
+                    "weapon_name": weapon.name,
+                    "ammo_type": weapon.ammo_type,
+                    "ammo": gs.ammo_counts.get(weapon.ammo_type, 0),
+                    "empty": False,
+                })
+            else:
+                weapons_info.append({
+                    "mount_name": mount_label,
+                    "weapon_name": "",
+                    "ammo_type": "",
+                    "ammo": 0,
+                    "empty": True,
+                })
+        weapon_hud.weapons_data = weapons_info
 
         quest_hud = self.query_one("#quest_hud", QuestHUD)
         quest_hud.quest_name = gs.current_quest.name if gs.current_quest else "None"
@@ -187,19 +203,20 @@ class WorldScreen(Screen):
         compass.target_angle = gs.compass_info["target_angle"]
         compass.player_angle = gs.compass_info["player_angle"]
         compass.target_name = gs.compass_info["target_name"]
-        compass.weapon_angle = math.degrees(gs.car_angle + gs.weapon_angle_offset)
 
-        # Update Entity Modal
+        # Update Entity Modal (always visible)
         entity_modal = self.query_one("#entity_modal", EntityModal)
         closest_entity = gs.closest_entity_info
         if closest_entity:
-            entity_modal.name = closest_entity["name"]
+            entity_modal.entity_name = closest_entity["name"]
             entity_modal.hp = closest_entity["hp"]
             entity_modal.max_hp = closest_entity["max_hp"]
             entity_modal.art = closest_entity["art"]
-            entity_modal.display = True
         else:
-            entity_modal.display = False
+            entity_modal.entity_name = "No Target"
+            entity_modal.hp = 0
+            entity_modal.max_hp = 0
+            entity_modal.art = []
 
         # Handle explosions
         for destroyed in gs.destroyed_this_frame:

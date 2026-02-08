@@ -100,7 +100,7 @@ class GameState:
         self.gas_consumption_scaler = 0.01
         self.drag_coefficient = 0.01 # Placeholder
         self.friction_coefficient = 0.02 # Placeholder
-        self.gas_consumption_rate = 0.1 # Placeholder
+        self.gas_consumption_rate = 0.01
 
         # --- World and Entity State ---
         self.active_obstacles = []
@@ -141,8 +141,8 @@ class GameState:
         self.menu_selected_section_idx = 0
         self.menu_selected_item_idx = 0
         self.menu_preview_angle = 0.0
-        self.safe_zone_radius = 0
-        self.despawn_radius = 0
+        self.safe_zone_radius = SAFE_ZONE_RADIUS
+        self.despawn_radius = DESPAWN_RADIUS
         self.screen_width = 0
         self.screen_height = 0
         self.notifications = []

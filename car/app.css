@@ -8,51 +8,86 @@ GameView {
     height: 100%;
 }
 
+/* --- Top HUD: centered column with location + compass --- */
 #top_hud {
     layer: hud;
     dock: top;
-    width: 100%;
+    width: auto;
     height: auto;
     align: center top;
 }
 
+/* --- Bottom HUD: centered row with quest + stats --- */
 #bottom_hud {
     layer: hud;
     dock: bottom;
-    width: 100%;
-    height: 7; /* Constrain height */
-    align: left bottom;
-    margin-top: 1;
+    width: auto;
+    height: 7;
+    align: center bottom;
 }
 
-#quest_hud, #stats_hud, #entity_modal {
+#quest_hud, #stats_hud, #entity_modal, #weapon_hud {
     background: $panel;
 }
 
 #quest_hud {
-    height: 7; /* Constrain height */
-    width: 28%;
-}
-
-#entity_modal {
-    height: 7; /* Constrain height */
-    width: 28%;
+    height: 7;
+    width: 30;
 }
 
 #stats_hud {
-    height: 7; /* Constrain height */
-    width: 44%;
+    height: 7;
+    width: 50;
 }
 
-#stats_hud .hud-container {
-    layout: horizontal;
+/* --- Weapon HUD: top-right --- */
+#weapon_hud {
+    layer: hud;
+    dock: right;
+    width: 28;
+    height: auto;
 }
 
-#stats_hud .hud-column {
-    width: 1fr;
-    padding: 0 1;
+WeaponHUD {
+    background: $panel;
+    border: heavy white;
 }
 
+/* --- Entity Modal: bottom-right, square, above bottom pane --- */
+#entity_modal {
+    layer: hud;
+    dock: right;
+    width: 28;
+    height: 12;
+    margin-bottom: 8;
+}
+
+EntityModal {
+    background: $panel;
+    border: heavy white;
+}
+
+/* --- Location HUD --- */
+#location_hud {
+    width: auto;
+    min-width: 30;
+    max-width: 50;
+    height: auto;
+    background: $panel;
+    border: heavy white;
+}
+
+/* --- Compass HUD --- */
+#compass_hud {
+    width: auto;
+    min-width: 24;
+    max-width: 40;
+    height: auto;
+    background: $panel;
+    border: heavy white;
+}
+
+/* --- Notifications --- */
 #notifications {
     layer: hud;
     dock: top;
@@ -60,28 +95,6 @@ GameView {
     width: auto;
     height: auto;
     padding: 1;
-}
-
-#location_hud {
-    width: 30;
-    height: 1;
-    background: $panel;
-    text-align: center;
-    align: center middle;
-}
-
-#compass_hud {
-    width: 20;
-    height: 3;
-    padding: 1;
-    background: $panel;
-    text-align: center;
-    align: center middle;
-}
-
-EntityModal {
-    background: $panel;
-    border: heavy white;
 }
 
 MainMenuScreen {
@@ -405,8 +418,7 @@ MechanicShopScreen {
 }
 
 Notifications {
-    dock: bottom;
-    height: 5;
+    height: auto;
     align: center middle;
     background: $panel;
     color: $text;

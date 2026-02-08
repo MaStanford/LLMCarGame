@@ -19,8 +19,6 @@ class StatsHUD(Static):
     level = reactive(1)
     xp = reactive(0)
     xp_to_next_level = reactive(100)
-    ammo = reactive(0)
-    max_ammo = reactive(100)
     pedal_position = reactive(0.0)
 
     def render(self) -> Panel:
@@ -58,10 +56,8 @@ class StatsHUD(Static):
             pedal_display = f"Brake: [red]{'⬇' * int(abs(self.pedal_position) * 5)}[/]"
         else:
             pedal_display = "     "
-            
-        bottom_stats = Text.from_markup(
-            f"[b]Ammo:[/b] {self.ammo}/{self.max_ammo} | {pedal_display}"
-        )
+
+        bottom_stats = Text.from_markup(pedal_display)
 
         render_group = Group(
             Align.center(top_stats),
