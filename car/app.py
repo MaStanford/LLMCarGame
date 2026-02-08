@@ -51,6 +51,10 @@ class GenesisModuleApp(App):
         self.dev_mode = self.settings.get("dev_mode", False)
         self.data = game_data
         self.generation_mode = self.settings.get("generation_mode", "local")
+        self.model_size = self.settings.get("model_size", "small")
+        self.cli_preset = self.settings.get("cli_preset", "gemini")
+        self.custom_cli_command = self.settings.get("custom_cli_command", "")
+        self.custom_cli_args = self.settings.get("custom_cli_args", "")
         self.last_grid_pos = (None, None)
 
     def reload_dynamic_data(self):

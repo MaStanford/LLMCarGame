@@ -1,4 +1,5 @@
 import logging
+from functools import partial
 from textual.app import ComposeResult
 from textual.containers import Vertical
 from textual.screen import Screen
@@ -62,12 +63,16 @@ class MainMenuScreen(Screen):
         else:
             # Local mode, check if model is already loaded or loading
             if self.app.llm_pipeline is None:
-                logging.info("Local mode active. Starting model loader worker...")
-                self.query_one("#model_status", Static).update("Loading LLM Model...")
+                model_size = self.app.model_size
+                logging.info(f"Local mode active. Starting model loader worker (size={model_size})...")
+                self.query_one("#model_status", Static).update(f"Loading LLM Model ({model_size})...")
                 self.query_one(ProgressBar).display = True
                 self.query_one("#new_game").disabled = True
                 self.query_one("#load_game").disabled = True
-                self.run_worker(load_pipeline, exclusive=True, thread=True)
+                self.run_worker(
+                    partial(load_pipeline, model_size=model_size),
+                    exclusive=True, thread=True, name="load_pipeline"
+                )
             else:
                 logging.info("Local mode active. Model already loaded.")
                 self.query_one("#model_status", Static).update("LLM model loaded.")

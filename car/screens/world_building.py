@@ -103,10 +103,9 @@ class WorldBuildingScreen(Screen):
 
     def on_stage_update(self, event: StageUpdate) -> None:
         """Handle stage update messages from the worker."""
-        # The original on_worker_message was changed to on_stage_update and now expects a StageUpdate event.
-        # The content of the method remains the same as it correctly handles the 'stage' message type.
-        if event.message_type == "stage":
-            self.query_one("#title", Static).update(f"[bold]{event.data}[/bold]")
+        msg_type, text = event.data
+        if msg_type == "stage":
+            self.query_one("#title", Static).update(f"[bold]{text}[/bold]")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle retry button press."""

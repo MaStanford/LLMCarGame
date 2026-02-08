@@ -1,9 +1,7 @@
-import os
-import json
 import logging
-import time
 from .prompt_builder import build_faction_prompt
-from .gemini_cli import generate_with_gemini_cli
+from .llm_inference import generate_json
+from .llm_schemas import FACTION_SCHEMA
 
 def generate_factions_from_llm(app, theme: dict):
     """
@@ -11,32 +9,12 @@ def generate_factions_from_llm(app, theme: dict):
     """
     prompt = build_faction_prompt(theme)
 
-    if app.generation_mode == "gemini_cli":
-        faction_data = generate_with_gemini_cli(prompt)
-    else:
-        # Fallback to local pipeline, which we now know is unreliable
-        logging.warning("Using local pipeline for faction generation. This may fail.")
-        if app.llm_pipeline is None or app.llm_pipeline == "unavailable":
-            logging.warning("LLM pipeline not available. Using fallback factions.")
-            return _get_fallback_factions()
-        
-        messages = [{"role": "user", "content": prompt}]
-        try:
-            os.environ["TOKENIZERS_PARALLELISM"] = "false"
-            outputs = app.llm_pipeline(
-                messages, max_new_tokens=2048, do_sample=True, temperature=0.8
-            )
-            response_text = outputs[0]["generated_text"][-1]["content"]
-            logging.info(f"--- RAW FACTION RESPONSE ---\n{response_text}\n--------------------------")
-            cleaned_json = response_text.strip().replace("```json", "").replace("```", "")
-            faction_data = json.loads(cleaned_json)
-        except Exception as e:
-            logging.error(f"Error during local LLM generation for factions: {e}", exc_info=True)
-            return _get_fallback_factions()
-        finally:
-            os.environ.pop("TOKENIZERS_PARALLELISM", None)
+    faction_data = generate_json(app, prompt, json_schema=FACTION_SCHEMA, max_tokens=2048, temperature=0.8)
 
-    # --- Process the response (from either source) ---
+    if faction_data is None:
+        return _get_fallback_factions()
+
+    # --- Process the response ---
     if not isinstance(faction_data, dict) or "error" in faction_data:
         details = faction_data.get('details', 'No details') if isinstance(faction_data, dict) else "Non-dict response"
         logging.error(f"Faction generation failed: {details}")

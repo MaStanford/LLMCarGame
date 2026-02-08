@@ -1,7 +1,5 @@
 import logging
-from ..logic.prompt_builder import build_quest_prompt # Re-using to get context
-from ..logic.gemini_cli import generate_with_gemini_cli
-from ..logic.llm_faction_generator import _get_fallback_factions
+from .llm_inference import generate_text
 
 def generate_shop_dialog_from_llm(app, theme: dict, shop_type: str, faction_name: str, faction_vibe: str, player_reputation: int) -> str:
     """
@@ -18,19 +16,10 @@ def generate_shop_dialog_from_llm(app, theme: dict, shop_type: str, faction_name
 
     logging.info(f"--- BUILDING SHOP DIALOG PROMPT ---\n{prompt}\n---------------------------------")
 
-    if app.generation_mode == "gemini_cli":
-        response = generate_with_gemini_cli(prompt)
-        # The CLI often returns just the string, which is what we want.
-        # If it returns a dict with an error, we'll fall back.
-        if isinstance(response, dict) and "error" in response:
-            logging.error(f"Gemini CLI failed for dialog: {response.get('details')}")
-            return _get_fallback_dialog(player_reputation)
-        return response if isinstance(response, str) else str(response)
-
-    else:
-        # Local LLM is not reliable for creative text, return a fallback.
-        logging.info("Local mode active for dialog, returning fallback.")
+    response = generate_text(app, prompt, max_tokens=256, temperature=0.8)
+    if response is None:
         return _get_fallback_dialog(player_reputation)
+    return response
 
 def _get_fallback_dialog(reputation: int) -> str:
     """Returns a hardcoded fallback dialog based on reputation."""

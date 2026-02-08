@@ -1,38 +1,73 @@
 import os
-from huggingface_hub import snapshot_download
+import sys
+from huggingface_hub import hf_hub_download
 
 # --- Configuration ---
-MODEL_ID = "unsloth/gemma-2-2b-it"
-MODEL_DIR = "models/unsloth-gemma-2-2b-it"
+MODELS = {
+    "small": {
+        "repo": "Qwen/Qwen3-4B-GGUF",
+        "filename": "qwen3-4b-q4_k_m.gguf",
+        "description": "Qwen3 4B (Q4_K_M) — ~2.5 GB, fast, good for most hardware",
+    },
+    "large": {
+        "repo": "Qwen/Qwen3-8B-GGUF",
+        "filename": "qwen3-8b-q4_k_m.gguf",
+        "description": "Qwen3 8B (Q4_K_M) — ~5 GB, higher quality, needs more RAM",
+    },
+}
+MODEL_DIR = "models"
 # -------------------
 
-def download_model():
-    """
-    Downloads the specified model from the Hugging Face Hub using snapshot_download.
-    This ensures all necessary files for Transformers are present.
-    """
-    print("--- Model Downloader ---")
-    
-    # Ensure the model directory exists
-    if not os.path.exists(MODEL_DIR):
-        print(f"Creating model directory: {MODEL_DIR}")
-        os.makedirs(MODEL_DIR)
 
-    print(f"Downloading '{MODEL_ID}' to '{MODEL_DIR}'...")
-    print("This may take a while depending on your internet connection.")
+def download_model(size: str = None):
+    """
+    Downloads GGUF model files from Hugging Face Hub.
+    Supports interactive selection or CLI argument.
+    """
+    if size is None:
+        print("--- Model Downloader ---")
+        print("Choose a model size:")
+        print(f"  1. Small — {MODELS['small']['description']}")
+        print(f"  2. Large — {MODELS['large']['description']}")
+        print(f"  3. Both")
+        choice = input("Enter choice [1/2/3]: ").strip()
+        sizes = {"1": ["small"], "2": ["large"], "3": ["small", "large"]}
+        selected = sizes.get(choice, ["small"])
+    else:
+        if size not in MODELS:
+            print(f"Unknown model size '{size}'. Options: small, large")
+            sys.exit(1)
+        selected = [size]
 
-    try:
-        snapshot_download(
-            repo_id=MODEL_ID,
-            local_dir=MODEL_DIR,
-            local_dir_use_symlinks=False, # We want the actual files
-            resume_download=True
-        )
-        print("\nDownload complete!")
-        print(f"Model saved to: {MODEL_DIR}")
-    except Exception as e:
-        print(f"\nAn error occurred during download: {e}")
-        print("Please check your internet connection and try again.")
+    os.makedirs(MODEL_DIR, exist_ok=True)
+
+    for s in selected:
+        config = MODELS[s]
+        dest = os.path.join(MODEL_DIR, config["filename"])
+
+        if os.path.exists(dest):
+            print(f"Already downloaded: {dest}")
+            continue
+
+        print(f"Downloading {config['filename']} from {config['repo']}...")
+        print("This may take a while depending on your internet connection.")
+
+        try:
+            hf_hub_download(
+                repo_id=config["repo"],
+                filename=config["filename"],
+                local_dir=MODEL_DIR,
+                local_dir_use_symlinks=False,
+                resume_download=True,
+            )
+            print(f"Downloaded to {dest}")
+        except Exception as e:
+            print(f"An error occurred during download: {e}")
+            print("Please check your internet connection and try again.")
+
+    print("\nDone.")
+
 
 if __name__ == "__main__":
-    download_model()
+    size_arg = sys.argv[1] if len(sys.argv) > 1 else None
+    download_model(size_arg)

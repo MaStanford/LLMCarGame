@@ -9,7 +9,7 @@ from ..logic.llm_faction_generator import generate_factions_from_llm, _get_fallb
 from ..logic.llm_quest_generator import generate_quest_from_llm, _get_fallback_quest
 from ..logic.llm_world_details_generator import generate_world_details_from_llm
 from ..logic.prompt_builder import _format_world_state
-from ..logic.gemini_cli import generate_with_gemini_cli
+from ..logic.llm_inference import generate_text
 
 class StageUpdate(Message):
     """A message to update the world building stage."""
@@ -22,19 +22,18 @@ def _generate_story_intro(app, theme, factions, neutral_faction_name):
     logging.info("Generating story intro...")
     mock_game_state = SimpleNamespace(faction_control={})
     world_state = _format_world_state(factions, mock_game_state)
-    
+
     with open("prompts/story_intro_prompt.txt", "r") as f:
         prompt = f.read()
-    
+
     prompt = prompt.replace("{{ theme }}", f"'{theme['name']}': {theme['description']}")
     prompt = prompt.replace("{{ world_state }}", world_state)
     prompt = prompt.replace("{{ neutral_city_name }}", neutral_faction_name)
 
-    if app.generation_mode == "gemini_cli":
-        response = generate_with_gemini_cli(prompt, parse_json=False)
-        return response if isinstance(response, str) else "Welcome to the wasteland."
-    else:
-        return "You arrive at the neutral city of The Junction, a beacon of tense neutrality in a world torn apart by warring factions. Your goal is simple: find the Genesis Module and escape. The road will be long and dangerous. Good luck."
+    response = generate_text(app, prompt, max_tokens=512, temperature=0.8)
+    if response:
+        return response
+    return "You arrive at the neutral city of The Junction, a beacon of tense neutrality in a world torn apart by warring factions. Your goal is simple: find the Genesis Module and escape. The road will be long and dangerous. Good luck."
 
 
 def generate_initial_world_worker(app: Any, new_game_settings: dict) -> Dict:
@@ -43,7 +42,7 @@ def generate_initial_world_worker(app: Any, new_game_settings: dict) -> Dict:
     """
     logging.info("Initial world generation worker started.")
     start_time = time.time()
-    
+
     try:
         theme = new_game_settings["theme"]
         logging.info(f"Generating world with theme: {theme['name']}")
@@ -51,12 +50,8 @@ def generate_initial_world_worker(app: Any, new_game_settings: dict) -> Dict:
         # Stage 1: Generate Factions
         app.post_message(StageUpdate(("stage", "Stage 1: Forging Factions...")))
         time.sleep(0.25)
-        if app.generation_mode == "local":
-            logging.info("Using local generation mode. Returning fallback factions.")
-            factions = _get_fallback_factions()
-        else:
-            factions = generate_factions_from_llm(app, theme)
-        
+        factions = generate_factions_from_llm(app, theme)
+
         if not factions or "error" in factions:
             raise ValueError(f"Faction generation failed: {factions.get('details', 'No details')}")
 
@@ -81,13 +76,10 @@ def generate_initial_world_worker(app: Any, new_game_settings: dict) -> Dict:
             story_intro="The story is just beginning..."
         )
         for i in range(3):
-            if app.generation_mode == "local":
-                quest = _get_fallback_quest(neutral_faction_id)
-            else:
-                quest = generate_quest_from_llm(
-                    game_state=mock_game_state, quest_giver_faction_id=neutral_faction_id,
-                    app=app, faction_data=factions
-                )
+            quest = generate_quest_from_llm(
+                game_state=mock_game_state, quest_giver_faction_id=neutral_faction_id,
+                app=app, faction_data=factions
+            )
             if quest:
                 initial_quests.append(quest)
 
@@ -98,7 +90,7 @@ def generate_initial_world_worker(app: Any, new_game_settings: dict) -> Dict:
 
         end_time = time.time()
         logging.info(f"Initial world generation finished successfully in {end_time - start_time:.2f} seconds.")
-        
+
         return {
             "factions": factions,
             "quests": initial_quests,

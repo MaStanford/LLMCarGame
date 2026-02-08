@@ -6,6 +6,10 @@ SETTINGS_FILE = "settings.json"
 
 DEFAULT_SETTINGS = {
     "generation_mode": "local",  # "local" or "gemini_cli"
+    "model_size": "small",       # "small" (Qwen3-4B) or "large" (Qwen3-8B), used when generation_mode == "local"
+    "cli_preset": "gemini",      # "gemini", "claude", or "custom" — which CLI tool to use when generation_mode == "gemini_cli"
+    "custom_cli_command": "",    # command name for custom preset (e.g. "ollama")
+    "custom_cli_args": "",       # extra args for custom preset (e.g. "run llama3 -p")
     "dev_mode": False
 }
 

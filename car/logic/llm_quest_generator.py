@@ -1,10 +1,10 @@
-import os
 import json
 import logging
 import random
 from .prompt_builder import build_quest_prompt
 from ..data.quests import Quest
-from .gemini_cli import generate_with_gemini_cli
+from .llm_inference import generate_json
+from .llm_schemas import QUEST_SCHEMA
 
 def generate_quest_from_llm(game_state, quest_giver_faction_id, app, faction_data=None):
     """
@@ -12,34 +12,13 @@ def generate_quest_from_llm(game_state, quest_giver_faction_id, app, faction_dat
     Can be passed faction_data directly to override the global data, useful for workers.
     """
     prompt = build_quest_prompt(game_state, quest_giver_faction_id, faction_data)
-    
-    if app.generation_mode == "gemini_cli":
-        quest_data = generate_with_gemini_cli(prompt)
-    else:
-        # Local pipeline logic
-        if app.llm_pipeline is None or app.llm_pipeline == "unavailable":
-            logging.warning("LLM pipeline not available. Using fallback quest.")
-            return _get_fallback_quest(quest_giver_faction_id)
-        
-        messages = [{"role": "user", "content": prompt}]
-        try:
-            os.environ["TOKENIZERS_PARALLELISM"] = "false"
-            outputs = app.llm_pipeline(
-                messages, max_new_tokens=1024, do_sample=True, temperature=0.8
-            )
-            response_text = outputs[0]["generated_text"][-1]["content"]
-            logging.info(f"""--- RAW QUEST RESPONSE ---
-{response_text}
-------------------------""")
-            cleaned_json = response_text.strip().replace("```json", "").replace("```", "")
-            quest_data = json.loads(cleaned_json)
-        except Exception as e:
-            logging.error(f"Error during local LLM generation for quests: {e}", exc_info=True)
-            return _get_fallback_quest(quest_giver_faction_id)
-        finally:
-            os.environ.pop("TOKENIZERS_PARALLELISM", None)
 
-    # --- Process the response (from either source) ---
+    quest_data = generate_json(app, prompt, json_schema=QUEST_SCHEMA, max_tokens=1024, temperature=0.8)
+
+    if quest_data is None:
+        return _get_fallback_quest(quest_giver_faction_id)
+
+    # --- Process the response ---
     if not isinstance(quest_data, dict) or "error" in quest_data:
         details = quest_data.get('details', 'No details') if isinstance(quest_data, dict) else "Non-dict response"
         logging.error(f"Quest generation failed: {details}")

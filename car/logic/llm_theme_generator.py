@@ -1,8 +1,7 @@
-import os
-import json
 import logging
 from typing import List, Dict
-from .gemini_cli import generate_with_gemini_cli
+from .llm_inference import generate_json
+from .llm_schemas import THEME_SCHEMA
 
 def generate_themes_from_llm(app) -> List[Dict[str, str]]:
     """
@@ -14,34 +13,12 @@ def generate_themes_from_llm(app) -> List[Dict[str, str]]:
 
     logging.info(f"--- BUILDING THEME PROMPT ---\n{prompt}\n---------------------------")
 
-    if app.generation_mode == "gemini_cli":
-        theme_data = generate_with_gemini_cli(prompt)
-    else:
-        # Local pipeline logic
-        if app.llm_pipeline is None or app.llm_pipeline == "unavailable":
-            logging.warning("LLM pipeline not available. Using fallback themes.")
-            return _get_fallback_themes()
-        
-        messages = [{"role": "user", "content": prompt}]
-        try:
-            os.environ["TOKENIZERS_PARALLELISM"] = "false"
-            outputs = app.llm_pipeline(
-                messages,
-                max_new_tokens=512,
-                do_sample=True,
-                temperature=0.9,
-            )
-            response_text = outputs[0]["generated_text"][-1]["content"]
-            logging.info(f"--- RAW THEME RESPONSE ---\n{response_text}\n--------------------------")
-            cleaned_json = response_text.strip().replace("```json", "").replace("```", "")
-            theme_data = json.loads(cleaned_json)
-        except Exception as e:
-            logging.error(f"Error during local LLM generation for themes: {e}", exc_info=True)
-            return _get_fallback_themes()
-        finally:
-            os.environ.pop("TOKENIZERS_PARALLELISM", None)
+    theme_data = generate_json(app, prompt, json_schema=THEME_SCHEMA, max_tokens=512, temperature=0.9)
 
-    # --- Process the response (from either source) ---
+    if theme_data is None:
+        return _get_fallback_themes()
+
+    # --- Process the response ---
     if not isinstance(theme_data, dict) or "error" in theme_data:
         details = theme_data.get('details', 'No details') if isinstance(theme_data, dict) else "Non-dict response"
         logging.error(f"Theme generation failed: {details}")

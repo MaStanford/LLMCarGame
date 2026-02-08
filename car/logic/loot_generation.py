@@ -32,7 +32,7 @@ def handle_enemy_loot_drop(game_state, enemy, app):
         # Decide whether to generate a special LLM item or a standard one
         if random.random() < (0.2 * luck_factor): # 20% base chance for special item
             base_weapon_id = random.choice(list(WEAPONS_DATA.keys()))
-            item_data = generate_item_from_llm(app, game_state, "weapon", base_weapon_id)
+            item_data = generate_item_from_llm(app, game_state.theme, game_state.player_level, base_weapon_id)
             
             # If LLM generation succeeds (or provides a valid fallback)
             if item_data:
