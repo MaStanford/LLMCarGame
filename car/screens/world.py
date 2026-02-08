@@ -1,5 +1,6 @@
 import math
 import logging
+import time
 
 from textual.screen import Screen
 from textual.widgets import Static, Footer
@@ -44,6 +45,7 @@ class WorldScreen(Screen):
         Binding("m", "show_map", "Map", show=True),
         Binding("f", "show_factions", "Factions", show=True),
         Binding("q", "show_quests", "Quests", show=True),
+        Binding("enter", "show_notifications", "Show Log", show=False),
     ]
 
     def on_mount(self) -> None:
@@ -134,6 +136,10 @@ class WorldScreen(Screen):
         """Pushes the quest detail screen."""
         self.app.push_screen(QuestDetailScreen())
 
+    def action_show_notifications(self) -> None:
+        """Re-show recent notification history."""
+        self.query_one("#notifications", Notifications).show_history()
+
     def compose(self):
         """Compose the layout of the screen."""
         yield GameView(id="game_view", game_state=self.app.game_state, world=self.app.world)
@@ -142,6 +148,7 @@ class WorldScreen(Screen):
             yield FPSCounter(id="fps_counter")
             yield HudLocation(id="location_hud")
             yield CompassHUD(id="compass_hud")
+            yield Notifications(id="notifications")
 
         with Vertical(id="right_hud"):
             yield WeaponHUD(id="weapon_hud")
@@ -152,7 +159,6 @@ class WorldScreen(Screen):
             yield QuestHUD(id="quest_hud")
             yield StatsHUD(id="stats_hud")
 
-        yield Notifications(id="notifications")
         yield Footer(show_command_palette=True)
 
     def update_widgets(self):
@@ -232,6 +238,12 @@ class WorldScreen(Screen):
             art = destroyed.art.get("N") if isinstance(destroyed.art, dict) else destroyed.art
             explosion = Explosion(art)
             self.mount(explosion)
-            explosion.offset = (int(destroyed.x - gs.car_world_x + self.size.width / 2), 
+            explosion.offset = (int(destroyed.x - gs.car_world_x + self.size.width / 2),
                                 int(destroyed.y - gs.car_world_y + self.size.height / 2))
+            # Show destruction feedback in entity modal
+            if getattr(destroyed, "is_faction_boss", False) and hasattr(destroyed, "name"):
+                entity_modal.destroyed_name = destroyed.name
+            else:
+                entity_modal.destroyed_name = destroyed.__class__.__name__.replace("_", " ").title()
+            entity_modal.destroyed_timer = time.time()
         gs.destroyed_this_frame.clear()

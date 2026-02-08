@@ -3,8 +3,8 @@ from ..obstacle import Obstacle
 class ScrapBarricade(Obstacle):
     def __init__(self, x, y):
         art = [
-            " <|#/#|#\\#|>",
-            " <|#\\#|#/#|>"
+            "▟█▛▜█▙",
+            "▜█▙▟█▛",
         ]
         super().__init__(
             x, y, art,

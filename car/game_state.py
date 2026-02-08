@@ -69,6 +69,15 @@ class GameState:
         self.distance_traveled = 0.0
         self.weapon_angle_offset = 0.0
 
+        # --- Collision Physics ---
+        self.deflection_vx = 0.0
+        self.deflection_vy = 0.0
+        self.deflection_frames = 0
+        self.collision_iframes = 0  # invulnerability frames after collision
+
+        # --- Karma System ---
+        self.karma = 0  # negative = evil, positive = good
+
         # --- Player State ---
         self.player_inventory = []
         self.attachment_points = self.player_car.attachment_points
@@ -241,6 +250,7 @@ class GameState:
             "defeated_bosses": list(self.defeated_bosses), # Convert set to list
             "activated_triggers": list(self.activated_triggers),
             "current_quest": self.current_quest.to_dict() if self.current_quest else None,
+            "karma": self.karma,
         }
 
     @classmethod
@@ -296,6 +306,7 @@ class GameState:
         gs.faction_control = data["faction_control"]
         gs.defeated_bosses = set(data["defeated_bosses"]) # Convert list back to set
         gs.activated_triggers = set(data.get("activated_triggers", []))
+        gs.karma = data.get("karma", 0)
         
         if data.get("current_quest"):
             from .data.quests import Quest

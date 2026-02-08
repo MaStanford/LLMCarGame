@@ -8,55 +8,53 @@ class Motorcycle(PlayerCar):
     def __init__(self, x, y):
         # Redesigned 8-directional art set for a motorcycle
         art = {
-            # North (Facing Up)
+            # North (Facing Up) - 4 lines x 3 chars, front wheel at top
             "N": [
-                " ◒ ",
-                "╭█╮",
-                " │ ",
-                " O "
+                " ◉ ",
+                " █ ",
+                "▐█▌",
+                " ◉ "
             ],
-            # North-East
+            # North-East - 3 lines x 4 chars, front wheel upper-right
             "NE": [
-                "  ◒╗ ",
-                " ╱█│ ",
-                "O-╯  "
+                "  ▌◉",
+                " █▌ ",
+                "◉▐  "
             ],
-            # East (Facing Right)
+            # East (Facing Right) - 2 lines x 5 chars, front wheel on right
             "E": [
-                "  ◒═╗",
-                " O═█╣",
-                "  ╰═╝"
+                " ▐██ ",
+                "◉ █ ◉"
             ],
-            # South-East
+            # South-East - 3 lines x 4 chars, vertical mirror of NE
             "SE": [
-                "O-╮  ",
-                " ╲█│ ",
-                "  ◒╝ "
+                "◉▐  ",
+                " █▌ ",
+                "  ▌◉"
             ],
-            # South (Facing Down)
+            # South (Facing Down) - 4 lines x 3 chars, vertical mirror of N
             "S": [
-                " O ",
-                " │ ",
-                "╰█╯",
-                " ◒ "
+                " ◉ ",
+                "▐█▌",
+                " █ ",
+                " ◉ "
             ],
-            # South-West
+            # South-West - 3 lines x 4 chars, horizontal mirror of SE
             "SW": [
-                "  ╭-O",
-                " │█╱ ",
-                " ╚◒  "
+                "  ▌◉",
+                " ▐█ ",
+                "◉▐  "
             ],
-            # West (Facing Left)
+            # West (Facing Left) - 2 lines x 5 chars, horizontal mirror of E
             "W": [
-                "╔═◒  ",
-                "╠█═O ",
-                "╚═╯  "
+                " ██▌ ",
+                "◉ █ ◉"
             ],
-            # North-West
+            # North-West - 3 lines x 4 chars, horizontal mirror of NE
             "NW": [
-                " ╔◒  ",
-                " │█╲ ",
-                "  ╰-O"
+                "◉▐  ",
+                " ▐█ ",
+                "  ▌◉"
             ]
         }
         super().__init__(

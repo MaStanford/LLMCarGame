@@ -6,63 +6,64 @@ class Sedan(PlayerCar):
     wasteland journeyman, offering a good mix of speed, armor, and firepower.
     """
     def __init__(self, x, y):
-        # Redesigned 8-directional art set for a classic, wider sedan
+        # 8-directional art: sedan (medium, balanced car)
+        # N/S: 5 lines x 5 chars | E/W: 3 lines x 9 chars | diags: 4 lines x 7 chars
         art = {
-            # North (Facing Up) - Made wider
+            # North (Facing Up) - hood at top, trunk at bottom
             "N": [
-                "  ▄████▄  ",
-                " ▗█░░░░█▖ ",
-                " ██▒▒▒▒██ ",
-                " (●)   (●) "
+                " ▄▓▄ ",
+                "●░░░●",
+                "█▓▓▓█",
+                "●███●",
+                " ▀█▀ "
             ],
-            # North-East - Adjusted for wider frame
-            "NE": [
-                "   ▄▄████▄ ",
-                "  ▟░▒▒▒▒██▖",
-                " █▒▒███◤` ",
-                "(●)═══(●)  "
-            ],
-            # East (Facing Right) - Made longer to match new proportions
-            "E": [
-                "   ▄▄▄▄▄▄▄▄ ",
-                "  ▟░▒▒▒▒▒▒█ ",
-                " █▒▒▒▒▒▒▒▒█ ",
-                "(●)══════(●)"
-            ],
-            # South-East - Adjusted for wider frame
-            "SE": [
-                "(●)═══(●)  ",
-                " █▒▒███◣  ",
-                "  ▜░▒▒▒▒██▖",
-                "   ▀▀████▀ "
-            ],
-            # South (Facing Down) - Made wider
+            # South (Facing Down) - hood at bottom, trunk at top
             "S": [
-                " (●)   (●) ",
-                " ████████ ",
-                " ▀█▄▄▄▄█▀ ",
-                "  ▀████▀  "
+                " ▄█▄ ",
+                "●███●",
+                "█▓▓▓█",
+                "●░░░●",
+                " ▀▓▀ "
             ],
-            # South-West - Adjusted for wider frame
-            "SW": [
-                "  (●)═══(●)",
-                "  ◢███▒▒█ ",
-                " ▗██▒▒▒▒░▟ ",
-                " ▀████▀▀   "
+            # East (Facing Right) - hood on right
+            "E": [
+                "●▓███░▓▄ ",
+                "█▓███▓░░▌",
+                "●▓███░▓▀ "
             ],
-            # West (Facing Left) - Made longer to match new proportions
+            # West (Facing Left) - hood on left
             "W": [
-                " ▄▄▄▄▄▄▄▄   ",
-                " █▒▒▒▒▒▒░▟  ",
-                " █▒▒▒▒▒▒▒▒█  ",
-                "(●)══════(●) "
+                " ▄▓░███▓●",
+                "▐░░▓███▓█",
+                " ▀▓░███▓●"
             ],
-            # North-West - Adjusted for wider frame
+            # North-East - front at upper-right
+            "NE": [
+                "  ▄▄░▓▄",
+                " ●█░░▓█",
+                "▐█▓▓██●",
+                " ▀██▀  "
+            ],
+            # North-West - front at upper-left (horizontal mirror of NE)
             "NW": [
-                " ▄████▄▄   ",
-                "▗██▒▒▒▒░▟  ",
-                " `◥███▒▒█  ",
-                "  (●)═══(●) "
+                "▄▓░▄▄  ",
+                "█▓░░█● ",
+                "●██▓▓█▌",
+                "  ▀██▀ "
+            ],
+            # South-East - front at lower-right (vertical mirror of NE)
+            "SE": [
+                " ▄██▄  ",
+                "▐█▓▓██●",
+                " ●█░░▓█",
+                "  ▀▀░▓▀"
+            ],
+            # South-West - front at lower-left (horizontal mirror of SE)
+            "SW": [
+                "  ▄██▄ ",
+                "●██▓▓█▌",
+                "█▓░░█● ",
+                "▀▓░▀▀  "
             ]
         }
         super().__init__(

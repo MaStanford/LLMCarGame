@@ -8,62 +8,62 @@ class Hotrod(PlayerCar):
     def __init__(self, x, y):
         # Redesigned 8-directional art set for a classic hotrod look
         art = {
-            # North (Facing Up)
+            # North (Facing Up) 5x5 - hood at top, rear at bottom
             "N": [
-                "  ▄▄█▄▄  ",
-                " ▗██▆██▖ ",
-                "  ◥█░█◤  ",
-                " (█) (█) "
+                " ▄▒▄ ",
+                "●▒▒▒●",
+                "═▓░▓═",
+                " ▓▓▓ ",
+                "█▓▓▓█",
             ],
-            # North-East
-            "NE": [
-                "    ▄▄▟` ",
-                "   ▟▆▒▙  ",
-                " ═<◤██◤` ",
-                " (●)═(█) "
-            ],
-            # East (Facing Right)
-            "E": [
-                "   ▄▄▄▄▄◣",
-                "  ▟▆██░█ ",
-                " ═<════█ ",
-                " (●)══(█)"
-            ],
-            # South-East
-            "SE": [
-                " (●)═(█) ",
-                " ═<◣██◣ ",
-                "   ▜▒▆▟ ",
-                "    ▀▀`  "
-            ],
-            # South (Facing Down)
+            # South (Facing Down) 5x5 - vertically mirrored N
             "S": [
-                " (█) (█) ",
-                " ▄██▀██▄ ",
-                " ▀█▒▒▒█▀ ",
-                "   ▀▀▀   "
+                "█▓▓▓█",
+                " ▓▓▓ ",
+                "═▓░▓═",
+                "●▒▒▒●",
+                " ▀▒▀ ",
             ],
-            # South-West
-            "SW": [
-                " (█)═(●) ",
-                "  ◢██◢<═ ",
-                "  ▙▆▒▟  ",
-                "  `▀▀    "
+            # East (Facing Right) 3x9 - long hood to right, rear left
+            "E": [
+                "█═▓░▒▒▒▄●",
+                "▓▓▓▓▓▒▒▒▒",
+                "█═▓░▒▒▒▀●",
             ],
-            # West (Facing Left)
+            # West (Facing Left) 3x9 - horizontally mirrored E
             "W": [
-                " ◢▄▄▄▄▄   ",
-                " █░██▆▙  ",
-                " █════<═ ",
-                " (█)══(●)"
+                "●▄▒▒▒░▓═█",
+                "▒▒▒▒▓▓▓▓▓",
+                "●▀▒▒▒░▓═█",
             ],
-            # North-West
+            # North-East (45 deg, up-right) 4x7
+            "NE": [
+                "  ▄▒▒●▒",
+                " ●▒▒░▓ ",
+                "═▓▓░▓▓ ",
+                " █▓▓▓█ ",
+            ],
+            # North-West (45 deg, up-left) 4x7 - horizontally mirrored NE
             "NW": [
-                " `▙▄▄    ",
-                "  ▟▒▆▙   ",
-                " `◥██◥<═ ",
-                " (█)═(●) "
-            ]
+                "▒●▒▒▄  ",
+                " ▓░▒▒● ",
+                " ▓▓░▓▓═",
+                " █▓▓▓█ ",
+            ],
+            # South-East (45 deg, down-right) 4x7 - vertically mirrored NE
+            "SE": [
+                " █▓▓▓█ ",
+                "═▓▓░▓▓ ",
+                " ●▒▒░▓ ",
+                "  ▀▒▒●▒",
+            ],
+            # South-West (45 deg, down-left) 4x7 - horizontally mirrored SE
+            "SW": [
+                " █▓▓▓█ ",
+                " ▓▓░▓▓═",
+                " ▓░▒▒● ",
+                "▒●▒▒▀  ",
+            ],
         }
         super().__init__(
             x, y, art,

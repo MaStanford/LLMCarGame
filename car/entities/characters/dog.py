@@ -5,11 +5,11 @@ from ...data.game_constants import GLOBAL_SPEED_MULTIPLIER
 class Dog(Character):
     def __init__(self, x, y):
         art = [
-            " /\_/\ ",
-            "( o.o )",
-            " > ^ < ",
+            "▗◣ᐧ ᐧ◢▖",
+            " ▝▀▀▀▘ ",
         ]
         super().__init__(x, y, art, durability=10, speed=0.5 * GLOBAL_SPEED_MULTIPLIER)
+        self.xp_value = 2
 
     def update(self, game_state, world, dt):
         # Simple wandering AI

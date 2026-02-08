@@ -72,6 +72,18 @@ def update_vehicle_movement(game_state, world, audio_manager, dt):
     
     next_world_x = game_state.car_world_x + game_state.car_velocity_x * dt
     next_world_y = game_state.car_world_y + game_state.car_velocity_y * dt
+
+    # Apply deflection velocity from collisions
+    if game_state.deflection_frames > 0:
+        next_world_x += game_state.deflection_vx * dt
+        next_world_y += game_state.deflection_vy * dt
+        game_state.deflection_frames -= 1
+        # Decay deflection velocity
+        game_state.deflection_vx *= 0.9
+        game_state.deflection_vy *= 0.9
+        if game_state.deflection_frames <= 0:
+            game_state.deflection_vx = 0.0
+            game_state.deflection_vy = 0.0
     
     next_center_x = next_world_x + game_state.player_car.width / 2
     next_center_y = next_world_y + game_state.player_car.height / 2
@@ -85,10 +97,18 @@ def update_vehicle_movement(game_state, world, audio_manager, dt):
     else:
         audio_manager.play_sfx("crash")
         prev_speed = game_state.car_speed
-        game_state.car_speed = 0
-        game_state.car_velocity_x = 0
-        game_state.car_velocity_y = 0
-        game_state.current_durability -= max(1, int(prev_speed * 0.2)) # Damage based on speed
+        # Terrain collision uses deflection instead of instant stop
+        if prev_speed < 2.0:
+            game_state.car_speed = 0
+            game_state.car_velocity_x = 0
+            game_state.car_velocity_y = 0
+        else:
+            game_state.car_speed *= 0.5
+            # Bounce back from terrain
+            game_state.deflection_vx = -game_state.car_velocity_x * 0.3
+            game_state.deflection_vy = -game_state.car_velocity_y * 0.3
+            game_state.deflection_frames = 10
+        game_state.current_durability -= max(1, int(prev_speed * 0.2))
         audio_manager.play_sfx("player_hit")
 
     # --- Gas Consumption ---

@@ -9,54 +9,69 @@ class SportsCar(PlayerCar):
     def __init__(self, x, y):
         # Redesigned 8-directional art set for a classic sports car
         art = {
-            # North (Facing Up)
+            # North (Facing Up) - 5 lines x 5 chars
+            # Long axis vertical, nose at top, rear at bottom
             "N": [
-                "  ▄▄██▄▄  ",
-                " ▟██░░██▙ ",
-                "  (●) (●) "
+                " ▄▀▄ ",
+                "●▓▓▓●",
+                "▐▓░▓▐",
+                "●▓▓▓●",
+                " ▀▄▀ ",
             ],
-            # North-East
-            "NE": [
-                "   ▄▄██▄▄ ",
-                "  ▟██░░██▙",
-                " ◢◤` (●)(●)",
-            ],
-            # East (Facing Right)
-            "E": [
-                "  ▄▄▄▄▄▄ ",
-                " ▟██░░▒▒█",
-                " (●)══(●)"
-            ],
-            # South-East
-            "SE": [
-                " (●) (●)",
-                "◢██████▙",
-                "◥██████◤"
-            ],
-            # South (Facing Down)
+            # South (Facing Down) - 5 lines x 5 chars
+            # Vertically mirrored N: nose at bottom, rear at top
             "S": [
-                " (●)══(●) ",
-                " ████████ ",
-                "  ▀▄▄▄▄▀  "
+                " ▄▀▄ ",
+                "●▓▓▓●",
+                "▐▓░▓▐",
+                "●▓▓▓●",
+                " ▀▄▀ ",
             ],
-            # South-West
-            "SW": [
-                " (●) (●)",
-                "▟██████◣",
-                "◥██████◤ "
+            # East (Facing Right) - 3 lines x 9 chars
+            # Long axis horizontal, nose on right
+            "E": [
+                " ●▄▓▓▓▄▀ ",
+                " ▐▓▓░▓▓▓▌",
+                " ●▀▓▓▓▀▄ ",
             ],
-            # West (Facing Left)
+            # West (Facing Left) - 3 lines x 9 chars
+            # Horizontally mirrored E: nose on left
             "W": [
-                " ▄▄▄▄▄▄  ",
-                "█▒▒░░██▟ ",
-                "(●)══(●) "
+                " ▀▄▓▓▓▄● ",
+                "▐▓▓▓░▓▓▐ ",
+                " ▄▀▓▓▓▀● ",
             ],
-            # North-West
+            # NE (45-deg up-right) - 4 lines x 7 chars
+            "NE": [
+                "  ▄▀▓▓●",
+                " ▐▓▓░▓▌",
+                "●▓▓▓▓▌ ",
+                " ▀▄●   ",
+            ],
+            # NW (45-deg up-left) - 4 lines x 7 chars
+            # Horizontally mirrored NE
             "NW": [
-                " ▄▄██▄▄   ",
-                "▟██░░██▙  ",
-                "(●)(●) `◥◣"
-            ]
+                "●▓▓▀▄  ",
+                "▐▓░▓▓▐ ",
+                " ▐▓▓▓▓●",
+                "   ●▄▀ ",
+            ],
+            # SE (45-deg down-right) - 4 lines x 7 chars
+            # Vertically mirrored NE
+            "SE": [
+                " ▄▀●   ",
+                "●▓▓▓▓▌ ",
+                " ▐▓▓░▓▌",
+                "  ▀▄▓▓●",
+            ],
+            # SW (45-deg down-left) - 4 lines x 7 chars
+            # Horizontally mirrored SE
+            "SW": [
+                "   ●▀▄ ",
+                " ▐▓▓▓▓●",
+                "▐▓░▓▓▐ ",
+                "●▓▓▄▀  ",
+            ],
         }
         super().__init__(
             x, y, art,

@@ -5,11 +5,12 @@ from ...data.game_constants import GLOBAL_SPEED_MULTIPLIER
 class Cow(Character):
     def __init__(self, x, y):
         art = [
-            " (\\_/)",
-            " (o.o) ",
-            " > ^ < ",
+            " ▗█▀█▖ ",
+            " ▐◉ ◉▌ ",
+            " ▝▄▄▄▘ ",
         ]
         super().__init__(x, y, art, durability=20, speed=0.25 * GLOBAL_SPEED_MULTIPLIER)
+        self.xp_value = 3
 
     def update(self, game_state, world, dt):
         # Simple wandering AI

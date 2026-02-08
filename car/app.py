@@ -199,7 +199,7 @@ class GenesisModuleApp(App):
                 return
 
     def find_closest_entity(self):
-        """Finds the closest enemy or boss to the player."""
+        """Finds the closest enemy, obstacle, or fauna to the player."""
         gs = self.game_state
         closest = None
         min_dist_sq = CUTSCENE_RADIUS**2
@@ -215,7 +215,7 @@ class GenesisModuleApp(App):
                         "name": enemy.name, "hp": enemy.durability, "max_hp": enemy.max_durability,
                         "art": art
                     }
-        
+
         # If no boss is nearby, find the closest normal enemy
         if not closest:
             for enemy in gs.active_enemies:
@@ -228,6 +228,37 @@ class GenesisModuleApp(App):
                         "hp": enemy.durability, "max_hp": enemy.max_durability,
                         "art": art
                     }
+
+        # Also check obstacles (only if damaged by player)
+        if not closest:
+            for obstacle in gs.active_obstacles:
+                if obstacle.durability >= obstacle.max_durability:
+                    continue
+                dist_sq = (obstacle.x - gs.car_world_x)**2 + (obstacle.y - gs.car_world_y)**2
+                if dist_sq < min_dist_sq:
+                    min_dist_sq = dist_sq
+                    art = obstacle.art.get("N") if isinstance(obstacle.art, dict) else obstacle.art
+                    closest = {
+                        "name": obstacle.__class__.__name__.replace("_", " ").title(),
+                        "hp": obstacle.durability, "max_hp": obstacle.max_durability,
+                        "art": art
+                    }
+
+        # Also check fauna (only if damaged by player)
+        if not closest:
+            for fauna in gs.active_fauna:
+                if fauna.durability >= fauna.max_durability:
+                    continue
+                dist_sq = (fauna.x - gs.car_world_x)**2 + (fauna.y - gs.car_world_y)**2
+                if dist_sq < min_dist_sq:
+                    min_dist_sq = dist_sq
+                    art = fauna.art.get("N") if isinstance(fauna.art, dict) else fauna.art
+                    closest = {
+                        "name": fauna.__class__.__name__.replace("_", " ").title(),
+                        "hp": fauna.durability, "max_hp": fauna.max_durability,
+                        "art": art
+                    }
+
         return closest
 
     def update_compass_data(self):

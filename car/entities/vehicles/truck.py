@@ -9,54 +9,62 @@ class Truck(PlayerCar):
     def __init__(self, x, y):
         # Redesigned 8-directional art set for a classic pickup truck
         art = {
-            # North (Facing Up)
+            # North (Facing Up) — 5×7 — cab at top, bed below
             "N": [
-                "  ▄▄███▄▄  ",
-                " ▟███████▙ ",
-                "(█)      (█)"
+                " ▄░░░▄ ",
+                "██░░░██",
+                "██▓▓▓██",
+                "██▓▓▓██",
+                " ▀███▀ ",
             ],
-            # North-East
-            "NE": [
-                "    ▄▄████▄",
-                "   ▟██▒▒▀▀█",
-                "  (█)══(█)◥◣",
-            ],
-            # East (Facing Right)
-            "E": [
-                "   ▄▄█████ ",
-                "  ▟██▒▒▀▀▀█",
-                " (█)════(█)"
-            ],
-            # South-East
-            "SE": [
-                "  (█)════(█)",
-                "  ◢◤▀▀▀▒▒██",
-                "   ▀▀▀▀████"
-            ],
-            # South (Facing Down)
+            # South (Facing Down) — 5×7 — vertical mirror of N
             "S": [
-                "(█)      (█)",
-                " ██▄▄▄▄▄▄██ ",
-                " ▀▀▀▀▀▀▀▀▀▀ "
+                " ▄███▄ ",
+                "██▓▓▓██",
+                "██▓▓▓██",
+                "██░░░██",
+                " ▀░░░▀ ",
             ],
-            # South-West
-            "SW": [
-                " (█)════(█) ",
-                " ██▒▒▀▀▀◥◣ ",
-                "  ████▀▀▀▀  "
+            # East (Facing Right) — 3×11 — cab on right, bed on left
+            "E": [
+                "▄██▄▄▄██▄░▄",
+                "▓▓▓█▓▓█▓░░▌",
+                "▀██▀▀▀██▀░▀",
             ],
-            # West (Facing Left)
+            # West (Facing Left) — 3×11 — horizontal mirror of E
             "W": [
-                "  █████▄▄   ",
-                " █▀▀▀▒▒██▟  ",
-                " (█)════(█) "
+                "▄░▄██▄▄▄██▄",
+                "▐░░▓█▓▓█▓▓▓",
+                "▀░▀██▀▀▀██▀",
             ],
-            # North-West
+            # North-East (diagonal) — 4×9 — cab at upper-right
+            "NE": [
+                "  ▄▄░░▄██",
+                " ▓▓░░▓█▌ ",
+                "██▓▓▓▓▌  ",
+                " ▀██▀▀   ",
+            ],
+            # North-West (diagonal) — 4×9 — horizontal mirror of NE
             "NW": [
-                " ▄████▄▄    ",
-                "█▀▀▒▒██▟   ",
-                "◢◤(█)══(█)   "
-            ]
+                "██▄░░▄▄  ",
+                " ▐█▓░░▓▓ ",
+                "  ▐▓▓▓▓██",
+                "   ▀▀██▀ ",
+            ],
+            # South-East (diagonal) — 4×9 — vertical mirror of NE
+            "SE": [
+                " ▄██▄▄   ",
+                "██▓▓▓▓▌  ",
+                " ▓▓░░▓█▌ ",
+                "  ▀▀░░▀██",
+            ],
+            # South-West (diagonal) — 4×9 — vertical mirror of NW
+            "SW": [
+                "   ▄▄██▄ ",
+                "  ▐▓▓▓▓██",
+                " ▐█▓░░▓▓ ",
+                "██▀░░▀▀  ",
+            ],
         }
         super().__init__(
             x, y, art,

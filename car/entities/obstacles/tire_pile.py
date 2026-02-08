@@ -3,9 +3,9 @@ from ..obstacle import Obstacle
 class TirePile(Obstacle):
     def __init__(self, x, y):
         art = [
-            "   (O)   ",
-            "  (O)(O)  ",
-            " (O)(O)(O) "
+            "   ◎   ",
+            "  ◎ ◎  ",
+            " ◎ ◎ ◎ ",
         ]
         super().__init__(
             x, y, art,

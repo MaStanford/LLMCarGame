@@ -8,62 +8,64 @@ class Hatchback(PlayerCar):
     def __init__(self, x, y):
         # Redesigned 8-directional art set for a more detailed look
         art = {
-            # North (Facing Up)
+            # North (Facing Up) - 4 lines x 5 chars
+            # Hood/nose at top, blunt hatch at bottom
             "N": [
-                "  ▟▀▀▙  ",
-                " █░░░░█ ",
-                "◢██▄██◣",
-                " (●) (●) "
+                " ▄▀▄ ",
+                "●░░░●",
+                "●▓▓▓●",
+                " █▄█ ",
             ],
-            # North-East
-            "NE": [
-                "  ▄▄▟` ",
-                " ▟░▒▒▙ ",
-                "◢███◤` ",
-                " (●)═(●) "
-            ],
-            # East (Facing Right)
-            "E": [
-                " ▄▄▄▟` ",
-                " █░█▒▙ ",
-                "◢█████ ",
-                " (●)═(●)"
-            ],
-            # South-East
-            "SE": [
-                " (●)═(●) ",
-                "◢███◣  ",
-                " █░▒▒▟ ",
-                "  ▀▀`  "
-            ],
-            # South (Facing Down)
+            # South (Facing Down) - 4 lines x 5 chars
+            # Vertically mirrored N: blunt hatch at top, nose at bottom
             "S": [
-                " (●) (●) ",
-                "◥██▀██◤",
-                " █▒▒▒▒█ ",
-                "  ▜▄▄▛  "
+                " █▀█ ",
+                "●▓▓▓●",
+                "●░░░●",
+                " ▀▄▀ ",
             ],
-            # South-West
-            "SW": [
-                " (●)═(●) ",
-                "  ◢███◤",
-                " ▙▒▒░█ ",
-                "  `▀▀  "
+            # East (Facing Right) - 3 lines x 7 chars
+            # Front/nose on right, blunt hatch on left
+            "E": [
+                " ●▄▄▄● ",
+                "█▓░░░▀▌",
+                " ●▀▀▀● ",
             ],
-            # West (Facing Left)
+            # West (Facing Left) - 3 lines x 7 chars
+            # Horizontally mirrored E: front/nose on left, hatch on right
             "W": [
-                " `▙▄▄▄ ",
-                " ▟▒█░█ ",
-                " █████◣",
-                "  (●)═(●)"
+                " ●▄▄▄● ",
+                "▐▀░░░▓█",
+                " ●▀▀▀● ",
             ],
-            # North-West
+            # North-East (45 degrees) - 3 lines x 6 chars
+            # Nose upper-right, hatch lower-left
+            "NE": [
+                " ▄▄▀▌",
+                "●░░▓█",
+                "█▓●▀ ",
+            ],
+            # North-West (45 degrees) - 3 lines x 6 chars
+            # Horizontal mirror of NE: nose upper-left, hatch lower-right
             "NW": [
-                " `▙▄▄  ",
-                " ▟▒▒░▙ ",
-                " `◥███◣",
-                " (●)═(●) "
-            ]
+                "▐▀▄▄ ",
+                "█▓░░●",
+                " ▀●▓█",
+            ],
+            # South-East (45 degrees) - 3 lines x 6 chars
+            # Vertical mirror of NE: hatch upper-right, nose lower-left
+            "SE": [
+                "█▓●▄ ",
+                "●░░▓█",
+                " ▀▀▄▌",
+            ],
+            # South-West (45 degrees) - 3 lines x 6 chars
+            # Horizontal mirror of SE / vertical mirror of NW
+            "SW": [
+                " ▄●▓█",
+                "█▓░░●",
+                "▐▄▀▀ ",
+            ],
         }
         super().__init__(
             x, y, art,

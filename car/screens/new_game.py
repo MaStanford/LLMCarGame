@@ -22,6 +22,8 @@ class NewGameScreen(Screen):
         Binding("down", "focus_next", "Down"),
         Binding("left", "cycle_left", "Left"),
         Binding("right", "cycle_right", "Right"),
+        Binding("a", "rotate_left", "Rotate Left"),
+        Binding("d", "rotate_right", "Rotate Right"),
         Binding("escape", "app.pop_screen", "Back"),
     ]
 
@@ -123,6 +125,16 @@ class NewGameScreen(Screen):
         elif focused_widget.id == "weapon-list-container":
             self.selected_weapon_index +=1
             self.update_car_and_weapon_info()
+
+    def action_rotate_left(self) -> None:
+        """Rotate the car preview counterclockwise."""
+        self.preview_angle = (self.preview_angle - 45) % 360
+        self.update_car_and_weapon_info()
+
+    def action_rotate_right(self) -> None:
+        """Rotate the car preview clockwise."""
+        self.preview_angle = (self.preview_angle + 45) % 360
+        self.update_car_and_weapon_info()
     
     def update_weapon_focus(self):
         """Visual update for weapon list focus."""
