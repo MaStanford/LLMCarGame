@@ -62,7 +62,7 @@ class Motorcycle(PlayerCar):
             durability=40,
             speed=10.5,
             acceleration=6.0,
-            handling=0.3,
+            handling=3.0,
             braking_power=8.0,
             # Attachment points for weapons
             attachment_points={
@@ -73,6 +73,6 @@ class Motorcycle(PlayerCar):
         self.max_attachments = 2
         # Default loadout for this chassis
         self.default_weapons = {
-            "handlebar_gun": "wep_pistol"
+            "front_gun": "wep_pistol"
         }
         self.name = "Motorcycle"

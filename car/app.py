@@ -55,6 +55,7 @@ class GenesisModuleApp(App):
         self.cli_preset = self.settings.get("cli_preset", "gemini")
         self.custom_cli_command = self.settings.get("custom_cli_command", "")
         self.custom_cli_args = self.settings.get("custom_cli_args", "")
+        self.dev_quick_start = self.settings.get("dev_quick_start", False)
         self.last_grid_pos = (None, None)
 
     def reload_dynamic_data(self):
@@ -114,6 +115,9 @@ class GenesisModuleApp(App):
                 self.push_screen(GameOverScreen())
                 return
 
+            # Process continuous input (held keys) before physics
+            self.screen.process_input(dt)
+
             notifications = update_physics_and_collisions(gs, self.world, self.audio_manager, dt, self)
             for notification in notifications:
                 self.screen.query_one("#notifications", Notifications).add_notification(notification)
@@ -166,9 +170,6 @@ class GenesisModuleApp(App):
             
             # Check for world triggers
             check_triggers(self, gs)
-
-            # --- Reset one-time actions ---
-            gs.actions["fire"] = False
 
         # Update FPS counter
         self.frame_count += 1
@@ -359,7 +360,3 @@ class GenesisModuleApp(App):
                 )
                 # Pass the city_id to the worker's custom attribute to know where to store the result
                 worker.city_id = city_id
-
-    def trigger_initial_quest_cache(self):
-        """Kicks off the quest caching for the player's starting area."""
-        self.check_and_cache_quests_for_nearby_cities()

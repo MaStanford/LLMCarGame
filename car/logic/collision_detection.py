@@ -79,7 +79,8 @@ def _apply_deflection(game_state, other_x, other_y, other_w, other_h, damage):
     # Apply speed-scaled damage
     speed_factor = max(0.3, game_state.car_speed / (game_state.max_speed if game_state.max_speed > 0 else 1))
     actual_damage = max(1, int(damage * speed_factor))
-    game_state.current_durability -= actual_damage
+    if not game_state.god_mode:
+        game_state.current_durability -= actual_damage
 
     if game_state.car_speed < STOP_THRESHOLD:
         # At low speeds, just stop

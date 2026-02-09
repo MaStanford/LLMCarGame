@@ -19,6 +19,8 @@ from ..widgets.notifications import Notifications
 from ..widgets.fps_counter import FPSCounter
 from ..world.generation import get_city_name
 from ..logic.spawning import spawn_initial_entities
+from ..logic.debug_commands import execute_command
+from ..widgets.debug_console import DebugConsole
 from .inventory import InventoryScreen
 from .pause_menu import PauseScreen
 from .map import MapScreen
@@ -28,17 +30,31 @@ from .quest_detail import QuestDetailScreen
 from textual.events import Key
 from textual.binding import Binding
 
+# --- Input Constants ---
+# Keys that are tracked for continuous (hold-to-act) input.
+# These are handled via on_key + staleness expiry, NOT Textual bindings,
+# so that multiple gameplay keys can be held simultaneously.
+GAMEPLAY_KEYS = {"w", "s", "a", "d", "space", "left", "right"}
+KEY_STALE_THRESHOLD = 0.15  # seconds — if no repeat event arrives within this window, the key is considered released
+PEDAL_RAMP_RATE = 4.0       # pedal units per second (0 to 1.0 in ~0.25s)
+SWIVEL_RATE = 3.0           # radians per second for weapon aiming
+
 class WorldScreen(Screen):
     """The default screen for the game."""
 
+    _pressed_keys: dict = {}  # key_name -> last_event_timestamp (reset in on_mount)
+
+    # Only one-shot menu/UI keys use Textual bindings.
+    # Gameplay keys (WASD, space, arrows) are handled by on_key + process_input.
+    # They are listed here with show=True purely so the footer displays them as hints.
     BINDINGS = [
-        Binding("w", "accelerate", "Accelerate", show=True),
-        Binding("s", "brake", "Brake", show=True),
-        Binding("a", "turn_left", "Turn Left", show=True),
-        Binding("d", "turn_right", "Turn Right", show=True),
-        Binding("left", "swivel_left", "Aim Left", show=True),
-        Binding("right", "swivel_right", "Aim Right", show=True),
-        Binding("space", "fire", "Fire", show=True),
+        Binding("w", "noop", "Accelerate", show=True),
+        Binding("s", "noop", "Brake", show=True),
+        Binding("a", "noop", "Turn Left", show=True),
+        Binding("d", "noop", "Turn Right", show=True),
+        Binding("left", "noop", "Aim Left", show=True),
+        Binding("right", "noop", "Aim Right", show=True),
+        Binding("space", "noop", "Fire", show=True),
         Binding("escape", "toggle_pause", "Pause", show=True),
         Binding("tab", "toggle_inventory", "Inventory", show=False),
         Binding("i", "toggle_inventory", "Inventory", show=True),
@@ -46,17 +62,19 @@ class WorldScreen(Screen):
         Binding("f", "show_factions", "Factions", show=True),
         Binding("q", "show_quests", "Quests", show=True),
         Binding("enter", "show_notifications", "Show Log", show=False),
+        Binding("grave_accent", "toggle_console", "Console", show=False),
     ]
 
     def on_mount(self) -> None:
         """Called when the screen is mounted."""
+        self._pressed_keys = {}  # key_name -> last_event_timestamp
         self.focus()
         gs = self.app.game_state
-        
+
         # Synchronize the player car's entity position with the game state's world position
         gs.player_car.x = gs.car_world_x
         gs.player_car.y = gs.car_world_y
-        
+
         # Spawn an initial batch of entities
         spawn_initial_entities(gs, self.app.world)
 
@@ -66,45 +84,67 @@ class WorldScreen(Screen):
 
     def on_screen_resume(self) -> None:
         """Called when the screen is resumed."""
+        self._pressed_keys = {}  # Clear stale keys from before the menu
         self.app.game_state.pause_menu_open = False
         self.app.game_state.menu_open = False
         self.app.start_game_loop()
-        
+
         # Update FPS counter visibility in case Dev Mode changed
         fps_counter = self.query_one("#fps_counter")
         if fps_counter:
             fps_counter.display = self.app.dev_mode
 
-    def action_accelerate(self) -> None:
-        gs = self.app.game_state
-        gs.pedal_position = min(1.0, gs.pedal_position + 0.2)
+    def on_key(self, event: Key) -> None:
+        """Track gameplay keys for continuous input (hold-to-act).
 
-    def action_brake(self) -> None:
-        gs = self.app.game_state
+        Textual has no key-up events. Instead, we record the timestamp of each
+        key-repeat event. The game loop's process_input() expires keys that
+        haven't received a repeat within KEY_STALE_THRESHOLD, treating that
+        as a key release.
+        """
+        if event.key in GAMEPLAY_KEYS:
+            self._pressed_keys[event.key] = time.time()
 
-        gs.pedal_position = max(-1.0, gs.pedal_position - 0.2)
+    def process_input(self, dt: float) -> None:
+        """Called each game tick to translate held keys into game actions.
 
-    def action_turn_left(self) -> None:
+        This replaces the old per-key Textual binding actions for gameplay keys.
+        All gameplay keys can now be held simultaneously.
+        """
         gs = self.app.game_state
-        gs.car_angle -= gs.turn_rate
+        now = time.time()
 
-    def action_turn_right(self) -> None:
-        gs = self.app.game_state
-        gs.car_angle += gs.turn_rate
-        
-    def action_swivel_left(self) -> None:
-        """Swivel the weapon aim to the left."""
-        gs = self.app.game_state
-        gs.weapon_angle_offset -= 0.1 # Placeholder value
+        # Expire stale keys (no repeat event within threshold = key released)
+        self._pressed_keys = {
+            k: t for k, t in self._pressed_keys.items()
+            if now - t < KEY_STALE_THRESHOLD
+        }
 
-    def action_swivel_right(self) -> None:
-        """Swivel the weapon aim to the right."""
-        gs = self.app.game_state
-        gs.weapon_angle_offset += 0.1 # Placeholder value
-        
-    def action_fire(self) -> None:
-        gs = self.app.game_state
-        gs.actions["fire"] = True
+        # --- Turning (continuous, dt-scaled via vehicle_movement.py) ---
+        gs.actions["turn_left"] = "a" in self._pressed_keys
+        gs.actions["turn_right"] = "d" in self._pressed_keys
+
+        # --- Throttle / Brake (ramp while held, sticky on release) ---
+        if "w" in self._pressed_keys:
+            gs.pedal_position = min(1.0, gs.pedal_position + PEDAL_RAMP_RATE * dt)
+        if "s" in self._pressed_keys:
+            gs.pedal_position = max(-1.0, gs.pedal_position - PEDAL_RAMP_RATE * dt)
+
+        # --- Firing (continuous while held, gated by weapon cooldowns) ---
+        gs.actions["fire"] = "space" in self._pressed_keys
+
+        # --- Weapon Aiming (continuous swivel) ---
+        if "left" in self._pressed_keys:
+            gs.weapon_angle_offset -= SWIVEL_RATE * dt
+        if "right" in self._pressed_keys:
+            gs.weapon_angle_offset += SWIVEL_RATE * dt
+
+    # --- One-shot menu actions (still use Textual bindings) ---
+
+    def action_noop(self) -> None:
+        """No-op action for gameplay keys displayed in footer.
+        Actual input is handled by on_key + process_input."""
+        pass
 
     def action_toggle_pause(self) -> None:
         """Toggle the pause menu."""
@@ -127,7 +167,7 @@ class WorldScreen(Screen):
         """Pushes the map screen."""
         self.app.stop_game_loop()
         self.app.push_screen(MapScreen())
-        
+
     def action_show_factions(self) -> None:
         """Pushes the faction screen."""
         self.app.push_screen(FactionScreen())
@@ -139,6 +179,23 @@ class WorldScreen(Screen):
     def action_show_notifications(self) -> None:
         """Re-show recent notification history."""
         self.query_one("#notifications", Notifications).show_history()
+
+    def action_toggle_console(self) -> None:
+        """Toggle the debug console (dev mode only)."""
+        if not self.app.dev_mode:
+            return
+        existing = self.query("#debug_console")
+        if existing:
+            existing.first().remove()
+        else:
+            self.mount(DebugConsole())
+
+    def on_debug_console_command_submitted(self, event: DebugConsole.CommandSubmitted) -> None:
+        """Handle a submitted debug command."""
+        result = execute_command(self.app.game_state, self.app.world, event.command)
+        notifications = self.query_one("#notifications", Notifications)
+        for line in result.split("\n"):
+            notifications.add_notification(line)
 
     def compose(self):
         """Compose the layout of the screen."""
@@ -165,9 +222,9 @@ class WorldScreen(Screen):
         """Update the screen widgets."""
         game_view = self.query_one("#game_view", GameView)
         game_view.refresh()
-        
+
         gs = self.app.game_state
-        
+
         stats_hud = self.query_one("#stats_hud", StatsHUD)
         stats_hud.cash = gs.player_cash
         stats_hud.durability = int(gs.current_durability)

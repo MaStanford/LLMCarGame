@@ -25,75 +25,6 @@ class KillBossObjective(Objective):
         if not any(enemy.name == self.boss_name for enemy in game_state.active_enemies):
             self.completed = True
 
-class KillCountObjective(Objective):
-    def __init__(self, target_count):
-        super().__init__()
-        self.target_count = target_count
-        self.kill_count = 0
-
-    def update(self, game_state):
-        # This will be updated by an external event in game.py
-        if self.kill_count >= self.target_count:
-            self.completed = True
-
-class SurvivalObjective(Objective):
-    def __init__(self, duration, mini_boss_name):
-        super().__init__()
-        self.duration = duration
-        self.timer = duration
-        self.mini_boss_name = mini_boss_name
-        self.mini_boss_spawned = False
-
-    def update(self, game_state):
-        if self.timer > 0:
-            self.timer -= 1
-        elif not self.mini_boss_spawned:
-            # Logic to spawn mini-boss will be in game.py
-            self.mini_boss_spawned = True
-        
-        if self.mini_boss_spawned and self.mini_boss_name not in game_state["active_enemies"]:
-            self.completed = True
-
-class Quest:
-    def __init__(self, name, description, objectives, rewards, city_id=None, quest_giver_faction=None, target_faction=None, time_limit=None, next_quest_id=None, requires_turn_in=True, dialog=None, is_conquest_quest=False):
-        self.name = name
-        self.description = description
-        self.objectives = objectives
-        self.rewards = rewards
-        self.city_id = city_id
-        self.quest_giver_faction = quest_giver_faction
-        self.target_faction = target_faction
-        self.time_limit = time_limit
-        self.next_quest_id = next_quest_id
-        self.requires_turn_in = requires_turn_in
-        self.dialog = dialog if dialog else "An old friend has a new job for you."
-        self.is_conquest_quest = is_conquest_quest
-        self.completed = False
-        self.failed = False
-        self.ready_to_turn_in = False
-
-    def to_dict(self):
-        return {
-            "type": self.__class__.__name__,
-            "completed": self.completed
-        }
-
-    @staticmethod
-    def from_dict(data):
-        # This is a base method, subclasses should handle their own specific fields
-        # But we can use a factory here if we want, or just let the subclasses handle it
-        pass
-
-class KillBossObjective(Objective):
-    def __init__(self, boss_name):
-        super().__init__()
-        self.boss_name = boss_name
-
-    def update(self, game_state):
-        # A boss is just a powerful enemy, so we check the active_enemies list
-        if not any(enemy.name == self.boss_name for enemy in game_state.active_enemies):
-            self.completed = True
-
     def to_dict(self):
         data = super().to_dict()
         data.update({
@@ -148,7 +79,10 @@ class SurvivalObjective(Objective):
             # Logic to spawn mini-boss will be in game.py
             self.mini_boss_spawned = True
         
-        if self.mini_boss_spawned and self.mini_boss_name not in game_state.active_enemies:
+        if self.mini_boss_spawned and not any(
+            getattr(e, 'name', '') == self.mini_boss_name
+            for e in game_state.active_enemies
+        ):
             self.completed = True
 
     def to_dict(self):

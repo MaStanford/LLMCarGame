@@ -71,7 +71,7 @@ class Truck(PlayerCar):
             durability=180,
             speed=4.2,
             acceleration=2.5,
-            handling=0.08,
+            handling=1.3,
             braking_power=3.5,
             # Attachment points for weapons
             attachment_points={

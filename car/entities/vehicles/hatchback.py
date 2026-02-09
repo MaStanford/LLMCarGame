@@ -72,7 +72,7 @@ class Hatchback(PlayerCar):
             durability=90,
             speed=7.2,
             acceleration=3.5,
-            handling=0.12,
+            handling=2.0,
             braking_power=5.5,
             # Attachment points for weapons
             attachment_points={

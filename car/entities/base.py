@@ -1,7 +1,11 @@
 from abc import ABC, abstractmethod
 
 class Entity(ABC):
+    _next_id = 0
+
     def __init__(self, x, y, art, durability):
+        Entity._next_id += 1
+        self.entity_id = Entity._next_id
         self.x = x
         self.y = y
         self.vx = 0
@@ -14,8 +18,6 @@ class Entity(ABC):
         self.patrol_target_x = None
         self.patrol_target_y = None
         self.is_major_enemy = False
-        self.patrol_target_x = None
-        self.patrol_target_y = None
 
     @staticmethod
     def get_car_dimensions(car_art_list):
@@ -41,4 +43,3 @@ class Entity(ABC):
     @abstractmethod
     def update(self, game_state, world, dt):
         pass
-import logging

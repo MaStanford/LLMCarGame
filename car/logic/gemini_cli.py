@@ -16,7 +16,7 @@ import shutil
 CLI_PRESETS = {
     "gemini": {
         "command": "gemini",
-        "args": ["--yolo", "-p"],
+        "args": ["--approval-mode=yolo", "-o", "text"],
         "description": "Google Gemini CLI",
     },
     "claude": {

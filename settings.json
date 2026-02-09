@@ -4,5 +4,6 @@
     "cli_preset": "claude",
     "custom_cli_command": "",
     "custom_cli_args": "",
-    "dev_mode": false
+    "dev_mode": true,
+    "dev_quick_start": true
 }

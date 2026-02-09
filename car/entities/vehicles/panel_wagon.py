@@ -70,7 +70,7 @@ class PanelWagon(PlayerCar):
             durability=140,
             speed=4.5,
             acceleration=2.5,
-            handling=0.09,
+            handling=1.4,
             braking_power=3.5,
             # Attachment points for weapons
             attachment_points={

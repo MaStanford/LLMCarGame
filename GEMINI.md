@@ -86,6 +86,56 @@ Then, run the game with the `--dev` flag:
 ```
 This will enable the Textual inspector, which can be accessed by pressing `Ctrl+B`.
 
+Dev mode can also be toggled in Settings during gameplay. When enabled:
+- **FPS Counter** is shown on the WorldScreen
+- **Debug Console** is available (press `` ` `` backtick on the WorldScreen)
+- **Quick Start** option becomes available in Settings
+
+### Debug Console (`car/logic/debug_commands.py`, `car/widgets/debug_console.py`)
+
+A dev-mode-only in-game command prompt, activated by pressing `` ` `` (backtick/grave accent) during gameplay. Commands are entered as text and results appear as notifications.
+
+**Implementation:** The `DebugConsole` widget (Textual `Input`) is mounted/unmounted on `WorldScreen` when toggled. Commands are parsed and executed by `execute_command()` in `debug_commands.py`. All entities have auto-incrementing `entity_id` (assigned in `Entity.__init__`) for stable references.
+
+**Available Commands:**
+
+| Command | Example | Description |
+|---------|---------|-------------|
+| `spawn enemy <class> [dx dy]` | `spawn enemy raider_buggy 30 40` | Spawn enemy at player + offset |
+| `spawn boss <faction_id>` | `spawn boss the_vultures` | Spawn faction boss |
+| `spawn fauna <class> [dx dy]` | `spawn fauna dog` | Spawn fauna (default: 50 units ahead) |
+| `spawn obstacle <class> [dx dy]` | `spawn obstacle rock 10 10` | Spawn obstacle |
+| `kill <id>` | `kill 42` | Kill entity by ID |
+| `kill all` | `kill all` | Kill all enemies |
+| `tp <x> <y>` | `tp 1000 1000` | Teleport to world coordinates |
+| `tp_rel <dx> <dy>` | `tp_rel 50 50` | Relative teleport |
+| `god` | `god` | Toggle invulnerability |
+| `heal` | `heal` | Full durability restore |
+| `gas` | `gas` | Full gas refill |
+| `cash <amount>` | `cash 5000` | Add cash |
+| `xp <amount>` | `xp 1000` | Add XP |
+| `level <n>` | `level 10` | Set player level |
+| `speed <value>` | `speed 20` | Set car speed directly |
+| `ammo <type> <n>` | `ammo bullet 100` | Set ammo count |
+| `list enemies` | `list enemies` | Show enemies with IDs |
+| `list factions` | `list factions` | Show factions |
+| `list all` | `list all` | Entity count summary |
+| `help` | `help` | Show available commands |
+
+**Entity class names** are matched case-insensitively with underscore tolerance: `raider_buggy`, `RaiderBuggy`, and `raiderbuggy` all work.
+
+### Dev Quick Start (`car/config.py`: `dev_quick_start`)
+
+A setting (toggled in Settings screen) that skips all LLM generation for instant game start. When enabled, clicking "Start Game" in the New Game screen:
+1. Uses hardcoded fallback theme ("Classic Wasteland")
+2. Uses hardcoded fallback factions (5 factions including neutral hub at 0,0)
+3. Uses hardcoded fallback quests and story intro
+4. Skips ThemeSelectionScreen, WorldBuildingScreen, and IntroCutsceneScreen
+5. Goes directly from NewGameScreen to WorldScreen
+
+**Normal flow:** MainMenu → NewGame → ThemeSelection → WorldBuilding → IntroCutscene → WorldScreen
+**Quick start:** MainMenu → NewGame → WorldScreen
+
 ## Architecture
 
 The game is built around the **Textual TUI framework**, which provides an event-driven, widget-based architecture. This replaces the previous manual `curses`-based rendering system.
@@ -189,6 +239,21 @@ The game is built around the **Textual TUI framework**, which provides an event-
     - **Faction Control:** Player actions directly impact the "Control" score of factions, affecting their economic and military strength.
     - **Decisive Battles:** When a faction's control drops to a critical level, a rival can offer the player a high-stakes "Decisive Battle" quest to eliminate the faction's leader.
     - **Conquest:** Winning a Decisive Battle results in a permanent conquest, altering the world map, faction relationships, and the units that spawn in the conquered territory.
+
+- **Input System — Simultaneous Key Tracking:**
+    - **Problem:** Textual's TUI framework provides no key-up events. Its `Binding` + `action_*` system dispatches one key at a time, so gameplay actions (turn, fire, accelerate) are mutually exclusive — the player can't hold turn while firing.
+    - **Solution: `pressed_keys` with Staleness Expiry (`car/screens/world.py`):**
+        1.  Gameplay keys (`WASD`, `Space`, `Left/Right arrows`) are **not** registered as Textual `Binding`s. Instead, a raw `on_key()` handler records each key event's timestamp into a `_pressed_keys: dict[str, float]` dictionary.
+        2.  Every game tick, `process_input(dt)` is called before physics. It first **expires stale keys** — any key whose last event timestamp is older than `KEY_STALE_THRESHOLD` (150ms) is considered released. Since OS key-repeat fires every ~30-50ms while a key is held, a 150ms gap reliably indicates release.
+        3.  The remaining held keys drive **continuous actions**: turning sets `actions["turn_left/right"]`, throttle ramps `pedal_position` at `PEDAL_RAMP_RATE` (4.0/s), firing sets `actions["fire"]`, and aiming adjusts `weapon_angle_offset` at `SWIVEL_RATE` (3.0 rad/s).
+        4.  All gameplay keys are tracked independently, enabling true **simultaneous multi-key input** (e.g., turn + fire + accelerate at once).
+    - **Menu keys** (`Escape`, `Tab`, `I`, `M`, `F`, `Q`, `Enter`) remain as standard one-shot Textual bindings since they don't need continuous input or simultaneity.
+    - **Screen Transitions:** `_pressed_keys` is cleared on `on_mount()` and `on_screen_resume()` to prevent phantom inputs when returning from menus.
+    - **Constants** (defined at module level in `car/screens/world.py`):
+        - `KEY_STALE_THRESHOLD = 0.15` — seconds before an un-repeated key is treated as released
+        - `PEDAL_RAMP_RATE = 4.0` — pedal units per second (0→1 in ~0.25s)
+        - `SWIVEL_RATE = 3.0` — weapon aim radians per second
+        - `GAMEPLAY_KEYS = {"w", "s", "a", "d", "space", "left", "right"}`
 
 - **Coordinate System and Entity Physics:** To ensure consistent and predictable behavior for all in-game objects, the following conventions are strictly followed:
     - **Game World Orientation:** The game operates on a "North-is-Up" principle. An angle of `0` radians corresponds to North. This is in contrast to the standard mathematical convention where `0` radians is East. All physics and rendering calculations must account for this by subtracting `math.pi / 2` from the game angle before using it in standard trigonometric functions (`cos`, `sin`).

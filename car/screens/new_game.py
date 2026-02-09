@@ -228,12 +228,111 @@ class NewGameScreen(Screen):
         if event.button.id == "start_game":
             difficulty = self.query_one("#difficulty_select", CycleWidget).options[self.query_one("#difficulty_select", CycleWidget).current_index]
             color_name = self.query_one("#color_select", CycleWidget).options[self.query_one("#color_select", CycleWidget).current_index]
-            
+
             settings = {
                 "selected_car_index": self.selected_car_index,
                 "difficulty": difficulty,
                 "difficulty_mods": DIFFICULTY_MODIFIERS[difficulty],
                 "car_color_name": color_name,
             }
-            self.app.switch_screen(ThemeSelectionScreen(settings))
+
+            if getattr(self.app, "dev_quick_start", False):
+                self._quick_start(settings)
+            else:
+                self.app.switch_screen(ThemeSelectionScreen(settings))
+
+    def _quick_start(self, new_game_settings: dict) -> None:
+        """Skip all LLM generation and start immediately with fallback data."""
+        import time
+        import os
+        import shutil
+        import pprint
+        import json
+        import logging
+
+        from ..game_state import GameState
+        from ..world import World
+        from ..logic.llm_theme_generator import _get_fallback_themes
+        from ..logic.llm_faction_generator import _get_fallback_factions
+        from ..logic.llm_quest_generator import _get_fallback_quest
+        from ..logic.save_load import load_triggers
+        from ..world.generation import get_buildings_in_city, find_safe_spawn_point
+
+        logging.info("Dev Quick Start: skipping LLM generation, using fallback data.")
+
+        # Use fallback data for everything
+        theme = _get_fallback_themes()[0]
+        factions = _get_fallback_factions()
+        new_game_settings["theme"] = theme
+
+        # Find neutral faction at (0,0)
+        neutral_faction_id = next(
+            (fid for fid, data in factions.items()
+             if data.get("hub_city_coordinates") == [0, 0]),
+            list(factions.keys())[0]
+        )
+
+        # Generate fallback quests
+        quests = []
+        for _ in range(3):
+            q = _get_fallback_quest(neutral_faction_id)
+            if q:
+                quests.append(q)
+
+        # Build world details from faction hubs
+        cities = {}
+        for fid, fdata in factions.items():
+            if "hub_city_coordinates" in fdata:
+                coords = fdata["hub_city_coordinates"]
+                cities[f"{coords[0]},{coords[1]}"] = f"The City of {fdata['name']}"
+        world_details = {"cities": cities, "roads": [], "landmarks": []}
+
+        story_intro = (
+            "You arrive at the neutral city of The Junction, a beacon of tense "
+            "neutrality in a world torn apart by warring factions. Your goal is "
+            "simple: find the Genesis Module and escape. Good luck."
+        )
+
+        # Save factions to temp/ (same as WorldBuildingScreen.start_game)
+        if os.path.exists("temp"):
+            shutil.rmtree("temp")
+        os.makedirs("temp")
+        with open("temp/factions.py", "w") as f:
+            f.write("FACTION_DATA = ")
+            pprint.pprint(factions, stream=f, indent=4)
+        with open("temp/world_details.json", "w") as f:
+            json.dump(world_details, f, indent=4)
+
+        self.app.reload_dynamic_data()
+
+        # Create game state
+        game_state = GameState(
+            selected_car_index=new_game_settings["selected_car_index"],
+            difficulty=new_game_settings["difficulty"],
+            difficulty_mods=new_game_settings["difficulty_mods"],
+            car_color_names=[new_game_settings["car_color_name"]],
+            theme=theme,
+            factions=factions,
+        )
+        game_state.world_details = world_details
+        game_state.story_intro = story_intro
+        game_state.quest_cache[f"city_0_0"] = quests
+
+        load_triggers(game_state)
+
+        # Spawn at neutral city (0, 0)
+        buildings = get_buildings_in_city(0, 0)
+        safe_x, safe_y = find_safe_spawn_point(0.0, 0.0, buildings, game_state.player_car, max_radius=100)
+        game_state.car_world_x = safe_x
+        game_state.car_world_y = safe_y
+        game_state.player_car.x = safe_x
+        game_state.player_car.y = safe_y
+
+        self.app.game_state = game_state
+        self.app.world = World(seed=int(time.time()))
+
+        # Go directly to the world screen
+        from ..screens.world import WorldScreen
+        self.app.start_game_loop()
+        self.app.switch_screen(WorldScreen())
 

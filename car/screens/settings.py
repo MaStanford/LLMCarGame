@@ -33,6 +33,9 @@ class SettingsScreen(Screen):
                 yield Static("Dev Mode", classes="setting-label")
                 yield Button(self._dev_mode_label(), id="toggle_dev_mode")
 
+                yield Static("Quick Start (Skip LLM)", classes="setting-label", id="quick_start_label")
+                yield Button(self._quick_start_label(), id="toggle_quick_start")
+
                 yield Button("Back", id="back", variant="primary")
         yield Footer()
 
@@ -66,6 +69,10 @@ class SettingsScreen(Screen):
     def _dev_mode_label(self) -> str:
         dev_mode = self.settings.get("dev_mode", False)
         return f"Dev Mode: {'On' if dev_mode else 'Off'}"
+
+    def _quick_start_label(self) -> str:
+        qs = self.settings.get("dev_quick_start", False)
+        return f"Quick Start: {'On' if qs else 'Off'}"
 
     def _refresh_sub_option(self) -> None:
         """Update the sub-option label and button to match the current mode."""
@@ -127,6 +134,14 @@ class SettingsScreen(Screen):
             save_settings(self.settings)
             event.button.label = self._dev_mode_label()
             self.app.dev_mode = new_dev_mode
+
+        elif event.button.id == "toggle_quick_start":
+            current_qs = self.settings.get("dev_quick_start", False)
+            new_qs = not current_qs
+            self.settings["dev_quick_start"] = new_qs
+            save_settings(self.settings)
+            event.button.label = self._quick_start_label()
+            self.app.dev_quick_start = new_qs
 
         elif event.button.id == "back":
             self.app.pop_screen()

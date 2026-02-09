@@ -70,7 +70,7 @@ class Hotrod(PlayerCar):
             durability=70,
             speed=10.2,
             acceleration=5.0,
-            handling=0.2,
+            handling=2.5,
             braking_power=6.0,
             # Attachment points for weapons
             attachment_points={

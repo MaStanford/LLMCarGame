@@ -74,6 +74,7 @@ class GameState:
         self.deflection_vy = 0.0
         self.deflection_frames = 0
         self.collision_iframes = 0  # invulnerability frames after collision
+        self.god_mode = False
 
         # --- Karma System ---
         self.karma = 0  # negative = evil, positive = good

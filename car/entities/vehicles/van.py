@@ -71,7 +71,7 @@ class Van(PlayerCar):
             durability=150,
             speed=5.25,
             acceleration=2.0,
-            handling=0.07,
+            handling=1.2,
             braking_power=3.0,
             # Attachment points for weapons
             attachment_points={
@@ -83,7 +83,7 @@ class Van(PlayerCar):
         self.max_attachments = 6
         # Default loadout for this chassis
         self.default_weapons = {
-            "left_side_gun": "wep_shotgun",
-            "right_side_gun": "wep_shotgun"
+            "side_gun_left": "wep_shotgun",
+            "side_gun_right": "wep_shotgun"
         }
         self.name = "Van"

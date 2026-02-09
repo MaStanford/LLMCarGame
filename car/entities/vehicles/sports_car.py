@@ -78,7 +78,7 @@ class SportsCar(PlayerCar):
             durability=80,
             speed=9.75,
             acceleration=4.0,
-            handling=0.15,
+            handling=2.2,
             braking_power=5.5,
             # Attachment points for weapons
             attachment_points={

@@ -138,7 +138,7 @@ def update_vehicle_movement(game_state, world, audio_manager, dt):
                 game_state.deflection_vx = -game_state.car_velocity_x * 0.3
                 game_state.deflection_vy = -game_state.car_velocity_y * 0.3
                 game_state.deflection_frames = 10
-            game_state.current_durability -= max(1, int(prev_speed * 0.2))
+            game_state.current_durability -= max(1, int(prev_speed * 0.2)) if not game_state.god_mode else 0
             audio_manager.play_sfx("player_hit")
         elif abs(game_state.car_speed) > 1.0:
             # Sliding along a wall - reduce speed moderately and play a scrape
