@@ -5,7 +5,6 @@ from ..data.game_constants import (
     CITY_SPACING, CITY_SIZE, MIN_BUILDINGS_PER_CITY, MAX_BUILDINGS_PER_CITY,
     MIN_BUILDING_DIM, MAX_BUILDING_DIM, ROAD_WIDTH, BUILDING_SHOP_BUFFER
 )
-from ..data.cosmetics import BUILDING_NAME_CHARS
 from ..data.buildings import BUILDING_DATA
 from ..data.shops import SHOP_DATA
 from ..data.terrain import TERRAIN_DATA
@@ -72,11 +71,34 @@ def does_city_exist_at(grid_x, grid_y, seed, factions):
     
     return local_random.random() < probability
 
-def generate_building_name(local_random, max_width_chars):
-    """Generates a short random name for a generic building."""
-    name_len = local_random.randint(max(1, max_width_chars - 4), max_width_chars - 1)
-    name = "".join(local_random.choice(BUILDING_NAME_CHARS) for _ in range(name_len))
-    return name
+def _ordinal(n):
+    """Returns ordinal string for a number (1st, 2nd, 3rd, etc.)."""
+    if 11 <= (n % 100) <= 13:
+        return f"{n}th"
+    suffix = {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
+    return f"{n}{suffix}"
+
+def generate_building_name(local_random, max_width_chars, b_x=0, b_y=0, city_start_x=0, city_start_y=0):
+    """Generates a street address for a building based on its position in the city.
+    X position -> numbered street (1st St, 2nd St, ...)
+    Y position -> lettered avenue (A Ave, B Ave, ...)
+    """
+    # Divide city into ~4-6 streets in each direction based on CITY_SIZE
+    block_size = 40  # world units per block
+    street_num = max(1, int((b_x - city_start_x) / block_size) + 1)
+    avenue_idx = max(0, int((b_y - city_start_y) / block_size))
+    avenue_letter = chr(ord('A') + min(avenue_idx, 25))
+
+    # Building number from sub-position within the block
+    building_num = ((b_x - city_start_x) % block_size) + 1
+
+    address = f"{building_num} {_ordinal(street_num)} & {avenue_letter}"
+    # Truncate to fit
+    if len(address) > max_width_chars - 1:
+        address = f"{_ordinal(street_num)} & {avenue_letter}"
+    if len(address) > max_width_chars - 1:
+        address = f"{_ordinal(street_num)} St"
+    return address[:max_width_chars - 1]
 
 def generate_city(grid_x, grid_y):
     """Deterministically generates building rectangles for a given city grid."""
@@ -144,7 +166,7 @@ def generate_city(grid_x, grid_y):
                     break
             
             if not overlaps:
-                building_name = generate_building_name(local_random, b_w)
+                building_name = generate_building_name(local_random, b_w, b_x, b_y, city_start_x, city_start_y)
                 building_data = {**new_building, "type": "GENERIC", "name": building_name, "city_id": cache_key}
                 buildings.append(building_data)
                 occupied_zones.append(new_building)

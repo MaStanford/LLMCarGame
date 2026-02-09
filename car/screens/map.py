@@ -13,6 +13,7 @@ class MapScreen(ModalScreen):
         Binding("left", "scroll_map(-1, 0)", "Left", show=True),
         Binding("right", "scroll_map(1, 0)", "Right", show=True),
         Binding("c", "center_map", "Center", show=True),
+        Binding("tab", "toggle_city_mode", "City/World", show=True),
         Binding("enter", "select_waypoint", "Select", show=True),
     ]
 
@@ -31,6 +32,10 @@ class MapScreen(ModalScreen):
     def action_center_map(self) -> None:
         """Center the map on the player."""
         self.query_one(MapView).center_on_player()
+
+    def action_toggle_city_mode(self) -> None:
+        """Toggle between world map and city map."""
+        self.query_one(MapView).toggle_city_mode()
 
     def action_select_waypoint(self) -> None:
         """Set a waypoint to the selected city."""
