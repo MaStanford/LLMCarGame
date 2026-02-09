@@ -55,6 +55,15 @@ class WorldScreen(Screen):
         Binding("left", "noop", "Aim Left", show=True),
         Binding("right", "noop", "Aim Right", show=True),
         Binding("space", "noop", "Fire", show=True),
+        Binding("1", "toggle_weapon(1)", "Wpn 1", show=False),
+        Binding("2", "toggle_weapon(2)", "Wpn 2", show=False),
+        Binding("3", "toggle_weapon(3)", "Wpn 3", show=False),
+        Binding("4", "toggle_weapon(4)", "Wpn 4", show=False),
+        Binding("5", "toggle_weapon(5)", "Wpn 5", show=False),
+        Binding("6", "toggle_weapon(6)", "Wpn 6", show=False),
+        Binding("7", "toggle_weapon(7)", "Wpn 7", show=False),
+        Binding("8", "toggle_weapon(8)", "Wpn 8", show=False),
+        Binding("9", "toggle_weapon(9)", "Wpn 9", show=False),
         Binding("escape", "toggle_pause", "Pause", show=True),
         Binding("tab", "toggle_inventory", "Inventory", show=False),
         Binding("i", "toggle_inventory", "Inventory", show=True),
@@ -63,6 +72,7 @@ class WorldScreen(Screen):
         Binding("q", "show_quests", "Quests", show=True),
         Binding("enter", "show_notifications", "Show Log", show=False),
         Binding("grave_accent", "toggle_console", "Console", show=False),
+        Binding("tilde", "toggle_console", "~ Console", show=False),
     ]
 
     def on_mount(self) -> None:
@@ -146,6 +156,22 @@ class WorldScreen(Screen):
         Actual input is handled by on_key + process_input."""
         pass
 
+    def action_toggle_weapon(self, slot: int) -> None:
+        """Toggle weapon on/off by slot number (1-indexed)."""
+        gs = self.app.game_state
+        point_names = list(gs.mounted_weapons.keys())
+        idx = slot - 1
+        if idx < 0 or idx >= len(point_names):
+            return
+        point_name = point_names[idx]
+        current = gs.weapon_enabled.get(point_name, True)
+        gs.weapon_enabled[point_name] = not current
+        weapon = gs.mounted_weapons.get(point_name)
+        weapon_label = weapon.name if weapon else "Empty"
+        state = "ON" if not current else "OFF"
+        notifications = self.query_one("#notifications", Notifications)
+        notifications.add_notification(f"[{slot}] {weapon_label}: {state}")
+
     def action_toggle_pause(self) -> None:
         """Toggle the pause menu."""
         if self.app.game_state.pause_menu_open:
@@ -183,12 +209,14 @@ class WorldScreen(Screen):
     def action_toggle_console(self) -> None:
         """Toggle the debug console (dev mode only)."""
         if not self.app.dev_mode:
+            self.notify("Console requires dev mode", severity="warning")
             return
         existing = self.query("#debug_console")
         if existing:
             existing.first().remove()
         else:
             self.mount(DebugConsole())
+            self.notify("Debug console opened")
 
     def on_debug_console_command_submitted(self, event: DebugConsole.CommandSubmitted) -> None:
         """Handle a submitted debug command."""
@@ -240,9 +268,10 @@ class WorldScreen(Screen):
         # Update Weapon HUD
         weapon_hud = self.query_one("#weapon_hud", WeaponHUD)
         weapons_info = []
-        for point_name, weapon in gs.mounted_weapons.items():
+        for slot_idx, (point_name, weapon) in enumerate(gs.mounted_weapons.items(), start=1):
             point_data = gs.attachment_points.get(point_name, {})
             mount_label = point_data.get("name", point_name)
+            enabled = gs.weapon_enabled.get(point_name, True)
             if weapon:
                 weapons_info.append({
                     "mount_name": mount_label,
@@ -250,6 +279,8 @@ class WorldScreen(Screen):
                     "ammo_type": weapon.ammo_type,
                     "ammo": gs.ammo_counts.get(weapon.ammo_type, 0),
                     "empty": False,
+                    "enabled": enabled,
+                    "slot": slot_idx,
                 })
             else:
                 weapons_info.append({
@@ -258,6 +289,8 @@ class WorldScreen(Screen):
                     "ammo_type": "",
                     "ammo": 0,
                     "empty": True,
+                    "enabled": enabled,
+                    "slot": slot_idx,
                 })
         weapon_hud.weapons_data = weapons_info
 

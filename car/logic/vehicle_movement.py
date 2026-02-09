@@ -1,10 +1,21 @@
 import math
+from .building_damage import find_building_at, damage_building
+from ..data.game_constants import BUILDING_RAM_DAMAGE
+
+def _is_terrain_enterable(terrain):
+    """Check if terrain is passable or belongs to an enterable building."""
+    if terrain.get("passable", True):
+        return True
+    building = terrain.get("building", {})
+    return building.get("enterable", False)
 
 def update_vehicle_movement(game_state, world, audio_manager, dt):
     """
     Handles the player's vehicle movement, including acceleration, braking, turning, and gas consumption.
     All calculations are now based on delta time (dt) for frame-rate independent physics.
+    Returns a list of notification strings.
     """
+    notifications = []
     engine_force = 0.0 # Initialize here to ensure it's always available
     
     # --- Vehicle Movement ---
@@ -94,10 +105,8 @@ def update_vehicle_movement(game_state, world, audio_manager, dt):
     next_center_x = next_world_x + game_state.player_car.width / 2
     next_center_y = next_world_y + game_state.player_car.height / 2
     next_terrain = world.get_terrain_at(next_center_x, next_center_y)
-    
-    is_shop = next_terrain.get("building", {}).get("shop_type") is not None
-    
-    if next_terrain.get("passable", True) or is_shop:
+
+    if _is_terrain_enterable(next_terrain):
         game_state.car_world_x = next_world_x
         game_state.car_world_y = next_world_y
     else:
@@ -112,7 +121,7 @@ def update_vehicle_movement(game_state, world, audio_manager, dt):
         test_cx = test_x + game_state.player_car.width / 2
         test_cy = game_state.car_world_y + game_state.player_car.height / 2
         terrain_x = world.get_terrain_at(test_cx, test_cy)
-        if terrain_x.get("passable", True) or terrain_x.get("building", {}).get("shop_type") is not None:
+        if _is_terrain_enterable(terrain_x):
             game_state.car_world_x = test_x
             moved = True
 
@@ -121,7 +130,7 @@ def update_vehicle_movement(game_state, world, audio_manager, dt):
         test_cx = game_state.car_world_x + game_state.player_car.width / 2
         test_cy = test_y + game_state.player_car.height / 2
         terrain_y = world.get_terrain_at(test_cx, test_cy)
-        if terrain_y.get("passable", True) or terrain_y.get("building", {}).get("shop_type") is not None:
+        if _is_terrain_enterable(terrain_y):
             game_state.car_world_y = test_y
             moved = True
 
@@ -129,6 +138,15 @@ def update_vehicle_movement(game_state, world, audio_manager, dt):
             # Fully blocked in both axes - apply collision physics
             audio_manager.play_sfx("crash")
             prev_speed = game_state.car_speed
+
+            # Apply ram damage to buildings
+            if "building" in next_terrain:
+                ram_damage = max(1, abs(prev_speed) * BUILDING_RAM_DAMAGE)
+                city_key, b_idx, b_data = find_building_at(next_center_x, next_center_y)
+                if city_key is not None:
+                    bld_notes = damage_building(game_state, city_key, b_idx, b_data, ram_damage)
+                    notifications.extend(bld_notes)
+
             if prev_speed < 2.0:
                 game_state.car_speed = 0
                 game_state.car_velocity_x = 0
@@ -153,4 +171,6 @@ def update_vehicle_movement(game_state, world, audio_manager, dt):
     # Synchronize the player_car entity's position with the game state
     game_state.player_car.x = game_state.car_world_x
     game_state.player_car.y = game_state.car_world_y
+
+    return notifications
 

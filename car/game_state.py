@@ -93,6 +93,7 @@ class GameState:
 
         self.ammo_counts = {}
         self.weapon_cooldowns = {}
+        self.weapon_enabled = {point_name: True for point_name in self.attachment_points}
 
         for weapon in self.mounted_weapons.values():
             if weapon:
@@ -135,6 +136,11 @@ class GameState:
         self.defeated_bosses = set()
         self.combat_enemy = None
         self.quest_cache = {}
+
+        # --- Building Destruction State ---
+        self.damaged_buildings = {}      # {(gx,gy,idx): current_hp}
+        self.destroyed_buildings = set() # {(gx,gy,idx)}
+        self.buildings_destroyed_per_city = {}  # {(gx,gy): count}
 
         # --- UI and Game Flow State ---
         self.shop_cooldown = 0
@@ -245,6 +251,7 @@ class GameState:
             "player_inventory": inventory_dict,
             "mounted_weapons": mounted_weapons_dict,
             "ammo_counts": self.ammo_counts,
+            "weapon_enabled": self.weapon_enabled,
             
             # Quest & Faction State
             "faction_reputation": self.faction_reputation,
@@ -253,6 +260,11 @@ class GameState:
             "activated_triggers": list(self.activated_triggers),
             "current_quest": self.current_quest.to_dict() if self.current_quest else None,
             "karma": self.karma,
+
+            # Building Destruction
+            "damaged_buildings": {f"{k[0]},{k[1]},{k[2]}": v for k, v in self.damaged_buildings.items()},
+            "destroyed_buildings": [f"{k[0]},{k[1]},{k[2]}" for k in self.destroyed_buildings],
+            "buildings_destroyed_per_city": {f"{k[0]},{k[1]}": v for k, v in self.buildings_destroyed_per_city.items()},
         }
 
     @classmethod
@@ -302,6 +314,7 @@ class GameState:
             for mount, weapon_data in data.get("mounted_weapons", {}).items()
         }
         gs.ammo_counts = data.get("ammo_counts", {})
+        gs.weapon_enabled = data.get("weapon_enabled", {point: True for point in gs.mounted_weapons})
         
         # --- Restore Quest & Faction State ---
         gs.faction_reputation = data["faction_reputation"]
@@ -309,6 +322,14 @@ class GameState:
         gs.defeated_bosses = set(data["defeated_bosses"]) # Convert list back to set
         gs.activated_triggers = set(data.get("activated_triggers", []))
         gs.karma = data.get("karma", 0)
+
+        # --- Restore Building Destruction State ---
+        raw_damaged = data.get("damaged_buildings", {})
+        gs.damaged_buildings = {tuple(int(x) for x in k.split(",")): v for k, v in raw_damaged.items()}
+        raw_destroyed = data.get("destroyed_buildings", [])
+        gs.destroyed_buildings = {tuple(int(x) for x in k.split(",")) for k in raw_destroyed}
+        raw_per_city = data.get("buildings_destroyed_per_city", {})
+        gs.buildings_destroyed_per_city = {tuple(int(x) for x in k.split(",")): v for k, v in raw_per_city.items()}
         
         if data.get("current_quest"):
             from .data.quests import Quest

@@ -198,6 +198,5 @@ class WorldBuildingScreen(Screen):
         
         self.app.game_state = game_state
         self.app.world = World(seed=int(time.time()))
-        
-        # Switch to the intro cutscene
+        self.app.world.game_state = game_state
         self.app.switch_screen(IntroCutsceneScreen(self.world_data["story_intro"]))

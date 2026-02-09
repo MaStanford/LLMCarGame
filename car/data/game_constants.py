@@ -75,3 +75,11 @@ PICKUP_CASH = "PICKUP_CASH"
 
 FUEL_PRICE = 10
 REPAIR_PRICE = 10
+
+# --- Building Destruction ---
+BUILDING_RAM_DAMAGE = 0.5          # Multiplier for ramming damage (speed * this)
+BUILDING_DESTROY_REP_LOSS = -15    # Rep loss per building destroyed
+BUILDING_RETALIATION_THRESHOLD = 3 # Buildings destroyed before enemy wave spawns
+BUILDING_BOSS_THRESHOLD = 5        # Buildings destroyed before boss spawns
+RETALIATION_ENEMY_COUNT = 5        # Enemies spawned in retaliation wave
+GENERIC_BUILDING_DURABILITY = 200  # Default HP for generic buildings

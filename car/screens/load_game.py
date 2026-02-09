@@ -68,6 +68,7 @@ class LoadGameScreen(Screen):
             logging.info(f"Successfully loaded game state for '{save_name}'. Switching to WorldScreen.")
             self.app.game_state = loaded_game_state
             self.app.world = World(seed=int(time.time()))
+            self.app.world.game_state = loaded_game_state
             self.app.switch_screen(WorldScreen())
             self.app.start_game_loop()
             self.app.trigger_initial_quest_cache()

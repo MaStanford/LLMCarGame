@@ -12,18 +12,22 @@ class World:
         self.terrain_data = TERRAIN_DATA
         self.building_data = BUILDING_DATA
         self.city_spacing = CITY_SPACING
+        self.game_state = None
 
     def get_terrain_at(self, x, y):
         grid_x = round(x / CITY_SPACING)
         grid_y = round(y / CITY_SPACING)
-        
+
         # Check for buildings first
         city_buildings = get_buildings_in_city(grid_x, grid_y)
-        for building in city_buildings:
+        for idx, building in enumerate(city_buildings):
             if building['x'] <= x < building['x'] + building['w'] and \
                building['y'] <= y < building['y'] + building['h']:
+                # Check if this building has been destroyed
+                if self.game_state and (grid_x, grid_y, idx) in self.game_state.destroyed_buildings:
+                    return TERRAIN_DATA["RUBBLE"]
                 building_data = BUILDING_DATA.get(building["type"], {})
-                return {**TERRAIN_DATA["BUILDING_WALL"], "building": building_data}
+                return {**TERRAIN_DATA["BUILDING_WALL"], "building": {**building_data, **building}}
 
         # Check for cities
         city_center_x = grid_x * CITY_SPACING

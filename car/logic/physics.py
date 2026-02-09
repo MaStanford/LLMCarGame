@@ -10,7 +10,7 @@ def update_physics_and_collisions(game_state, world, audio_manager, dt, app):
     Returns a list of notification messages.
     """
     # 1. Update player vehicle movement and position
-    update_vehicle_movement(game_state, world, audio_manager, dt)
+    movement_notifications = update_vehicle_movement(game_state, world, audio_manager, dt)
 
     # 2. Handle weapon firing and projectile updates
     update_weapon_systems(game_state, audio_manager)
@@ -35,6 +35,7 @@ def update_physics_and_collisions(game_state, world, audio_manager, dt, app):
 
     # 4. Process all collisions and their effects
     notifications = handle_collisions(game_state, world, audio_manager, app)
+    notifications.extend(movement_notifications)
 
     # 5. Update AI and movement for all non-player entities
     for enemy in game_state.active_enemies:

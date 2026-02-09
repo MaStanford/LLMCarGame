@@ -1,6 +1,7 @@
 import random
 import math
 from .loot_generation import handle_enemy_loot_drop
+from .building_damage import find_building_at, damage_building
 from ..world.generation import get_buildings_in_city
 
 # Collision physics constants
@@ -141,6 +142,12 @@ def handle_collisions(game_state, world, audio_manager, app):
         # Check for collisions with terrain
         p_terrain = world.get_terrain_at(p_x, p_y)
         if not p_terrain.get("passable", True):
+            # Check if this is a building and apply damage
+            if "building" in p_terrain:
+                city_key, b_idx, b_data = find_building_at(p_x, p_y)
+                if city_key is not None:
+                    bld_notifications = damage_building(game_state, city_key, b_idx, b_data, p_power)
+                    notifications.extend(bld_notifications)
             projectiles_to_remove.add(i)
             continue
 

@@ -330,8 +330,7 @@ class NewGameScreen(Screen):
 
         self.app.game_state = game_state
         self.app.world = World(seed=int(time.time()))
-
-        # Go directly to the world screen
+        self.app.world.game_state = game_state
         from ..screens.world import WorldScreen
         self.app.start_game_loop()
         self.app.switch_screen(WorldScreen())

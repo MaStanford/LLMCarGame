@@ -15,6 +15,8 @@ def update_weapon_systems(game_state, audio_manager):
     game_state.active_flames.clear()
     if game_state.actions["fire"]:
         for point_name, weapon in game_state.mounted_weapons.items():
+            if not game_state.weapon_enabled.get(point_name, True):
+                continue
             if weapon and game_state.weapon_cooldowns[weapon.instance_id] <= 0:
                 ammo_type = weapon.ammo_type
                 if game_state.ammo_counts.get(ammo_type, 0) > 0:

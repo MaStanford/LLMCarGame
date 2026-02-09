@@ -5,6 +5,8 @@ BUILDING_DATA = {
         "name": "Mechanic Shop",
         "type": "mechanic_shop",
         "shop_type": "mechanic",
+        "enterable": True,
+        "base_durability": 300,
         "art": [
             "╔════════════════╗",
             "║   AUTO REPAIR  ║",
@@ -22,10 +24,12 @@ BUILDING_DATA = {
         "name": "Gas Station",
         "type": "gas_station",
         "shop_type": "gas",
+        "enterable": True,
+        "base_durability": 300,
         "art": [
             "    .--''''--.    ",
-            "   /   G A S   \  ",
-            "  /____________\  ",
+            "   /   G A S   \\  ",
+            "  /____________\\  ",
             "       |  |       ",
             "    [#]|  | $3.59 ",
             "    [#]|  |~~~>   ",
@@ -38,6 +42,8 @@ BUILDING_DATA = {
         "name": "Ammo Shop",
         "type": "weapon_shop",
         "shop_type": "weapon",
+        "enterable": True,
+        "base_durability": 300,
         "art": [
             "╔════════════╗",
             "║  * AMMO *  ║",
@@ -54,10 +60,12 @@ BUILDING_DATA = {
     "city_hall": {
         "name": "City Hall",
         "type": "city_hall",
+        "enterable": True,
+        "base_durability": 500,
         "art": [
-            "      /▲\      ",
-            "     /:::\     ",
-            "    /:::::\    ",
+            "      /▲\\      ",
+            "     /:::\\     ",
+            "    /:::::\\    ",
             " ╔═══════════╗ ",
             " ║   CITY    ║ ",
             " ║   HALL    ║ ",
