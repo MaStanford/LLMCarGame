@@ -61,9 +61,9 @@ class Motorcycle(PlayerCar):
             x, y, art,
             durability=40,
             speed=10.5,
-            acceleration=1.2,
+            acceleration=6.0,
             handling=0.3,
-            braking_power=0.9,
+            braking_power=8.0,
             # Attachment points for weapons
             attachment_points={
                 "front_gun": {"name": "Front Gun", "level": "light", "offset_x": 0, "offset_y": -1},

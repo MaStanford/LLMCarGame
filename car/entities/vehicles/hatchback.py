@@ -71,9 +71,9 @@ class Hatchback(PlayerCar):
             x, y, art,
             durability=90,
             speed=7.2,
-            acceleration=0.7,
+            acceleration=3.5,
             handling=0.12,
-            braking_power=0.75,
+            braking_power=5.5,
             # Attachment points for weapons
             attachment_points={
                 "hood_gun": {"name": "Hood Gun", "level": "light", "offset_x": 0, "offset_y": -2},

@@ -8,70 +8,70 @@ class PanelWagon(PlayerCar):
     def __init__(self, x, y):
         # Redesigned 8-directional art set for a panel wagon
         art = {
-            # North (Facing Up)
+            # North (Facing Up) — 5 lines × 7 chars
             "N": [
-                " ▄██████▄ ",
-                "██▀───-▀██",
-                "█▛▀▀▀▀▀▀▀▜█",
-                " (●)   (●) "
+                "  ▄█▄  ",
+                " █░░░█ ",
+                " █▒▒▒█ ",
+                " █▓▓▓█ ",
+                " ●▀█▀● ",
             ],
-            # North-East
-            "NE": [
-                "  ▄████▄▄ ",
-                " ████▒▒▒█ ",
-                "█▛▀▀▀██◤` ",
-                " (●)══(●) "
-            ],
-            # East (Facing Right)
-            "E": [
-                "  ▄██████▄",
-                " ▐██▒▒▒▒▒█",
-                " █▀▀▀▀▀▀▀█",
-                " (●)═══(●)"
-            ],
-            # South-East
-            "SE": [
-                " (●)══(●) ",
-                "█▄▄▄██◣  ",
-                " ▐██▒▒▒█ ",
-                "  ▀████▀  "
-            ],
-            # South (Facing Down)
+            # South (Facing Down) — 5 lines × 7 chars (vertical mirror of N)
             "S": [
-                " (●)   (●) ",
-                "█▄▄▄▄▄▄▄▄▄█",
-                "███▅█▅███",
-                " ▀█████▀ "
+                " ●▄█▄● ",
+                " █▓▓▓█ ",
+                " █▒▒▒█ ",
+                " █░░░█ ",
+                "  ▀█▀  ",
             ],
-            # South-West
-            "SW": [
-                "  (●)══(●) ",
-                "  ◢██▄▄▄█",
-                " █▒▒▒██▌ ",
-                "  ▀████▀  "
+            # East (Facing Right) — 3 lines × 11 chars
+            "E": [
+                " ▄█▓▒░░▀▄ ",
+                " ●██████●▌",
+                " ▀█▓▒░░▄▀ ",
             ],
-            # West (Facing Left)
+            # West (Facing Left) — 3 lines × 11 chars (horizontal mirror of E)
             "W": [
-                " ▄██████▄  ",
-                "█▒▒▒▒▒██▌ ",
-                "█▀▀▀▀▀▀▀█ ",
-                "(●)═══(●) "
+                " ▄▀░░▒▓█▄ ",
+                "▐●██████● ",
+                " ▀▄░░▒▓█▀ ",
             ],
-            # North-West
+            # North-East — 4 lines × 9 chars
+            "NE": [
+                "  ▄░░▀▌ ",
+                " █▒▒██▀ ",
+                " █▓██▀  ",
+                " ●▀ ▀●  ",
+            ],
+            # North-West — 4 lines × 9 chars (horizontal mirror of NE)
             "NW": [
-                "  ▄▄████▄  ",
-                " █▒▒▒████ ",
-                " `◥██▀▀▀▛█ ",
-                "  (●)══(●) "
-            ]
+                " ▐▀░░▄  ",
+                " ▀██▒▒█ ",
+                "  ▀██▓█ ",
+                "  ●▀ ▀● ",
+            ],
+            # South-East — 4 lines × 9 chars (vertical mirror of NE)
+            "SE": [
+                " ●▄ ▄●  ",
+                " █▓██▄  ",
+                " █▒▒██▄ ",
+                "  ▀░░▄▌ ",
+            ],
+            # South-West — 4 lines × 9 chars (horizontal mirror of SE)
+            "SW": [
+                "  ●▄ ▄● ",
+                "  ▄██▓█ ",
+                " ▄██▒▒█ ",
+                " ▐▄░░▀  ",
+            ],
         }
         super().__init__(
             x, y, art,
             durability=140,
             speed=4.5,
-            acceleration=0.55,
+            acceleration=2.5,
             handling=0.09,
-            braking_power=0.55,
+            braking_power=3.5,
             # Attachment points for weapons
             attachment_points={
                 "roof_rack": {"name": "Roof Rack", "level": "medium", "offset_x": 0, "offset_y": -1},

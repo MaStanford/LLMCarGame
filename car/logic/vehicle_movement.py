@@ -41,9 +41,15 @@ def update_vehicle_movement(game_state, world, audio_manager, dt):
     speed_diff = target_speed - game_state.car_speed
 
     # 3. Determine the force to apply (acceleration or braking)
-    # The force is proportional to the car's acceleration stat.
-    change_in_speed = game_state.acceleration_factor * math.copysign(1, speed_diff) * dt
-    
+    # Use braking_power when decelerating (target speed is closer to zero than current speed),
+    # use acceleration_factor when speeding up.
+    is_braking = (abs(target_speed) < abs(game_state.car_speed)) or (
+        game_state.car_speed > 0 and target_speed < 0) or (
+        game_state.car_speed < 0 and target_speed > 0)
+
+    force = game_state.braking_power if is_braking else game_state.acceleration_factor
+    change_in_speed = force * math.copysign(1, speed_diff) * dt
+
     # Prevent overshooting the target speed
     if abs(change_in_speed) > abs(speed_diff):
         change_in_speed = speed_diff
@@ -95,21 +101,48 @@ def update_vehicle_movement(game_state, world, audio_manager, dt):
         game_state.car_world_x = next_world_x
         game_state.car_world_y = next_world_y
     else:
-        audio_manager.play_sfx("crash")
-        prev_speed = game_state.car_speed
-        # Terrain collision uses deflection instead of instant stop
-        if prev_speed < 2.0:
-            game_state.car_speed = 0
-            game_state.car_velocity_x = 0
-            game_state.car_velocity_y = 0
-        else:
-            game_state.car_speed *= 0.5
-            # Bounce back from terrain
-            game_state.deflection_vx = -game_state.car_velocity_x * 0.3
-            game_state.deflection_vy = -game_state.car_velocity_y * 0.3
-            game_state.deflection_frames = 10
-        game_state.current_durability -= max(1, int(prev_speed * 0.2))
-        audio_manager.play_sfx("player_hit")
+        # Wall-sliding: try each axis independently so the player slides along walls
+        # instead of getting stuck when hitting buildings at an angle.
+        dx = next_world_x - game_state.car_world_x
+        dy = next_world_y - game_state.car_world_y
+        moved = False
+
+        # Try moving in X only
+        test_x = game_state.car_world_x + dx
+        test_cx = test_x + game_state.player_car.width / 2
+        test_cy = game_state.car_world_y + game_state.player_car.height / 2
+        terrain_x = world.get_terrain_at(test_cx, test_cy)
+        if terrain_x.get("passable", True) or terrain_x.get("building", {}).get("shop_type") is not None:
+            game_state.car_world_x = test_x
+            moved = True
+
+        # Try moving in Y only
+        test_y = game_state.car_world_y + dy
+        test_cx = game_state.car_world_x + game_state.player_car.width / 2
+        test_cy = test_y + game_state.player_car.height / 2
+        terrain_y = world.get_terrain_at(test_cx, test_cy)
+        if terrain_y.get("passable", True) or terrain_y.get("building", {}).get("shop_type") is not None:
+            game_state.car_world_y = test_y
+            moved = True
+
+        if not moved:
+            # Fully blocked in both axes - apply collision physics
+            audio_manager.play_sfx("crash")
+            prev_speed = game_state.car_speed
+            if prev_speed < 2.0:
+                game_state.car_speed = 0
+                game_state.car_velocity_x = 0
+                game_state.car_velocity_y = 0
+            else:
+                game_state.car_speed *= 0.5
+                game_state.deflection_vx = -game_state.car_velocity_x * 0.3
+                game_state.deflection_vy = -game_state.car_velocity_y * 0.3
+                game_state.deflection_frames = 10
+            game_state.current_durability -= max(1, int(prev_speed * 0.2))
+            audio_manager.play_sfx("player_hit")
+        elif abs(game_state.car_speed) > 1.0:
+            # Sliding along a wall - reduce speed moderately and play a scrape
+            game_state.car_speed *= 0.85
 
     # --- Gas Consumption ---
     distance_this_frame = abs(game_state.car_speed * dt)

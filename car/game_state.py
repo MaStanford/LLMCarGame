@@ -107,8 +107,8 @@ class GameState:
         self.braking_deceleration_factor = 0.0
         self.max_speed = 0.0
         self.gas_consumption_scaler = 0.01
-        self.drag_coefficient = 0.01 # Placeholder
-        self.friction_coefficient = 0.02 # Placeholder
+        self.drag_coefficient = 0.03
+        self.friction_coefficient = 0.08
         self.gas_consumption_rate = 0.01
 
         # --- World and Entity State ---
@@ -156,6 +156,7 @@ class GameState:
         self.screen_height = 0
         self.notifications = []
         self.closest_entity_info = None
+        self.tracked_entity = None
         self.compass_info = {"target_angle": 0, "player_angle": 0, "target_name": ""}
 
         self.world_triggers = []

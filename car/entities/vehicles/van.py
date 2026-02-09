@@ -7,72 +7,72 @@ class Van(PlayerCar):
     it a mobile fortress.
     """
     def __init__(self, x, y):
-        # Redesigned 8-directional art set for a classic box van
+        # 8-directional art for a large boxy cargo van
         art = {
-            # North (Facing Up)
+            # North (Facing Up) — 5 lines × 7 chars
             "N": [
-                "  ▄▄▄▄▄▄▄  ",
-                " ▗█░░░░░░█▖ ",
-                " █████████ ",
-                " (●)═══(●) "
+                " ▄░░░▄ ",
+                "●█████●",
+                " █████ ",
+                " █████ ",
+                "●▀███▀●",
             ],
-            # North-East
-            "NE": [
-                "   ▄▄▄▄▄▄▄▄",
-                "  ▟░▒▀▀▀▀██",
-                " █▒███████",
-                "(●)════(●) "
-            ],
-            # East (Facing Right)
-            "E": [
-                "   ▄▄▄▄▄▄▄▄▄ ",
-                "  ▟░▒███████",
-                " █▒█████████",
-                "(●)══════(●)"
-            ],
-            # South-East
-            "SE": [
-                "(●)════(●) ",
-                " █████████",
-                "  ▀▀▀▀▀▀██",
-                "     ▀▀▀▀▀▀"
-            ],
-            # South (Facing Down)
+            # South (Facing Down) — 5 lines × 7 chars (vertical mirror of N)
             "S": [
-                " (●)═══(●) ",
-                " █████████ ",
-                " █████▄▄██ ",
-                " ▀▀▀▀▀▀▀▀▀ "
+                "●▄███▄●",
+                " █████ ",
+                " █████ ",
+                "●█████●",
+                " ▀░░░▀ ",
             ],
-            # South-West
-            "SW": [
-                " (●)════(●)",
-                "█████████ ",
-                "██▀▀▀▀▀▀  ",
-                "▀▀▀▀▀▀     "
+            # East (Facing Right) — 3 lines × 11 chars
+            "E": [
+                " ▄████░▄▄ ",
+                "●██████████●",
+                " ▀████▓▀▀ ",
             ],
-            # West (Facing Left)
+            # West (Facing Left) — 3 lines × 11 chars (horizontal mirror of E)
             "W": [
-                " ▄▄▄▄▄▄▄▄▄   ",
-                "███████▒░▟  ",
-                "█████████▒█  ",
-                "(●)══════(●) "
+                " ▄▄░████▄ ",
+                "●██████████●",
+                " ▀▀▓████▀ ",
             ],
-            # North-West
+            # NE — 4 lines × 9 chars
+            "NE": [
+                "  ▄░░███ ",
+                " ●█████▌ ",
+                " ██████● ",
+                " ▀████▀  ",
+            ],
+            # NW — 4 lines × 9 chars (horizontal mirror of NE)
             "NW": [
-                "▄▄▄▄▄▄▄▄   ",
-                "██▀▀▀▀▒░▟  ",
-                "████████▒█ ",
-                " (●)════(●)"
-            ]
+                " ███░░▄  ",
+                " ▐█████● ",
+                " ●██████ ",
+                "  ▀████▀ ",
+            ],
+            # SE — 4 lines × 9 chars (vertical mirror of NE)
+            "SE": [
+                " ▄████▄  ",
+                " ██████● ",
+                " ●█████▌ ",
+                "  ▀░░███ ",
+            ],
+            # SW — 4 lines × 9 chars (vertical mirror of NW)
+            "SW": [
+                "  ▄████▄ ",
+                " ●██████ ",
+                " ▐█████● ",
+                " ███░░▀  ",
+            ],
         }
         super().__init__(
             x, y, art,
             durability=150,
             speed=5.25,
-            acceleration=0.4,
+            acceleration=2.0,
             handling=0.07,
-            braking_power=0.4,
+            braking_power=3.0,
             # Attachment points for weapons
             attachment_points={
                 "roof_rack": {"name": "Roof Rack", "level": "heavy", "offset_x": 0, "offset_y": -1},

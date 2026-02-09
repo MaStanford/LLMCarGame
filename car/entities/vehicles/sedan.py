@@ -70,9 +70,9 @@ class Sedan(PlayerCar):
             x, y, art,
             durability=100,
             speed=7.5,
-            acceleration=0.6,
+            acceleration=3.0,
             handling=0.1,
-            braking_power=0.7,
+            braking_power=5.0,
             # Attachment points for weapons
             attachment_points={
                 "hood_gun": {"name": "Hood Gun", "level": "light", "offset_x": 0, "offset_y": -2},

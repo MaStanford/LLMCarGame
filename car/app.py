@@ -17,7 +17,7 @@ from .logic.physics import update_physics_and_collisions
 from .logic.quest_logic import update_quests
 from .logic.trigger_logic import check_triggers
 from .audio.audio import AudioManager
-from .data.game_constants import CUTSCENE_RADIUS
+from .data.game_constants import CUTSCENE_RADIUS, UNTARGET_RADIUS
 from .widgets.entity_modal import EntityModal
 from .widgets.explosion import Explosion
 from .widgets.notifications import Notifications

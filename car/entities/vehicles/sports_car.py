@@ -77,9 +77,9 @@ class SportsCar(PlayerCar):
             x, y, art,
             durability=80,
             speed=9.75,
-            acceleration=0.8,
+            acceleration=4.0,
             handling=0.15,
-            braking_power=0.6,
+            braking_power=5.5,
             # Attachment points for weapons
             attachment_points={
                 "hood_gun": {"name": "Hood Gun", "level": "light", "offset_x": 0, "offset_y": -2},

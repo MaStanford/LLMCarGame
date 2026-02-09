@@ -70,9 +70,9 @@ class Truck(PlayerCar):
             x, y, art,
             durability=180,
             speed=4.2,
-            acceleration=0.5,
+            acceleration=2.5,
             handling=0.08,
-            braking_power=0.5,
+            braking_power=3.5,
             # Attachment points for weapons
             attachment_points={
                 "hood_gun": {"name": "Hood Gun", "level": "medium", "offset_x": 0, "offset_y": -2},
