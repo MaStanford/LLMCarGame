@@ -41,6 +41,7 @@ class GameState:
         self.base_acceleration_factor = self.player_car.acceleration
         self.base_turn_rate = self.player_car.handling
         self.base_braking_power = self.player_car.braking_power
+        self.base_weapon_aim_speed = getattr(self.player_car, 'weapon_aim_speed', 1.0)
 
         # --- Effective Stats (modified by level) ---
         self.max_speed = 0.0
@@ -49,6 +50,7 @@ class GameState:
         self.max_durability = 0
         self.gas_capacity = 0
         self.braking_power = 0
+        self.weapon_aim_speed = 0.0
         self.level_damage_modifier = 1.0
 
         # --- XP and Level Variables ---
@@ -199,6 +201,7 @@ class GameState:
         self.acceleration_factor = self.base_acceleration_factor * level_bonus_multiplier
         self.turn_rate = self.base_turn_rate * level_bonus_multiplier
         self.braking_power = self.base_braking_power * level_bonus_multiplier
+        self.weapon_aim_speed = self.base_weapon_aim_speed * level_bonus_multiplier
 
         new_max_durability = int(self.base_max_durability * level_bonus_multiplier)
         durability_increase = new_max_durability - self.max_durability

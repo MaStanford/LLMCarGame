@@ -80,7 +80,7 @@ class SportsCar(PlayerCar):
             acceleration=4.0,
             handling=2.2,
             braking_power=5.5,
-            # Attachment points for weapons
+            weapon_aim_speed=1.2,
             attachment_points={
                 "hood_gun": {"name": "Hood Gun", "level": "light", "offset_x": 0, "offset_y": -2},
                 "spoiler_gun": {"name": "Spoiler Gun", "level": "medium", "offset_x": 0, "offset_y": 2}

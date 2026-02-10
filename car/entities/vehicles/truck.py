@@ -73,6 +73,7 @@ class Truck(PlayerCar):
             acceleration=2.5,
             handling=1.3,
             braking_power=3.5,
+            weapon_aim_speed=0.8,
             # Attachment points for weapons
             attachment_points={
                 "hood_gun": {"name": "Hood Gun", "level": "medium", "offset_x": 0, "offset_y": -2},

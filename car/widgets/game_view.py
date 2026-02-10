@@ -57,8 +57,38 @@ class GameView(Widget):
                     entity.y + entity.height < world_start_y or
                     entity.y - entity.height > world_end_y):
                     continue
-            
+
             self.draw_entity(canvas, styles, entity, world_start_x, world_start_y, w, h)
+
+        # Render pickups (blink at 4Hz so they're obvious)
+        pickup_visible = time.time() % 0.5 < 0.35
+        if pickup_visible:
+            for pickup in gs.active_pickups.values():
+                px = pickup["x"]
+                py = pickup["y"]
+                # Cull off-screen pickups
+                if px < world_start_x or px > world_end_x or py < world_start_y or py > world_end_y:
+                    continue
+                sx = int(px - world_start_x)
+                sy = int(py - world_start_y)
+                art = pickup.get("char", "$")
+                pickup_type = pickup.get("type", "cash")
+                # Color by type
+                if pickup_type == "cash":
+                    color = "bright_yellow"
+                elif pickup_type == "weapon":
+                    color = "bright_cyan"
+                elif pickup_type == "narrative":
+                    color = "bright_magenta"
+                else:
+                    color = "bright_white"
+                # Draw each character of the pickup art
+                for i, ch in enumerate(art):
+                    draw_x = sx + i
+                    if 0 <= sy < h and 0 <= draw_x < w:
+                        canvas[sy][draw_x] = ch
+                        existing_style = styles[sy][draw_x]
+                        styles[sy][draw_x] = Style(color=color, bold=True, bgcolor=existing_style.bgcolor)
 
         # Render particles
         for p_x, p_y, _, _, _, _, particle_char, _, _ in gs.active_particles:

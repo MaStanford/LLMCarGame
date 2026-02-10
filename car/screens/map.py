@@ -13,7 +13,7 @@ class MapScreen(ModalScreen):
         Binding("left", "scroll_map(-1, 0)", "Left", show=True),
         Binding("right", "scroll_map(1, 0)", "Right", show=True),
         Binding("c", "center_map", "Center", show=True),
-        Binding("tab", "toggle_city_mode", "City/World", show=True),
+        Binding("t", "toggle_city_mode", "City/World", show=True),
         Binding("enter", "select_waypoint", "Select", show=True),
     ]
 

@@ -37,7 +37,6 @@ from textual.binding import Binding
 GAMEPLAY_KEYS = {"w", "s", "a", "d", "space", "left", "right"}
 KEY_STALE_THRESHOLD = 0.15  # seconds — if no repeat event arrives within this window, the key is considered released
 PEDAL_RAMP_RATE = 4.0       # pedal units per second (0 to 1.0 in ~0.25s)
-SWIVEL_RATE = 3.0           # radians per second for weapon aiming
 
 class WorldScreen(Screen):
     """The default screen for the game."""
@@ -143,11 +142,11 @@ class WorldScreen(Screen):
         # --- Firing (continuous while held, gated by weapon cooldowns) ---
         gs.actions["fire"] = "space" in self._pressed_keys
 
-        # --- Weapon Aiming (continuous swivel) ---
+        # --- Weapon Aiming (continuous swivel, stat-based) ---
         if "left" in self._pressed_keys:
-            gs.weapon_angle_offset -= SWIVEL_RATE * dt
+            gs.weapon_angle_offset -= gs.weapon_aim_speed * dt
         if "right" in self._pressed_keys:
-            gs.weapon_angle_offset += SWIVEL_RATE * dt
+            gs.weapon_angle_offset += gs.weapon_aim_speed * dt
 
     # --- One-shot menu actions (still use Textual bindings) ---
 

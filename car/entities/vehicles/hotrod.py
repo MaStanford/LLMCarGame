@@ -72,6 +72,7 @@ class Hotrod(PlayerCar):
             acceleration=5.0,
             handling=2.5,
             braking_power=6.0,
+            weapon_aim_speed=1.3,
             # Attachment points for weapons
             attachment_points={
                 "hood_gun": {"name": "Hood Gun", "level": "light", "offset_x": 0, "offset_y": -2},

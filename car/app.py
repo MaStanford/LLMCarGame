@@ -17,7 +17,7 @@ from .logic.physics import update_physics_and_collisions
 from .logic.quest_logic import update_quests
 from .logic.trigger_logic import check_triggers
 from .audio.audio import AudioManager
-from .data.game_constants import CUTSCENE_RADIUS, UNTARGET_RADIUS
+from .data.game_constants import CUTSCENE_RADIUS, UNTARGET_RADIUS, CITY_SPACING, SHOP_INTERACTION_SPEED_THRESHOLD
 from .widgets.entity_modal import EntityModal
 from .widgets.explosion import Explosion
 from .widgets.notifications import Notifications
@@ -152,8 +152,8 @@ class GenesisModuleApp(App):
 
             # --- Proximity Quest Generation ---
             # Check if we've moved to a new grid cell
-            current_grid_x = round(gs.car_world_x / 1000)
-            current_grid_y = round(gs.car_world_y / 1000)
+            current_grid_x = round(gs.car_world_x / CITY_SPACING)
+            current_grid_y = round(gs.car_world_y / CITY_SPACING)
             if (current_grid_x, current_grid_y) != self.last_grid_pos:
                 self.check_and_cache_quests_for_nearby_cities()
                 self.last_grid_pos = (current_grid_x, current_grid_y)
@@ -185,8 +185,18 @@ class GenesisModuleApp(App):
     def check_building_interaction(self):
         """Checks if the player is inside a building and pushes the appropriate screen."""
         gs = self.game_state
-        buildings = get_buildings_in_city(round(gs.car_world_x / 1000), round(gs.car_world_y / 1000))
-        for building in buildings:
+
+        # Player must be slow enough to enter a building
+        if abs(gs.car_speed) > SHOP_INTERACTION_SPEED_THRESHOLD:
+            return
+
+        grid_x = round(gs.car_world_x / CITY_SPACING)
+        grid_y = round(gs.car_world_y / CITY_SPACING)
+        buildings = get_buildings_in_city(grid_x, grid_y)
+        for idx, building in enumerate(buildings):
+            # Skip destroyed buildings
+            if (grid_x, grid_y, idx) in gs.destroyed_buildings:
+                continue
             if (building['x'] <= gs.car_world_x < building['x'] + building['w'] and
                 building['y'] <= gs.car_world_y < building['y'] + building['h']):
                 
@@ -322,8 +332,8 @@ class GenesisModuleApp(App):
         from functools import partial
 
         gs = self.game_state
-        player_grid_x = round(gs.car_world_x / 1000)
-        player_grid_y = round(gs.car_world_y / 1000)
+        player_grid_x = round(gs.car_world_x / CITY_SPACING)
+        player_grid_y = round(gs.car_world_y / CITY_SPACING)
 
         # Check a 3x3 grid around the player
         for dx in range(-1, 2):
@@ -338,7 +348,7 @@ class GenesisModuleApp(App):
                 # Mark as pending to prevent re-dispatching
                 gs.quest_cache[city_id] = "pending"
 
-                city_faction_id = get_city_faction(check_x * 1000, check_y * 1000, gs.factions)
+                city_faction_id = get_city_faction(check_x * CITY_SPACING, check_y * CITY_SPACING, gs.factions)
                 
                 logging.info(f"No quests cached for nearby city {city_id}. Starting pre-fetch worker.")
 

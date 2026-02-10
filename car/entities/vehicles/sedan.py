@@ -73,7 +73,7 @@ class Sedan(PlayerCar):
             acceleration=3.0,
             handling=1.8,
             braking_power=5.0,
-            # Attachment points for weapons
+            weapon_aim_speed=1.0,
             attachment_points={
                 "hood_gun": {"name": "Hood Gun", "level": "light", "offset_x": 0, "offset_y": -2},
                 "trunk_gun": {"name": "Trunk Gun", "level": "light", "offset_x": 0, "offset_y": 2}

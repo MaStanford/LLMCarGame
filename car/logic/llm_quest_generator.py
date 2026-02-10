@@ -2,9 +2,45 @@ import json
 import logging
 import random
 from .prompt_builder import build_quest_prompt
-from ..data.quests import Quest
+from ..data.quests import (
+    Quest, KillBossObjective, KillCountObjective,
+    SurvivalObjective, DeliverPackageObjective, DefendLocationObjective
+)
 from .llm_inference import generate_json
 from .llm_schemas import QUEST_SCHEMA
+
+OBJECTIVE_CLASS_MAP = {
+    "KillBossObjective": KillBossObjective,
+    "KillCountObjective": KillCountObjective,
+    "SurvivalObjective": SurvivalObjective,
+    "DeliverPackageObjective": DeliverPackageObjective,
+    "DefendLocationObjective": DefendLocationObjective,
+}
+
+def _instantiate_objectives(raw_objectives):
+    """Convert raw objective data (from LLM or fallback) into Objective instances.
+    Accepts formats like: ["KillBossObjective", ["arg1"]] or {"type": "KillBossObjective", "args": ["arg1"]}
+    """
+    objectives = []
+    for obj_data in raw_objectives:
+        if isinstance(obj_data, list) and len(obj_data) == 2:
+            class_name, args = obj_data
+        elif isinstance(obj_data, dict):
+            class_name = obj_data.get("type", obj_data.get("class"))
+            args = obj_data.get("args", [])
+        else:
+            logging.warning(f"Unknown objective format: {obj_data}")
+            continue
+
+        obj_class = OBJECTIVE_CLASS_MAP.get(class_name)
+        if obj_class:
+            objectives.append(obj_class(*args))
+        else:
+            logging.warning(f"Unknown objective class: {class_name}")
+
+    if not objectives:
+        objectives.append(KillCountObjective(3))
+    return objectives
 
 def generate_quest_from_llm(game_state, quest_giver_faction_id, app, faction_data=None):
     """
@@ -46,7 +82,7 @@ def generate_quest_from_llm(game_state, quest_giver_faction_id, app, faction_dat
             name=quest_data["name"],
             description=quest_data["description"],
             dialog=quest_data["dialog"],
-            objectives=quest_data["objectives"],
+            objectives=_instantiate_objectives(quest_data["objectives"]),
             rewards=quest_data["rewards"],
             quest_giver_faction=quest_giver_faction_id,
             target_faction=target_faction_id,
@@ -61,7 +97,7 @@ def _get_fallback_quest(quest_giver_faction_id):
         name="Fallback: Scrap Metal Mayhem",
         description="Raid a scrap yard and destroy a war rig.",
         dialog="The Vultures are getting too bold. Go destroy their war rig.",
-        objectives=[["KillBossObjective", ["Scrap King Klaw"]]],
+        objectives=_instantiate_objectives([["KillBossObjective", ["Scrap King Klaw"]]]),
         rewards={"xp": 500, "cash": 1000},
         quest_giver_faction=quest_giver_faction_id,
         target_faction="the_vultures",

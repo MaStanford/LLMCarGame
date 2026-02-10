@@ -44,6 +44,8 @@ LEVEL_STAT_BONUS_PER_LEVEL = 0.05 # 5% increase per level
 
 # Spawning
 MAX_ENEMIES = 10
+MAX_FAUNA = 30
+MAX_OBSTACLES = 50
 
 # UI & Rendering
 MIN_TERMINAL_WIDTH = 80

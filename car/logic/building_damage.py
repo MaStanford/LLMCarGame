@@ -5,6 +5,7 @@ from ..data.game_constants import (
     RETALIATION_ENEMY_COUNT, CITY_SPACING
 )
 from ..data.buildings import BUILDING_DATA
+from ..data.pickups import PICKUP_DATA, PICKUP_CASH
 from ..world.generation import get_buildings_in_city
 
 
@@ -67,7 +68,8 @@ def damage_building(game_state, city_key, idx, building, damage):
             "y": building["y"] + building["h"] // 2,
             "type": "cash",
             "value": cash_value,
-            "char": "$",
+            "char": PICKUP_DATA[PICKUP_CASH]["art"][0],
+            "color": PICKUP_DATA[PICKUP_CASH]["color_pair_name"],
         }
 
         # Give XP

@@ -109,6 +109,12 @@ def update_vehicle_movement(game_state, world, audio_manager, dt):
     if _is_terrain_enterable(next_terrain):
         game_state.car_world_x = next_world_x
         game_state.car_world_y = next_world_y
+        # Auto-stop when entering a building (non-passable but enterable)
+        if not next_terrain.get("passable", True) and next_terrain.get("building", {}).get("enterable", False):
+            game_state.car_speed = 0
+            game_state.car_velocity_x = 0
+            game_state.car_velocity_y = 0
+            game_state.pedal_position = 0.0
     else:
         # Wall-sliding: try each axis independently so the player slides along walls
         # instead of getting stuck when hitting buildings at an angle.

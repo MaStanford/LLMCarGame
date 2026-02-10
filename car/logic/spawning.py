@@ -1,7 +1,7 @@
 import random
 import math
 from .entity_loader import ENEMY_VEHICLES, ENEMY_CHARACTERS, FAUNA, OBSTACLES
-from ..data.game_constants import CITY_SPACING, CITY_SIZE, SAFE_ZONE_RADIUS, DESPAWN_RADIUS
+from ..data.game_constants import CITY_SPACING, CITY_SIZE, SAFE_ZONE_RADIUS, DESPAWN_RADIUS, MAX_FAUNA, MAX_OBSTACLES
 from ..logic.data_loader import FACTION_DATA
 from ..world.generation import get_city_faction
 
@@ -105,6 +105,8 @@ def spawn_enemy(game_state, world):
 
 def spawn_fauna(game_state, world, is_initial_spawn=False):
     """Spawns a new fauna."""
+    if not is_initial_spawn and len(game_state.active_fauna) >= MAX_FAUNA:
+        return
     fauna_class = random.choice(FAUNA)
     sx, sy = _get_spawn_coordinates(game_state)
     if sx is None: return
@@ -115,6 +117,8 @@ def spawn_fauna(game_state, world, is_initial_spawn=False):
 
 def spawn_obstacle(game_state, world, is_initial_spawn=False):
     """Spawns a new obstacle."""
+    if not is_initial_spawn and len(game_state.active_obstacles) >= MAX_OBSTACLES:
+        return
     obstacle_class = random.choice(OBSTACLES)
     sx, sy = _get_spawn_coordinates(game_state)
     if sx is None: return

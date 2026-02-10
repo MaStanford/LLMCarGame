@@ -73,6 +73,7 @@ class Van(PlayerCar):
             acceleration=2.0,
             handling=1.2,
             braking_power=3.0,
+            weapon_aim_speed=0.7,
             # Attachment points for weapons
             attachment_points={
                 "roof_rack": {"name": "Roof Rack", "level": "heavy", "offset_x": 0, "offset_y": -1},

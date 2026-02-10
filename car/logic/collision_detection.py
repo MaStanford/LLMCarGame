@@ -3,6 +3,7 @@ import math
 from .loot_generation import handle_enemy_loot_drop
 from .building_damage import find_building_at, damage_building
 from ..world.generation import get_buildings_in_city
+from ..data.game_constants import CITY_SPACING
 
 # Collision physics constants
 STOP_THRESHOLD = 2.0  # Speed below which collisions stop the car completely
@@ -32,7 +33,7 @@ def find_safe_exit_spot(world, building):
         # Check if the spot is passable and not inside any building
         if terrain.get("passable", True) and not any(
             b['x'] <= check_x < b['x'] + b['w'] and b['y'] <= check_y < b['y'] + b['h']
-            for b in get_buildings_in_city(round(check_x / 1000), round(check_y / 1000))
+            for b in get_buildings_in_city(round(check_x / CITY_SPACING), round(check_y / CITY_SPACING))
         ):
             return check_x, check_y
 
@@ -117,6 +118,7 @@ def _drop_meat(game_state, x, y):
         "type": "cash",  # Meat sells for cash
         "value": meat_value,
         "char": "♠",
+        "color": "PICKUP_CASH",
     }
 
 
@@ -276,12 +278,14 @@ def handle_collisions(game_state, world, audio_manager, app):
                 break
 
     # --- Pickup Collisions ---
+    # Pickups have a 3x3 collection area for more forgiving collection
+    PICKUP_SIZE = 3
     pickups_to_remove = []
     for pickup_id, pickup in game_state.active_pickups.items():
-        if (game_state.player_car.x < pickup["x"] + 1 and
-            game_state.player_car.x + game_state.player_car.width > pickup["x"] and
-            game_state.player_car.y < pickup["y"] + 1 and
-            game_state.player_car.y + game_state.player_car.height > pickup["y"]):
+        if (game_state.player_car.x < pickup["x"] + PICKUP_SIZE and
+            game_state.player_car.x + game_state.player_car.width > pickup["x"] - PICKUP_SIZE // 2 and
+            game_state.player_car.y < pickup["y"] + PICKUP_SIZE and
+            game_state.player_car.y + game_state.player_car.height > pickup["y"] - PICKUP_SIZE // 2):
 
             if pickup["type"] == "cash":
                 game_state.player_cash += pickup["value"]
