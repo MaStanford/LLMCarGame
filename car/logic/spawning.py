@@ -99,6 +99,14 @@ def spawn_enemy(game_state, world):
 
     if world.get_terrain_at(sx, sy).get("passable", True):
         new_enemy = enemy_class(sx, sy)
+        hp_mult = game_state.difficulty_mods.get("enemy_hp_mult", 1.0)
+        dmg_mult = game_state.difficulty_mods.get("enemy_dmg_mult", 1.0)
+        new_enemy.durability = int(new_enemy.durability * hp_mult)
+        new_enemy.max_durability = new_enemy.durability
+        if hasattr(new_enemy, 'collision_damage'):
+            new_enemy.collision_damage = int(new_enemy.collision_damage * dmg_mult)
+        else:
+            new_enemy.collision_damage = int(5 * dmg_mult)
         new_enemy.patrol_target_x = sx + random.uniform(-100, 100)
         new_enemy.patrol_target_y = sy + random.uniform(-100, 100)
         game_state.active_enemies.append(new_enemy)

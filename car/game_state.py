@@ -4,6 +4,7 @@ import importlib
 from .entities.weapon import Weapon
 from .logic.entity_loader import PLAYER_CARS
 from .data import *
+from .data.game_constants import LEVEL_STAT_BONUS_PER_LEVEL, MAX_LEVEL
 
 class GameState:
     def __init__(self, selected_car_index, difficulty, difficulty_mods, car_color_names, factions, theme=None):
@@ -184,7 +185,7 @@ class GameState:
     def gain_xp(self, xp):
         self.current_xp += xp
         while self.current_xp >= self.xp_to_next_level:
-            if self.player_level < 100: # Placeholder max level
+            if self.player_level < MAX_LEVEL:
                 self.current_xp -= self.xp_to_next_level
                 self.player_level += 1
                 self.xp_to_next_level = int(self.xp_to_next_level * 1.5) # Placeholder
@@ -195,7 +196,7 @@ class GameState:
                 break
 
     def apply_level_bonuses(self):
-        level_bonus_multiplier = 1.0 + (self.player_level - 1) * 0.1 # Placeholder
+        level_bonus_multiplier = 1.0 + (self.player_level - 1) * LEVEL_STAT_BONUS_PER_LEVEL
 
         self.max_speed = self.base_max_speed * level_bonus_multiplier * GLOBAL_SPEED_MULTIPLIER
         self.acceleration_factor = self.base_acceleration_factor * level_bonus_multiplier

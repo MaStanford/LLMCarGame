@@ -4,6 +4,7 @@ from .loot_generation import handle_enemy_loot_drop
 from .building_damage import find_building_at, damage_building
 from ..world.generation import get_buildings_in_city
 from ..data.game_constants import CITY_SPACING
+from ..data.quests import KillCountObjective
 
 # Collision physics constants
 STOP_THRESHOLD = 2.0  # Speed below which collisions stop the car completely
@@ -122,6 +123,18 @@ def _drop_meat(game_state, x, y):
     }
 
 
+def _update_kill_objectives(game_state, enemy):
+    """Increments kill_count on any active KillCountObjective that matches the enemy."""
+    quest = game_state.current_quest
+    if quest is None or quest.completed:
+        return
+    enemy_class_name = enemy.__class__.__name__
+    for objective in quest.objectives:
+        if isinstance(objective, KillCountObjective) and not objective.completed:
+            if objective.target_name is None or objective.target_name == enemy_class_name:
+                objective.kill_count += 1
+
+
 def handle_collisions(game_state, world, audio_manager, app):
     """
     Handles all collision detection and resolution.
@@ -164,7 +177,10 @@ def handle_collisions(game_state, world, audio_manager, app):
                 if enemy.durability <= 0:
                     game_state.destroyed_this_frame.append(enemy)
                     handle_enemy_loot_drop(game_state, enemy, app)
-                    notifications.append(f"Destroyed {enemy.__class__.__name__}!")
+                    xp = getattr(enemy, 'xp_value', 5)
+                    game_state.gain_xp(xp)
+                    _update_kill_objectives(game_state, enemy)
+                    notifications.append(f"Destroyed {enemy.__class__.__name__}! (+{xp} XP)")
                     game_state.active_enemies.remove(enemy)
                 hit = True
                 break
@@ -211,6 +227,34 @@ def handle_collisions(game_state, world, audio_manager, app):
     if projectiles_to_remove:
         game_state.active_particles = [p for i, p in enumerate(game_state.active_particles) if i not in projectiles_to_remove]
 
+    # --- Flame Collisions ---
+    FLAME_WIDTH = 2.0
+    for flame in game_state.active_flames:
+        sx, sy, ex, ey, power = flame[0], flame[1], flame[2], flame[3], flame[4]
+        dx = ex - sx
+        dy = ey - sy
+        seg_len_sq = dx * dx + dy * dy
+        for enemy in game_state.active_enemies[:]:
+            ecx = enemy.x + enemy.width / 2
+            ecy = enemy.y + enemy.height / 2
+            if seg_len_sq == 0:
+                dist = math.sqrt((ecx - sx) ** 2 + (ecy - sy) ** 2)
+            else:
+                t = max(0, min(1, ((ecx - sx) * dx + (ecy - sy) * dy) / seg_len_sq))
+                proj_x = sx + t * dx
+                proj_y = sy + t * dy
+                dist = math.sqrt((ecx - proj_x) ** 2 + (ecy - proj_y) ** 2)
+            if dist < FLAME_WIDTH:
+                enemy.durability -= power
+                if enemy.durability <= 0:
+                    game_state.destroyed_this_frame.append(enemy)
+                    handle_enemy_loot_drop(game_state, enemy, app)
+                    xp = getattr(enemy, 'xp_value', 5)
+                    game_state.gain_xp(xp)
+                    _update_kill_objectives(game_state, enemy)
+                    notifications.append(f"Destroyed {enemy.__class__.__name__}! (+{xp} XP)")
+                    game_state.active_enemies.remove(enemy)
+
     # --- Player-Enemy Collision (with deflection) ---
     player = game_state.player_car
     player_rect = (player.x, player.y, player.width, player.height)
@@ -230,7 +274,10 @@ def handle_collisions(game_state, world, audio_manager, app):
                 if enemy.durability <= 0:
                     game_state.destroyed_this_frame.append(enemy)
                     handle_enemy_loot_drop(game_state, enemy, app)
-                    notifications.append(f"Destroyed {enemy.__class__.__name__}!")
+                    xp = getattr(enemy, 'xp_value', 5)
+                    game_state.gain_xp(xp)
+                    _update_kill_objectives(game_state, enemy)
+                    notifications.append(f"Destroyed {enemy.__class__.__name__}! (+{xp} XP)")
                     game_state.active_enemies.remove(enemy)
                 break  # Only handle one collision per frame
 
