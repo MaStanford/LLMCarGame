@@ -7,3 +7,4 @@ from .shops import SHOP_DATA
 from .cosmetics import BUILDING_OUTLINE, BUILDING_NAME_CHARS
 from .weapons import WEAPONS_DATA
 from .obstacles import OBSTACLE_DATA, TOTAL_SPAWN_RATE
+from .equipment import EQUIPMENT_DATA, EQUIPMENT_SLOTS

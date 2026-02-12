@@ -183,6 +183,16 @@ InventoryScreen #inventory_grid {
     height: 12;
 }
 
+#equipment_slots {
+    border: heavy white;
+    height: 10;
+}
+
+#item_info {
+    border: heavy white;
+    height: auto;
+}
+
 #inventory {
     border: heavy white;
 }

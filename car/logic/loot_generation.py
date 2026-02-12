@@ -1,8 +1,10 @@
 import random
 from ..data.pickups import PICKUP_DATA, PICKUP_CASH
 from ..data.weapons import WEAPONS_DATA
-from .modifier_logic import generate_weapon_modifiers
+from ..data.equipment import EQUIPMENT_DATA
+from .modifier_logic import generate_weapon_modifiers, generate_equipment_modifiers
 from ..entities.weapon import Weapon
+from ..entities.equipment import Equipment
 from .llm_item_generator import generate_item_from_llm
 
 def handle_enemy_loot_drop(game_state, enemy, app):
@@ -61,6 +63,23 @@ def handle_enemy_loot_drop(game_state, enemy, app):
             "weapon": weapon,
             "char": "W",
             "color": "PICKUP_GUN"
+        }
+        game_state.next_pickup_id += 1
+
+
+    # --- Equipment Drop ---
+    if random.random() < (0.08 * luck_factor):
+        equipment_id = random.choice(list(EQUIPMENT_DATA.keys()))
+        modifiers, rarity = generate_equipment_modifiers(game_state.player_level, luck_factor)
+        equipment = Equipment(equipment_id, modifiers=modifiers, rarity=rarity)
+
+        game_state.active_pickups[game_state.next_pickup_id] = {
+            "type": "equipment",
+            "x": enemy.x - 1,
+            "y": enemy.y + 1,
+            "equipment": equipment,
+            "char": "E",
+            "color": "PICKUP_EQUIPMENT"
         }
         game_state.next_pickup_id += 1
 

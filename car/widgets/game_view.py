@@ -78,6 +78,8 @@ class GameView(Widget):
                     color = "bright_yellow"
                 elif pickup_type == "weapon":
                     color = "bright_cyan"
+                elif pickup_type == "equipment":
+                    color = "bright_green"
                 elif pickup_type == "narrative":
                     color = "bright_magenta"
                 else:

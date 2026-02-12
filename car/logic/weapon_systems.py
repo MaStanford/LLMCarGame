@@ -17,7 +17,7 @@ def update_weapon_systems(game_state, audio_manager):
         for point_name, weapon in game_state.mounted_weapons.items():
             if not game_state.weapon_enabled.get(point_name, True):
                 continue
-            if weapon and game_state.weapon_cooldowns[weapon.instance_id] <= 0:
+            if weapon and game_state.weapon_cooldowns.get(weapon.instance_id, 0) <= 0:
                 ammo_type = weapon.ammo_type
                 if game_state.ammo_counts.get(ammo_type, 0) > 0:
                     point_data = game_state.attachment_points.get(point_name)

@@ -5,6 +5,7 @@ from .entities.weapon import Weapon
 from .logic.entity_loader import PLAYER_CARS
 from .data import *
 from .data.game_constants import LEVEL_STAT_BONUS_PER_LEVEL, MAX_LEVEL
+from .data.equipment import EQUIPMENT_SLOTS
 
 class GameState:
     def __init__(self, selected_car_index, difficulty, difficulty_mods, car_color_names, factions, theme=None):
@@ -85,9 +86,13 @@ class GameState:
         # --- Player State ---
         self.player_inventory = []
         self.attachment_points = self.player_car.attachment_points
-        
+
         # Initialize all attachment points as empty
         self.mounted_weapons = {point_name: None for point_name in self.attachment_points}
+
+        # --- Equipment Slots ---
+        self.equipped_equipment = {slot: None for slot in EQUIPMENT_SLOTS}
+        self.player_scrap = 0
         
         # Equip default weapons
         for mount_point, weapon_type_id in self.player_car.default_weapons.items():
@@ -220,6 +225,46 @@ class GameState:
 
         self.level_damage_modifier = level_bonus_multiplier
 
+        self.apply_equipment_bonuses()
+
+    def apply_equipment_bonuses(self):
+        """Applies stat modifiers from all equipped equipment."""
+        combined = {}
+        for slot_name, equipment in self.equipped_equipment.items():
+            if equipment:
+                for stat, multiplier in equipment.stat_bonuses.items():
+                    if stat in combined:
+                        combined[stat] = combined[stat] * multiplier
+                    else:
+                        combined[stat] = multiplier
+
+        if "speed" in combined:
+            self.max_speed *= combined["speed"]
+        if "acceleration" in combined:
+            self.acceleration_factor *= combined["acceleration"]
+        if "handling" in combined:
+            self.turn_rate *= combined["handling"]
+        if "braking" in combined:
+            self.braking_power *= combined["braking"]
+        if "weapon_aim_speed" in combined:
+            self.weapon_aim_speed *= combined["weapon_aim_speed"]
+        if "damage" in combined:
+            self.level_damage_modifier *= combined["damage"]
+        if "fire_rate" in combined:
+            self.level_damage_modifier *= combined["fire_rate"]
+        if "durability" in combined:
+            new_max = int(self.max_durability * combined["durability"])
+            increase = new_max - self.max_durability
+            self.max_durability = new_max
+            self.current_durability = min(self.max_durability, self.current_durability + increase)
+        if "fuel_capacity" in combined:
+            new_cap = int(self.gas_capacity * combined["fuel_capacity"])
+            increase = new_cap - self.gas_capacity
+            self.gas_capacity = new_cap
+            self.current_gas = min(self.gas_capacity, self.current_gas + increase)
+        if "fuel_efficiency" in combined:
+            self.gas_consumption_rate *= (2.0 - combined["fuel_efficiency"])
+
     def to_dict(self):
         """Serializes the game state to a dictionary."""
         inventory_dict = [item.to_dict() for item in self.player_inventory]
@@ -256,6 +301,11 @@ class GameState:
             "mounted_weapons": mounted_weapons_dict,
             "ammo_counts": self.ammo_counts,
             "weapon_enabled": self.weapon_enabled,
+            "equipped_equipment": {
+                slot: equip.to_dict() if equip else None
+                for slot, equip in self.equipped_equipment.items()
+            },
+            "player_scrap": self.player_scrap,
             
             # Quest & Faction State
             "faction_reputation": self.faction_reputation,
@@ -312,13 +362,29 @@ class GameState:
         gs.distance_traveled = data.get("distance_traveled", 0.0)
         
         # --- Restore Inventory & Weapons ---
-        gs.player_inventory = [Weapon.from_dict(item_data) for item_data in data.get("player_inventory", [])]
+        from .entities.equipment import Equipment
+        raw_inventory = data.get("player_inventory", [])
+        gs.player_inventory = []
+        for item_data in raw_inventory:
+            if item_data.get("item_type") == "equipment":
+                gs.player_inventory.append(Equipment.from_dict(item_data))
+            else:
+                gs.player_inventory.append(Weapon.from_dict(item_data))
+
         gs.mounted_weapons = {
             mount: Weapon.from_dict(weapon_data) if weapon_data else None
             for mount, weapon_data in data.get("mounted_weapons", {}).items()
         }
         gs.ammo_counts = data.get("ammo_counts", {})
         gs.weapon_enabled = data.get("weapon_enabled", {point: True for point in gs.mounted_weapons})
+
+        # --- Restore Equipment Slots ---
+        raw_equipment = data.get("equipped_equipment", {})
+        for slot, equip_data in raw_equipment.items():
+            if equip_data and slot in gs.equipped_equipment:
+                gs.equipped_equipment[slot] = Equipment.from_dict(equip_data)
+        gs.player_scrap = data.get("player_scrap", 0)
+        gs.apply_level_bonuses()
         
         # --- Restore Quest & Faction State ---
         gs.faction_reputation = data["faction_reputation"]

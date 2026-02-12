@@ -340,6 +340,9 @@ def handle_collisions(game_state, world, audio_manager, app):
             elif pickup["type"] == "weapon":
                 game_state.player_inventory.append(pickup["weapon"])
                 notifications.append(f"Picked up {pickup['weapon'].name}!")
+            elif pickup["type"] == "equipment":
+                game_state.player_inventory.append(pickup["equipment"])
+                notifications.append(f"Picked up {pickup['equipment'].name}!")
             elif pickup["type"] == "narrative":
                 from ..screens.narrative_dialog import NarrativeDialogScreen
                 game_state.menu_open = True

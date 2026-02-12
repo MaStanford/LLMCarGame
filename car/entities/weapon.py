@@ -90,6 +90,7 @@ class Weapon:
     def to_dict(self):
         """Serializes the weapon to a dictionary."""
         return {
+            "item_type": "weapon",
             "weapon_type_id": self.weapon_type_id,
             "modifiers": self.modifiers,
             "instance_id": self.instance_id,
