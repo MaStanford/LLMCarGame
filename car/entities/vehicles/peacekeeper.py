@@ -53,7 +53,7 @@ class Peacekeeper(Vehicle):
 
         behavior = self.current_phase["behavior"]
         if behavior == "PATROL":
-            _execute_patrol_behavior(self, game_state, self)
+            _execute_patrol_behavior(self, game_state)
         elif behavior == "CHASE":
             _execute_chase_behavior(self, game_state, self)
         

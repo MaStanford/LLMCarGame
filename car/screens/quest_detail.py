@@ -25,7 +25,7 @@ class QuestDetailScreen(ModalScreen):
         quest = self.app.game_state.current_quest
         if quest:
             self.query_one("#quest_title", Static).update(quest.name)
-            self.query_one("#quest_dialog", Static).update(quest.detail_dialog)
+            self.query_one("#quest_dialog", Static).update(quest.description)
             
             rewards_str = f"""
             Rewards:

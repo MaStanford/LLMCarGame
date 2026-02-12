@@ -307,6 +307,19 @@ CityHallScreen {
 
 #loading_container {
     align: center middle;
+    height: auto;
+    padding: 1 2;
+}
+
+#loading_container ProgressBar {
+    width: 80%;
+    margin-bottom: 1;
+}
+
+#loading_label {
+    text-align: center;
+    color: $text-muted;
+    text-style: italic;
 }
 
 #item_list, #quest_list {

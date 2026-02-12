@@ -57,6 +57,7 @@ class GenesisModuleApp(App):
         self.custom_cli_args = self.settings.get("custom_cli_args", "")
         self.dev_quick_start = self.settings.get("dev_quick_start", False)
         self.last_grid_pos = (None, None)
+        self.current_save_name = None
 
     def reload_dynamic_data(self):
         """Forces a reload of the data modules to pick up generated content."""
@@ -276,22 +277,17 @@ class GenesisModuleApp(App):
 
     def update_compass_data(self):
         """Calculates the compass direction and caches it in the game state."""
+        from .logic.quest_logic import get_quest_target_location
         gs = self.game_state
         target_x, target_y, target_name = None, None, None
-        
+
         if gs.waypoint:
-            target_x, target_y = gs.waypoint
-            target_name = "Waypoint"
+            target_x = gs.waypoint["x"]
+            target_y = gs.waypoint["y"]
+            target_name = gs.waypoint.get("name", "Waypoint")
         elif gs.current_quest:
-            if gs.current_quest.ready_to_turn_in:
-                target_x = gs.current_quest.city_id[0] * CITY_SPACING
-                target_y = gs.current_quest.city_id[1] * CITY_SPACING
-                target_name = "Turn In Quest"
-            elif gs.current_quest.boss:
-                boss = gs.current_quest.boss
-                target_x, target_y = boss.x, boss.y
-                target_name = boss.name
-        
+            target_x, target_y, target_name = get_quest_target_location(gs.current_quest, gs)
+
         if target_x is not None:
             angle_to_target = math.atan2(target_y - gs.car_world_y, target_x - gs.car_world_x)
             gs.compass_info = {
@@ -304,8 +300,9 @@ class GenesisModuleApp(App):
 
     def on_worker_state_changed(self, event: "Worker.StateChanged") -> None:
         """Handles completed quest generation workers."""
+        from textual.worker import WorkerState
         if event.worker.name.startswith("QuestGenerator"):
-            if event.worker.state == "SUCCESS":
+            if event.worker.state == WorkerState.SUCCESS:
                 city_id = event.worker.city_id
                 quests = event.worker.result
                 if quests:
@@ -314,11 +311,16 @@ class GenesisModuleApp(App):
                 else:
                     self.game_state.quest_cache.pop(city_id, None)
                     logging.warning(f"Quest generation failed for city {city_id}. No quests cached.")
-                
+
                 from .screens.city_hall import CityHallScreen, QuestsLoaded
                 if isinstance(self.screen, CityHallScreen) and self.screen.current_city_id == city_id:
                     logging.info(f"Posting QuestsLoaded message to CityHallScreen for city {city_id}")
                     self.screen.post_message(QuestsLoaded(quests or []))
+            elif event.worker.state == WorkerState.ERROR:
+                city_id = getattr(event.worker, 'city_id', None)
+                if city_id:
+                    self.game_state.quest_cache.pop(city_id, None)
+                    logging.error(f"Quest generation worker failed for city {city_id}: {event.worker.error}")
 
     def trigger_initial_quest_cache(self):
         """Kicks off the quest caching for the player's starting area."""

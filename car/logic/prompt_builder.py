@@ -67,27 +67,65 @@ def _format_narrative_history(game_state):
         + "\n".join(history)
     )
 
-def _format_world_details(world_details):
-    """Formats the world details (cities, roads, landmarks) into a string."""
+def _format_world_details(world_details, player_grid_x=None, player_grid_y=None, nearby_radius=3):
+    """Formats the world details (cities, roads, landmarks) into a string.
+
+    When player position is provided, cities and landmarks are categorized as
+    'Nearby' (within nearby_radius grid cells) or omitted for objectives.
+    """
     if not world_details:
         return "No specific world details available."
-    
+
+    from ..data.game_constants import CITY_SPACING
+
     details = []
     if "cities" in world_details and world_details["cities"]:
-        details.append("Known Cities:")
-        for name in world_details["cities"].values():
-            details.append(f"- {name}")
-            
+        nearby_cities = []
+        distant_cities = []
+        for key, name in world_details["cities"].items():
+            try:
+                gx_str, gy_str = key.split(",")
+                gx, gy = int(gx_str), int(gy_str)
+            except ValueError:
+                nearby_cities.append(name)
+                continue
+            if player_grid_x is not None and player_grid_y is not None:
+                dist = max(abs(gx - player_grid_x), abs(gy - player_grid_y))
+                if dist <= nearby_radius:
+                    nearby_cities.append(name)
+                else:
+                    distant_cities.append(name)
+            else:
+                nearby_cities.append(name)
+
+        if nearby_cities:
+            details.append("Nearby Cities (use these for delivery/defend objectives):")
+            for name in nearby_cities:
+                details.append(f"- {name}")
+        if distant_cities:
+            details.append(f"\nDistant Cities ({len(distant_cities)} others, too far for quest objectives)")
+
     if "roads" in world_details and world_details["roads"]:
         details.append("\nMajor Roads:")
         for road in world_details["roads"]:
             details.append(f"- {road.get('name', 'Unnamed Road')}")
 
     if "landmarks" in world_details and world_details["landmarks"]:
-        details.append("\nLandmarks:")
+        nearby_landmarks = []
         for landmark in world_details["landmarks"]:
-            details.append(f"- {landmark.get('name', 'Unnamed Landmark')}")
-            
+            lx = landmark.get("x", 0)
+            ly = landmark.get("y", 0)
+            if player_grid_x is not None and player_grid_y is not None:
+                dist = ((lx - player_grid_x * CITY_SPACING)**2 + (ly - player_grid_y * CITY_SPACING)**2)**0.5
+                if dist <= nearby_radius * CITY_SPACING:
+                    nearby_landmarks.append(landmark.get("name", "Unnamed Landmark"))
+            else:
+                nearby_landmarks.append(landmark.get("name", "Unnamed Landmark"))
+        if nearby_landmarks:
+            details.append("\nNearby Landmarks (use these for defend objectives):")
+            for name in nearby_landmarks:
+                details.append(f"- {name}")
+
     return "\n".join(details)
 
 
@@ -121,7 +159,16 @@ def build_quest_prompt(game_state, quest_giver_faction_id, faction_data_override
     player_state = _format_player_state(game_state)
     world_state = _format_world_state(faction_data, game_state)
     narrative_history = _format_narrative_history(game_state)
-    world_details_str = _format_world_details(getattr(game_state, 'world_details', {}))
+
+    # Compute player grid position for nearby filtering
+    from ..data.game_constants import CITY_SPACING
+    player_grid_x = round(getattr(game_state, 'car_world_x', 0) / CITY_SPACING)
+    player_grid_y = round(getattr(game_state, 'car_world_y', 0) / CITY_SPACING)
+    world_details_str = _format_world_details(
+        getattr(game_state, 'world_details', {}),
+        player_grid_x=player_grid_x,
+        player_grid_y=player_grid_y,
+    )
     theme_str = f"The current theme is '{theme['name']}': {theme['description']}"
     
     with open("prompts/quest_prompt.txt", "r") as f:

@@ -110,7 +110,10 @@ class WorldScreen(Screen):
     def on_screen_resume(self) -> None:
         """Called when the screen is resumed."""
         self._pressed_keys = {}  # Clear stale keys from before the menu
-        self._oneshot_active = {}  # Clear one-shot debounce state
+        # Seed one-shot debounce with current time so lingering key repeats
+        # (e.g. Escape still held from closing the pause menu) are ignored.
+        now = time.time()
+        self._oneshot_active = {k: now for k in ONE_SHOT_ACTIONS}
         self.app.game_state.pause_menu_open = False
         self.app.game_state.menu_open = False
         self.focus()

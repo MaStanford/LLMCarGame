@@ -1,6 +1,10 @@
 from textual.screen import ModalScreen
 from textual.binding import Binding
 from ..widgets.map_view import MapView
+import time
+
+# Brief cooldown after mounting to ignore key repeats from the press that opened this screen
+_MOUNT_COOLDOWN = 0.25
 
 class MapScreen(ModalScreen):
     """The map screen."""
@@ -26,14 +30,23 @@ class MapScreen(ModalScreen):
 
     def on_mount(self) -> None:
         """Called when the screen is mounted."""
+        self._mount_time = time.time()
         self.query_one(MapView).focus()
+
+    def _past_cooldown(self) -> bool:
+        """Check if enough time has passed since mount to accept input."""
+        return time.time() - self._mount_time >= _MOUNT_COOLDOWN
 
     def action_scroll_map(self, dx: int, dy: int) -> None:
         """Scroll the map."""
+        if not self._past_cooldown():
+            return
         self.query_one(MapView).move_camera(dx, dy)
 
     def action_nav_node(self, dx: int, dy: int) -> None:
         """Navigate to the nearest node in the given direction."""
+        if not self._past_cooldown():
+            return
         self.query_one(MapView).nav_to_nearest_node(dx, dy)
 
     def action_center_map(self) -> None:
@@ -42,6 +55,8 @@ class MapScreen(ModalScreen):
 
     def action_toggle_city_mode(self) -> None:
         """Toggle between world map and city map."""
+        if not self._past_cooldown():
+            return
         self.query_one(MapView).toggle_city_mode()
 
     def action_select_waypoint(self) -> None:

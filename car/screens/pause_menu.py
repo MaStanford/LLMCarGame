@@ -1,12 +1,17 @@
 from textual.screen import ModalScreen
 from textual.widgets import Button, Footer
 from textual.binding import Binding
+from textual.events import Key
 from ..logic.save_load import save_game
 from .main_menu import MainMenuScreen
 from .quest_detail import QuestDetailScreen
 from .inventory import InventoryScreen
 from .faction import FactionScreen
 from .save_game import SaveGameScreen
+import time
+
+# Brief cooldown after mounting to ignore key repeats from the press that opened this screen
+_MOUNT_COOLDOWN = 0.25
 
 class PauseScreen(ModalScreen):
     """The pause menu screen."""
@@ -21,6 +26,7 @@ class PauseScreen(ModalScreen):
         super().__init__()
         self.focusable_widgets = []
         self.current_focus_index = 0
+        self._mount_time = 0.0
 
     def compose(self):
         """Compose the layout of the screen."""
@@ -35,6 +41,7 @@ class PauseScreen(ModalScreen):
 
     def on_mount(self) -> None:
         """Set up the focusable widgets."""
+        self._mount_time = time.time()
         self.focusable_widgets = self.query(Button)
         self.update_focus()
 
@@ -58,7 +65,9 @@ class PauseScreen(ModalScreen):
         self.update_focus()
 
     def action_resume_game(self) -> None:
-        """Resume the game."""
+        """Resume the game (ignores if called too soon after mount — key repeat from open press)."""
+        if time.time() - self._mount_time < _MOUNT_COOLDOWN:
+            return
         self.app.pop_screen()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:

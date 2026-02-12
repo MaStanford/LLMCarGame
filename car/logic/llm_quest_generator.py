@@ -8,6 +8,7 @@ from ..data.quests import (
 )
 from .llm_inference import generate_json
 from .llm_schemas import QUEST_SCHEMA
+from ..data.game_constants import CITY_SPACING
 
 OBJECTIVE_CLASS_MAP = {
     "KillBossObjective": KillBossObjective,
@@ -16,6 +17,75 @@ OBJECTIVE_CLASS_MAP = {
     "DeliverPackageObjective": DeliverPackageObjective,
     "DefendLocationObjective": DefendLocationObjective,
 }
+
+# Max grid distance for delivery/defend objectives
+_MAX_QUEST_GRID_DISTANCE = 3
+
+
+def _validate_objectives(objectives, game_state):
+    """Validate and fix objectives that reference locations.
+
+    If a DeliverPackageObjective references a city that doesn't exist or is too
+    far away, substitute the nearest valid city.  If a DefendLocationObjective
+    references an unknown landmark, substitute the nearest known one.
+    """
+    world_details = getattr(game_state, 'world_details', {})
+    player_grid_x = round(getattr(game_state, 'car_world_x', 0) / CITY_SPACING)
+    player_grid_y = round(getattr(game_state, 'car_world_y', 0) / CITY_SPACING)
+
+    for obj in objectives:
+        if isinstance(obj, DeliverPackageObjective):
+            cities = world_details.get("cities", {})
+            # Check if destination exists and is nearby
+            found_nearby = False
+            for key, name in cities.items():
+                if name == obj.destination:
+                    try:
+                        gx_str, gy_str = key.split(",")
+                        gx, gy = int(gx_str), int(gy_str)
+                        dist = max(abs(gx - player_grid_x), abs(gy - player_grid_y))
+                        if dist <= _MAX_QUEST_GRID_DISTANCE:
+                            found_nearby = True
+                    except ValueError:
+                        pass
+                    break
+
+            if not found_nearby and cities:
+                # Pick nearest city that isn't the player's current city
+                best_name = None
+                best_dist = float('inf')
+                for key, name in cities.items():
+                    try:
+                        gx_str, gy_str = key.split(",")
+                        gx, gy = int(gx_str), int(gy_str)
+                    except ValueError:
+                        continue
+                    dist = max(abs(gx - player_grid_x), abs(gy - player_grid_y))
+                    if 1 <= dist <= _MAX_QUEST_GRID_DISTANCE and dist < best_dist:
+                        best_dist = dist
+                        best_name = name
+                if best_name:
+                    logging.info(f"Delivery destination '{obj.destination}' too far or unknown, substituting '{best_name}'")
+                    obj.destination = best_name
+
+        elif isinstance(obj, DefendLocationObjective):
+            landmarks = world_details.get("landmarks", [])
+            known_names = [lm.get("name") for lm in landmarks]
+            if obj.location not in known_names and landmarks:
+                # Find nearest landmark
+                best_name = None
+                best_dist = float('inf')
+                for lm in landmarks:
+                    lx, ly = lm.get("x", 0), lm.get("y", 0)
+                    dist = ((lx - player_grid_x * CITY_SPACING)**2 + (ly - player_grid_y * CITY_SPACING)**2)**0.5
+                    if dist < best_dist:
+                        best_dist = dist
+                        best_name = lm.get("name")
+                if best_name:
+                    logging.info(f"Defend location '{obj.location}' unknown, substituting '{best_name}'")
+                    obj.location = best_name
+
+    return objectives
 
 def _instantiate_objectives(raw_objectives):
     """Convert raw objective data (from LLM or fallback) into Objective instances.
@@ -91,7 +161,10 @@ def generate_quest_from_llm(game_state, quest_giver_faction_id, app, faction_dat
             name=quest_data["name"],
             description=quest_data["description"],
             dialog=quest_data["dialog"],
-            objectives=_instantiate_objectives(quest_data["objectives"]),
+            objectives=_validate_objectives(
+                _instantiate_objectives(quest_data["objectives"]),
+                game_state,
+            ),
             rewards=quest_data["rewards"],
             quest_giver_faction=quest_giver_faction_id,
             target_faction=target_faction_id,

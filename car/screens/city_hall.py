@@ -2,7 +2,7 @@ import math
 import logging
 from functools import partial
 from textual.screen import ModalScreen
-from textual.widgets import Header, Footer, Static, Button, LoadingIndicator
+from textual.widgets import Header, Footer, Static, Button, ProgressBar
 from textual.containers import Grid, Vertical
 from textual.binding import Binding
 from textual.message import Message
@@ -14,7 +14,22 @@ from ..logic.boss import check_challenge_conditions, spawn_faction_boss
 from ..data.game_constants import CITY_SPACING
 from ..world.generation import get_city_faction, get_buildings_in_city, find_safe_spawn_point
 from ..workers.city_hall_dialog_generator import generate_dialog_worker
+from ..workers.quest_generator import generate_quests_worker
 from textual.worker import Worker, WorkerState
+
+# Atmospheric loading messages shown while quests generate
+_MAYOR_MESSAGES = [
+    "The mayor shuffles through a stack of papers...",
+    "He adjusts his glasses and squints at a document...",
+    "He pulls out a worn ledger from under the desk...",
+    "He mutters something about bandits this season...",
+    "He stamps a requisition form with a heavy sigh...",
+    "He flips through reports from the local patrols...",
+    "He circles a few entries with a red pen...",
+    "'Just a moment,' he says without looking up...",
+    "He cross-references a map tacked to the wall...",
+    "He finally closes the ledger and meets your eyes...",
+]
 
 class QuestsLoaded(Message):
     """A message to indicate that quests have been loaded."""
@@ -27,8 +42,9 @@ class CityHallScreen(ModalScreen):
 
     BINDINGS = [
         Binding("escape", "app.pop_screen", "Back", show=True),
-        Binding("up", "move_selection(-1)", "Up", show=True),
-        Binding("down", "move_selection(1)", "Down", show=True),
+        Binding("up", "move_selection(-1)", "Up", show=False),
+        Binding("down", "move_selection(1)", "Down", show=False),
+        Binding("enter", "accept_quest", "Accept", show=True),
     ]
 
     def __init__(self, *args, **kwargs) -> None:
@@ -39,6 +55,8 @@ class CityHallScreen(ModalScreen):
         self.can_challenge = False
         self.current_city_faction = None
         self.current_city_id = None
+        self._loading_msg_index = 0
+        self._loading_timer = None
 
     def on_mount(self) -> None:
         """Called when the screen is mounted."""
@@ -47,7 +65,7 @@ class CityHallScreen(ModalScreen):
         grid_y = round(gs.car_world_y / CITY_SPACING)
         self.current_city_id = f"city_{grid_x}_{grid_y}"
         self.current_city_faction = get_city_faction(gs.car_world_x, gs.car_world_y, gs.factions)
-        
+
         logging.info(f"CityHallScreen mounted for city: {self.current_city_id}")
 
         turn_in_city_tuple = (grid_x, grid_y)
@@ -65,9 +83,41 @@ class CityHallScreen(ModalScreen):
                 logging.info(f"Found {len(cached_quests)} quests in cache.")
                 self.available_quests = cached_quests
             self.can_challenge = check_challenge_conditions(gs, self.current_city_faction, gs.factions)
-        
+
+        self._loading_timer = self.set_interval(2.5, self._cycle_loading_message)
         self.update_quest_display()
         self.generate_dialog()
+
+    def generate_quests(self):
+        """Launch a quest generation worker for the current city."""
+        gs = self.app.game_state
+        gs.quest_cache[self.current_city_id] = "pending"
+
+        worker_callable = partial(
+            generate_quests_worker,
+            app=self.app,
+            city_id=self.current_city_id,
+            city_faction_id=self.current_city_faction,
+            theme=gs.theme,
+            faction_data=gs.factions,
+            story_intro=gs.story_intro,
+        )
+
+        worker = self.run_worker(
+            worker_callable,
+            exclusive=False,
+            thread=True,
+            name=f"QuestGenerator_{self.current_city_id}",
+            group="quest_generation",
+        )
+        worker.city_id = self.current_city_id
+
+    def _cycle_loading_message(self) -> None:
+        """Cycle through atmospheric loading messages while quests generate."""
+        loading = self.query_one("#loading_container")
+        if loading.display:
+            self._loading_msg_index = (self._loading_msg_index + 1) % len(_MAYOR_MESSAGES)
+            self.query_one("#loading_label").update(_MAYOR_MESSAGES[self._loading_msg_index])
 
     def on_quests_loaded(self, message: QuestsLoaded) -> None:
         """Handle the QuestsLoaded message."""
@@ -91,7 +141,8 @@ class CityHallScreen(ModalScreen):
             faction_vibe=faction_vibe,
             player_reputation=player_rep
         )
-        self.run_worker(worker_callable, exclusive=True, name="CityHallDialogGenerator", thread=True)
+        self.run_worker(worker_callable, exclusive=True, name="CityHallDialogGenerator",
+                        thread=True, group="dialog_generation")
 
     def on_worker_state_changed(self, event: Worker.StateChanged) -> None:
         """Handle completed dialog worker."""
@@ -115,6 +166,9 @@ class CityHallScreen(ModalScreen):
 
     def on_unmount(self) -> None:
         """Called when the screen is unmounted."""
+        if self._loading_timer:
+            self._loading_timer.stop()
+
         gs = self.app.game_state
         gs.menu_open = False
 
@@ -151,7 +205,7 @@ class CityHallScreen(ModalScreen):
             quest = self.app.game_state.current_quest
             quest_list_widget.update("Quest Complete!")
             self.query_one("#quest_info", Static).update(quest.name)
-            self.query_one(Dialog).update(quest.completion_dialog)
+            self.query_one(Dialog).update(quest.dialog)
             self.query_one("#accept_quest", Button).label = "Complete Quest"
         else:
             cached_quests = self.app.game_state.quest_cache.get(self.current_city_id)
@@ -187,6 +241,21 @@ class CityHallScreen(ModalScreen):
             self.selected_index = (self.selected_index + amount + len(self.available_quests)) % len(self.available_quests)
             self.update_quest_display()
 
+    def action_accept_quest(self) -> None:
+        """Accept the selected quest or complete a turn-in via Enter key."""
+        gs = self.app.game_state
+        if self.is_turn_in:
+            complete_quest(gs, self.app)
+            self.app.pop_screen()
+        elif self.available_quests:
+            accept_button = self.query_one("#accept_quest", Button)
+            if not accept_button.disabled:
+                selected_quest = self.available_quests[self.selected_index]
+                handle_quest_acceptance(gs, selected_quest)
+                if self.current_city_id in gs.quest_cache:
+                    del gs.quest_cache[self.current_city_id]
+                self.app.pop_screen()
+
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle accept button presses."""
         gs = self.app.game_state
@@ -215,8 +284,8 @@ class CityHallScreen(ModalScreen):
         with Grid(id="city_hall_grid"):
             with Vertical(id="quest_list_container"):
                 with Vertical(id="loading_container"):
-                    yield LoadingIndicator()
-                    yield Static("Contacting the Mayor for contracts...", id="loading_label")
+                    yield ProgressBar(id="quest_progress", total=None, show_percentage=False, show_eta=False)
+                    yield Static(_MAYOR_MESSAGES[0], id="loading_label")
                 yield Static("Available Contracts", id="quest_list")
             yield Static("Quest Details", id="quest_info")
             yield Dialog("")

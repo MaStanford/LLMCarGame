@@ -7,6 +7,75 @@ from ..world.generation import get_buildings_in_city, get_city_faction
 from ..logic.data_loader import FACTION_DATA
 from . import faction_logic
 
+def get_quest_target_location(quest, game_state):
+    """
+    Returns (world_x, world_y, label) for the quest's current objective target,
+    or (None, None, None) if no specific location can be determined.
+    Used by the compass and world map to show quest markers.
+    """
+    if not quest:
+        return None, None, None
+
+    # If ready to turn in, point to the quest giver city
+    if quest.ready_to_turn_in and quest.city_id:
+        x = quest.city_id[0] * CITY_SPACING
+        y = quest.city_id[1] * CITY_SPACING
+        return x, y, "Turn In Quest"
+
+    # If quest has a live boss entity, point to it
+    if quest.boss:
+        return quest.boss.x, quest.boss.y, quest.boss.name
+
+    # Check uncompleted objectives for location-bearing targets
+    for objective in quest.objectives:
+        if objective.completed:
+            continue
+
+        if isinstance(objective, DeliverPackageObjective):
+            # Resolve destination city name to world coordinates
+            cities = game_state.world_details.get("cities", {})
+            for key, name in cities.items():
+                if name == objective.destination:
+                    try:
+                        gx_str, gy_str = key.split(",")
+                        x = int(gx_str) * CITY_SPACING
+                        y = int(gy_str) * CITY_SPACING
+                        return x, y, f"Deliver to {objective.destination}"
+                    except ValueError:
+                        pass
+
+        elif isinstance(objective, DefendLocationObjective):
+            # Resolve landmark name to world coordinates
+            for landmark in game_state.world_details.get("landmarks", []):
+                if landmark.get("name") == objective.location:
+                    return landmark["x"], landmark["y"], f"Defend {objective.location}"
+
+        elif isinstance(objective, KillBossObjective):
+            # Boss not spawned yet — point to quest area
+            if quest.city_id:
+                x = quest.city_id[0] * CITY_SPACING
+                y = quest.city_id[1] * CITY_SPACING
+                return x, y, f"Hunt {objective.boss_name}"
+
+        elif isinstance(objective, KillCountObjective):
+            remaining = objective.target_count - objective.kill_count
+            label = f"Eliminate {remaining} more"
+            if quest.city_id:
+                x = quest.city_id[0] * CITY_SPACING
+                y = quest.city_id[1] * CITY_SPACING
+                return x, y, label
+
+        elif isinstance(objective, SurvivalObjective):
+            remaining_s = max(0, objective.timer // 30)
+            label = f"Survive ({remaining_s}s)"
+            if quest.city_id:
+                x = quest.city_id[0] * CITY_SPACING
+                y = quest.city_id[1] * CITY_SPACING
+                return x, y, label
+
+    return None, None, None
+
+
 def get_available_quests(game_state):
     """Generates a list of available quests for the current city."""
     quests = []

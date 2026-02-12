@@ -67,6 +67,7 @@ class LoadGameScreen(Screen):
         if loaded_game_state:
             logging.info(f"Successfully loaded game state for '{save_name}'. Switching to WorldScreen.")
             self.app.game_state = loaded_game_state
+            self.app.current_save_name = save_name
             self.app.world = World(seed=int(time.time()))
             self.app.world.game_state = loaded_game_state
             self.app.switch_screen(WorldScreen())

@@ -233,8 +233,17 @@ class MapView(Widget):
         if best_i >= 0:
             self.selected_node_index = best_i
             node = self.world_nodes[best_i]
-            self.camera_x = node["x"]
-            self.camera_y = node["y"]
+            # Only move camera if the node is near the edge of the screen
+            w, h = self.size
+            scale = 200
+            screen_x = (node["x"] - self.camera_x) / scale + w / 2
+            screen_y = (node["y"] - self.camera_y) / scale + h / 2
+            margin_x = w * 0.25
+            margin_y = h * 0.25
+            if (screen_x < margin_x or screen_x > w - margin_x or
+                    screen_y < margin_y or screen_y > h - margin_y):
+                self.camera_x = node["x"]
+                self.camera_y = node["y"]
             self.refresh()
 
     def select_waypoint(self):
@@ -572,6 +581,34 @@ class MapView(Widget):
                     styles[sy][sx] = Style(color="cyan", bold=True)
                     self._draw_text(canvas, styles, sx + 2, sy, city_name,
                                     Style(color="cyan"))
+
+        # Draw Quest Objective Marker
+        if gs.current_quest:
+            from ..logic.quest_logic import get_quest_target_location
+            qt_x, qt_y, qt_label = get_quest_target_location(gs.current_quest, gs)
+            if qt_x is not None:
+                qsx = int((qt_x - map_start_x) / scale)
+                qsy = int((qt_y - map_start_y) / scale)
+                if 0 <= qsy < h - 1 and 0 <= qsx < w:
+                    if gs.current_quest.ready_to_turn_in:
+                        marker_char = "?"
+                        marker_style = Style(color="green", bold=True)
+                    else:
+                        marker_char = "!"
+                        marker_style = Style(color="yellow", bold=True)
+                    canvas[qsy][qsx] = marker_char
+                    styles[qsy][qsx] = marker_style
+                    if qt_label:
+                        self._draw_text(canvas, styles, qsx + 2, qsy, qt_label, marker_style)
+
+        # Draw Waypoint Marker
+        if gs.waypoint:
+            wp_sx = int((gs.waypoint["x"] - map_start_x) / scale)
+            wp_sy = int((gs.waypoint["y"] - map_start_y) / scale)
+            if 0 <= wp_sy < h - 1 and 0 <= wp_sx < w:
+                wp_style = Style(color="rgb(255,100,255)", bold=True)
+                canvas[wp_sy][wp_sx] = "⊕"
+                styles[wp_sy][wp_sx] = wp_style
 
         # Draw Player
         player_x = int((self.game_state.car_world_x - map_start_x) / scale)
