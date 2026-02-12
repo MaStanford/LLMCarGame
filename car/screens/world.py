@@ -38,22 +38,37 @@ GAMEPLAY_KEYS = {"w", "s", "a", "d", "space", "left", "right"}
 KEY_STALE_THRESHOLD = 0.15  # seconds — if no repeat event arrives within this window, the key is considered released
 PEDAL_RAMP_RATE = 4.0       # pedal units per second (0 to 1.0 in ~0.25s)
 
+# One-shot keys for menu/UI actions.
+# Handled directly in on_key for reliability (bypasses binding dispatch lag).
+ONE_SHOT_ACTIONS = {
+    "escape": "toggle_pause",
+    "i": "toggle_inventory",
+    "tab": "toggle_inventory",
+    "m": "show_map",
+    "f": "show_factions",
+    "q": "show_quests",
+    "enter": "show_notifications",
+    "grave_accent": "toggle_console",
+    "tilde": "toggle_console",
+}
+
 class WorldScreen(Screen):
     """The default screen for the game."""
 
     _pressed_keys: dict = {}  # key_name -> last_event_timestamp (reset in on_mount)
 
-    # Only one-shot menu/UI keys use Textual bindings.
+    # Only one-shot menu/UI keys use Textual bindings for footer display.
     # Gameplay keys (WASD, space, arrows) are handled by on_key + process_input.
-    # They are listed here with show=True purely so the footer displays them as hints.
+    # Menu keys are ALSO handled directly in on_key for reliability.
+    # Gameplay hints are hidden from footer to avoid overflow — only menu keys shown.
     BINDINGS = [
-        Binding("w", "noop", "Accelerate", show=True),
-        Binding("s", "noop", "Brake", show=True),
-        Binding("a", "noop", "Turn Left", show=True),
-        Binding("d", "noop", "Turn Right", show=True),
-        Binding("left", "noop", "Aim Left", show=True),
-        Binding("right", "noop", "Aim Right", show=True),
-        Binding("space", "noop", "Fire", show=True),
+        Binding("w", "noop", "Accelerate", show=False),
+        Binding("s", "noop", "Brake", show=False),
+        Binding("a", "noop", "Turn Left", show=False),
+        Binding("d", "noop", "Turn Right", show=False),
+        Binding("left", "noop", "Aim Left", show=False),
+        Binding("right", "noop", "Aim Right", show=False),
+        Binding("space", "noop", "Fire", show=False),
         Binding("1", "toggle_weapon(1)", "Wpn 1", show=False),
         Binding("2", "toggle_weapon(2)", "Wpn 2", show=False),
         Binding("3", "toggle_weapon(3)", "Wpn 3", show=False),
@@ -76,7 +91,8 @@ class WorldScreen(Screen):
 
     def on_mount(self) -> None:
         """Called when the screen is mounted."""
-        self._pressed_keys = {}  # key_name -> last_event_timestamp
+        self._pressed_keys = {}  # key_name -> last_event_timestamp (gameplay)
+        self._oneshot_active = {}  # key_name -> last_event_timestamp (menu keys, for debounce)
         self.focus()
         gs = self.app.game_state
 
@@ -94,8 +110,10 @@ class WorldScreen(Screen):
     def on_screen_resume(self) -> None:
         """Called when the screen is resumed."""
         self._pressed_keys = {}  # Clear stale keys from before the menu
+        self._oneshot_active = {}  # Clear one-shot debounce state
         self.app.game_state.pause_menu_open = False
         self.app.game_state.menu_open = False
+        self.focus()
         self.app.start_game_loop()
 
         # Update FPS counter visibility in case Dev Mode changed
@@ -104,15 +122,31 @@ class WorldScreen(Screen):
             fps_counter.display = self.app.dev_mode
 
     def on_key(self, event: Key) -> None:
-        """Track gameplay keys for continuous input (hold-to-act).
+        """Handle all gameplay input directly for reliability.
 
-        Textual has no key-up events. Instead, we record the timestamp of each
-        key-repeat event. The game loop's process_input() expires keys that
-        haven't received a repeat within KEY_STALE_THRESHOLD, treating that
-        as a key release.
+        Continuous keys (WASD, arrows, space) are tracked by timestamp for
+        hold-to-act behavior. One-shot keys (menus, toggles) are debounced:
+        they fire once on initial press, then ignore repeats until the key
+        is released (no event within KEY_STALE_THRESHOLD).
         """
+        now = time.time()
+
         if event.key in GAMEPLAY_KEYS:
-            self._pressed_keys[event.key] = time.time()
+            self._pressed_keys[event.key] = now
+        elif event.key in ONE_SHOT_ACTIONS:
+            # Debounce: only fire if this key wasn't already held
+            last = self._oneshot_active.get(event.key, 0)
+            if now - last > KEY_STALE_THRESHOLD:
+                action_name = ONE_SHOT_ACTIONS[event.key]
+                getattr(self, f"action_{action_name}")()
+            self._oneshot_active[event.key] = now
+            event.prevent_default()
+        elif event.key.isdigit() and 1 <= int(event.key) <= 9:
+            last = self._oneshot_active.get(event.key, 0)
+            if now - last > KEY_STALE_THRESHOLD:
+                self.action_toggle_weapon(int(event.key))
+            self._oneshot_active[event.key] = now
+            event.prevent_default()
 
     def process_input(self, dt: float) -> None:
         """Called each game tick to translate held keys into game actions.

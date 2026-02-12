@@ -102,7 +102,8 @@ WORLD_DETAILS_SCHEMA = {
                 "properties": {
                     "x": {"type": "integer"},
                     "y": {"type": "integer"},
-                    "name": {"type": "string"}
+                    "name": {"type": "string"},
+                    "description": {"type": "string"}
                 }
             }
         }

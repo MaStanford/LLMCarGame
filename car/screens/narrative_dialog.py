@@ -7,7 +7,7 @@ class NarrativeDialogScreen(ModalScreen):
     """A screen to display narrative text from a discovered item."""
 
     BINDINGS = [
-        Binding("escape", "app.pop_screen", "Back"),
+        Binding("escape", "app.pop_screen", "Back", show=True),
     ]
 
     def __init__(self, narrative_data, *args, **kwargs):

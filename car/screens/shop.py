@@ -2,7 +2,7 @@ import math
 from functools import partial
 from textual.screen import Screen
 from textual.widgets import Header, Footer, Static, Button
-from textual.containers import Grid, Vertical, Horizontal
+from textual.containers import Vertical, Horizontal, ScrollableContainer
 from textual.binding import Binding
 from textual.worker import Worker, WorkerState
 
@@ -24,6 +24,8 @@ class ShopScreen(Screen):
         Binding("left", "switch_focus", "Switch", show=True),
         Binding("right", "switch_focus", "Switch", show=True),
         Binding("enter", "select_item", "Select", show=True),
+        Binding("shift+up", "scroll_page(-3)", "Scroll Up", show=False),
+        Binding("shift+down", "scroll_page(3)", "Scroll Down", show=False),
     ]
 
     def __init__(self, shop_type: str, *args, **kwargs) -> None:
@@ -240,25 +242,27 @@ class ShopScreen(Screen):
             # First press: stage for confirmation
             self.sell_confirmation_item = selected_item
 
+    def action_scroll_page(self, amount: int) -> None:
+        """Scroll the entire shop page."""
+        self.query_one("#shop_page", ScrollableContainer).scroll_relative(y=amount)
+
     def compose(self):
         """Compose the layout of the screen."""
         yield Header(show_clock=True)
-        with Grid(id="shop_grid"):
-            # Top-Left: Shop Inventory
-            yield ItemListWidget(id="shop_inventory")
-            
-            # Top-Right: Player Inventory
-            yield ItemListWidget(id="player_inventory")
-
-            # Bottom-Left: Shopkeeper Dialog
+        with ScrollableContainer(id="shop_page"):
+            # Inventories side by side
+            with Horizontal(id="shop_lists_row"):
+                with Vertical(id="shop_inventory_pane"):
+                    yield ItemListWidget(id="shop_inventory")
+                with Vertical(id="player_inventory_pane"):
+                    yield ItemListWidget(id="player_inventory")
+            # Shopkeeper dialog
             yield Static("Welcome, traveler!", id="shop_dialog")
-
-            # Bottom-Right: Player Info & Actions
-            with Vertical():
-                yield ItemInfoWidget()
-                with Horizontal(id="stats_action_row"):
-                    yield MenuStatsHUD()
-                    btn = Button("Buy", id="action_button", variant="primary")
-                    btn.can_focus = False
-                    yield btn
+            # Item info and action row
+            yield ItemInfoWidget()
+            with Horizontal(id="stats_action_row"):
+                yield MenuStatsHUD()
+                btn = Button("Buy", id="action_button", variant="primary")
+                btn.can_focus = False
+                yield btn
         yield Footer()

@@ -16,9 +16,9 @@ class MainMenuScreen(Screen):
     """The main menu screen."""
 
     BINDINGS = [
-        Binding("up", "focus_previous", "Up"),
-        Binding("down", "focus_next", "Down"),
-        Binding("enter", "select_button", "Select"),
+        Binding("up", "focus_previous", "Up", show=False),
+        Binding("down", "focus_next", "Down", show=False),
+        Binding("enter", "select_button", "Select", show=True),
     ]
 
     def __init__(self) -> None:

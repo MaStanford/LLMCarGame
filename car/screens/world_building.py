@@ -19,9 +19,9 @@ class WorldBuildingScreen(Screen):
     """A screen that shows the progress of the world being built, with flair."""
 
     BINDINGS = [
-        Binding("up", "focus_previous", "Up"),
-        Binding("down", "focus_next", "Down"),
-        Binding("enter", "select_button", "Select"),
+        Binding("up", "focus_previous", "Up", show=False),
+        Binding("down", "focus_next", "Down", show=False),
+        Binding("enter", "select_button", "Select", show=True),
     ]
 
     def __init__(self, new_game_settings: dict) -> None:

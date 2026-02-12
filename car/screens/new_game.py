@@ -18,13 +18,13 @@ class NewGameScreen(Screen):
     """The new game setup screen."""
 
     BINDINGS = [
-        Binding("up", "focus_previous", "Up"),
-        Binding("down", "focus_next", "Down"),
-        Binding("left", "cycle_left", "Left"),
-        Binding("right", "cycle_right", "Right"),
-        Binding("a", "rotate_left", "Rotate Left"),
-        Binding("d", "rotate_right", "Rotate Right"),
-        Binding("escape", "app.pop_screen", "Back"),
+        Binding("up", "focus_previous", "Up", show=False),
+        Binding("down", "focus_next", "Down", show=False),
+        Binding("left", "cycle_left", "Left", show=True),
+        Binding("right", "cycle_right", "Right", show=True),
+        Binding("a", "rotate_left", "Rotate Left", show=True),
+        Binding("d", "rotate_right", "Rotate Right", show=True),
+        Binding("escape", "app.pop_screen", "Back", show=True),
     ]
 
     def __init__(self) -> None:

@@ -8,7 +8,7 @@ class IntroCutsceneScreen(Screen):
     """A screen to display the introductory story text."""
 
     BINDINGS = [
-        Binding("enter", "end_cutscene", "Continue"),
+        Binding("enter", "end_cutscene", "Continue", show=True),
     ]
 
     def __init__(self, intro_text: str) -> None:

@@ -7,14 +7,17 @@ class MapScreen(ModalScreen):
 
     BINDINGS = [
         Binding("escape", "app.pop_screen", "Back", show=True),
-        Binding("m", "app.pop_screen", "Back", show=True),
-        Binding("up", "scroll_map(0, -1)", "Up", show=True),
-        Binding("down", "scroll_map(0, 1)", "Down", show=True),
-        Binding("left", "scroll_map(-1, 0)", "Left", show=True),
-        Binding("right", "scroll_map(1, 0)", "Right", show=True),
+        Binding("m", "toggle_city_mode", "City/World", show=True),
+        Binding("up", "scroll_map(0, -1)", "Scroll", show=False),
+        Binding("down", "scroll_map(0, 1)", "Scroll", show=False),
+        Binding("left", "scroll_map(-1, 0)", "Scroll", show=False),
+        Binding("right", "scroll_map(1, 0)", "Scroll", show=False),
+        Binding("w", "nav_node(0, -1)", "Up", show=True),
+        Binding("s", "nav_node(0, 1)", "Down", show=True),
+        Binding("a", "nav_node(-1, 0)", "Left", show=True),
+        Binding("d", "nav_node(1, 0)", "Right", show=True),
         Binding("c", "center_map", "Center", show=True),
-        Binding("t", "toggle_city_mode", "City/World", show=True),
-        Binding("enter", "select_waypoint", "Select", show=True),
+        Binding("enter", "select_waypoint", "Waypoint", show=True),
     ]
 
     def compose(self):
@@ -28,6 +31,10 @@ class MapScreen(ModalScreen):
     def action_scroll_map(self, dx: int, dy: int) -> None:
         """Scroll the map."""
         self.query_one(MapView).move_camera(dx, dy)
+
+    def action_nav_node(self, dx: int, dy: int) -> None:
+        """Navigate to the nearest node in the given direction."""
+        self.query_one(MapView).nav_to_nearest_node(dx, dy)
 
     def action_center_map(self) -> None:
         """Center the map on the player."""

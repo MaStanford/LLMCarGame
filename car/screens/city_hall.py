@@ -26,9 +26,9 @@ class CityHallScreen(ModalScreen):
     """The city hall screen for accepting quests."""
 
     BINDINGS = [
-        Binding("escape", "app.pop_screen", "Back"),
-        Binding("up", "move_selection(-1)", "Up"),
-        Binding("down", "move_selection(1)", "Down"),
+        Binding("escape", "app.pop_screen", "Back", show=True),
+        Binding("up", "move_selection(-1)", "Up", show=True),
+        Binding("down", "move_selection(1)", "Down", show=True),
     ]
 
     def __init__(self, *args, **kwargs) -> None:

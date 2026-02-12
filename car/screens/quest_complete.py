@@ -7,7 +7,7 @@ class QuestCompleteScreen(ModalScreen):
     """A modal screen to show quest completion details."""
 
     BINDINGS = [
-        Binding("enter", "app.pop_screen", "Continue"),
+        Binding("enter", "app.pop_screen", "Continue", show=True),
     ]
 
     def __init__(self, quest) -> None:

@@ -43,6 +43,8 @@ class MapView(Widget):
         self.city_mode = False
         self.city_grid_x = 0
         self.city_grid_y = 0
+        self.world_nodes = []       # List of node dicts with x, y, short_name, long_name, type, grid_x, grid_y
+        self.selected_node_index = -1  # -1 = no selection
 
     def on_mount(self) -> None:
         """Called when the widget is mounted."""
@@ -52,6 +54,7 @@ class MapView(Widget):
         self.cached_map = [[' ' for _ in range(w)] for _ in range(h)]
         self.cached_styles = [[Style() for _ in range(w)] for _ in range(h)]
         self._generate_map_chunk()
+        self._build_node_list()
         self.blink_timer = self.set_interval(0.5, self.toggle_blink)
 
     def on_unmount(self) -> None:
@@ -81,6 +84,7 @@ class MapView(Widget):
         else:
             self.camera_x += dx * 200
             self.camera_y += dy * 200
+            self.selected_node_index = -1
         self.refresh()
 
     def center_on_player(self):
@@ -90,10 +94,151 @@ class MapView(Widget):
         if self.city_mode:
             self.city_grid_x = round(self.camera_x / CITY_SPACING)
             self.city_grid_y = round(self.camera_y / CITY_SPACING)
+        self.selected_node_index = -1
         self.refresh()
 
+    def _build_node_list(self):
+        """Build a list of all selectable nodes (cities + landmarks) with short/long names."""
+        gs = self.game_state
+        nodes = []
+
+        # Add cities: short_name is city name, long_name includes faction info
+        for (gx_jitter, gy_jitter), (symbol, orig_gx, orig_gy) in self.map_data.items():
+            city_world_x = orig_gx * CITY_SPACING
+            city_world_y = orig_gy * CITY_SPACING
+            city_name = gs.world_details.get("cities", {}).get(f"{orig_gx},{orig_gy}", "Unknown City")
+
+            # Build long description from faction data
+            long_desc = city_name
+            for fid, fdata in gs.factions.items():
+                if fdata.get("hub_city_coordinates") == [orig_gx, orig_gy]:
+                    long_desc = f"{city_name} -- Capital of {fdata.get('name', 'Unknown')}"
+                    break
+
+            nodes.append({
+                "x": city_world_x,
+                "y": city_world_y,
+                "short_name": city_name,
+                "long_name": long_desc,
+                "type": "city",
+                "grid_x": orig_gx,
+                "grid_y": orig_gy,
+            })
+
+        # Add landmarks
+        if gs.world_details and "landmarks" in gs.world_details:
+            for landmark in gs.world_details["landmarks"]:
+                try:
+                    lx, ly = landmark["x"], landmark["y"]
+                    short = landmark.get("name", "Landmark")
+                    desc = landmark.get("description", short)
+                    nodes.append({
+                        "x": lx,
+                        "y": ly,
+                        "short_name": short,
+                        "long_name": f"{short} -- {desc}" if desc != short else short,
+                        "type": "landmark",
+                        "grid_x": None,
+                        "grid_y": None,
+                    })
+                except (ValueError, KeyError):
+                    continue
+
+        self.world_nodes = nodes
+
+        # Set initial selection: waypoint node if exists, else nearest city
+        self.selected_node_index = -1
+        if gs.waypoint:
+            wp_x, wp_y = gs.waypoint["x"], gs.waypoint["y"]
+            for i, node in enumerate(nodes):
+                if abs(node["x"] - wp_x) < 1 and abs(node["y"] - wp_y) < 1:
+                    self.selected_node_index = i
+                    self.camera_x = node["x"]
+                    self.camera_y = node["y"]
+                    break
+
+        if self.selected_node_index == -1 and nodes:
+            # Select nearest city to player
+            px, py = gs.car_world_x, gs.car_world_y
+            best_i = 0
+            best_dist = float('inf')
+            for i, node in enumerate(nodes):
+                if node["type"] == "city":
+                    d = (node["x"] - px) ** 2 + (node["y"] - py) ** 2
+                    if d < best_dist:
+                        best_dist = d
+                        best_i = i
+            self.selected_node_index = best_i
+
+    def nav_to_nearest_node(self, dx: int, dy: int):
+        """Navigate to the nearest node in the given direction from the current selection."""
+        if not self.world_nodes:
+            return
+
+        # Get origin point
+        if 0 <= self.selected_node_index < len(self.world_nodes):
+            origin = self.world_nodes[self.selected_node_index]
+            ox, oy = origin["x"], origin["y"]
+        else:
+            ox, oy = self.game_state.car_world_x, self.game_state.car_world_y
+
+        best_i = -1
+        best_score = float('inf')
+
+        for i, node in enumerate(self.world_nodes):
+            if i == self.selected_node_index:
+                continue
+
+            rel_x = node["x"] - ox
+            rel_y = node["y"] - oy
+
+            # Check if this node is in the requested direction
+            # dx/dy define the direction: (0,-1)=up, (0,1)=down, (-1,0)=left, (1,0)=right
+            if dx != 0:
+                # Horizontal: node must be in the correct x direction
+                if dx > 0 and rel_x <= 0:
+                    continue
+                if dx < 0 and rel_x >= 0:
+                    continue
+            if dy != 0:
+                # Vertical: node must be in the correct y direction
+                if dy > 0 and rel_y <= 0:
+                    continue
+                if dy < 0 and rel_y >= 0:
+                    continue
+
+            # Score: distance, but penalize nodes that are far off the primary axis
+            dist = math.sqrt(rel_x ** 2 + rel_y ** 2)
+            if dist == 0:
+                continue
+
+            # Angle alignment: how well does the direction match?
+            # For dx=1,dy=0 (right), ideal angle is 0. For dx=0,dy=-1 (up), ideal angle is -pi/2
+            ideal_angle = math.atan2(dy, dx)
+            actual_angle = math.atan2(rel_y, rel_x)
+            angle_diff = abs(actual_angle - ideal_angle)
+            if angle_diff > math.pi:
+                angle_diff = 2 * math.pi - angle_diff
+
+            # Only consider nodes within 90 degrees of the direction
+            if angle_diff > math.pi / 2:
+                continue
+
+            # Score: closer + more aligned = better
+            score = dist * (1 + angle_diff)
+            if score < best_score:
+                best_score = score
+                best_i = i
+
+        if best_i >= 0:
+            self.selected_node_index = best_i
+            node = self.world_nodes[best_i]
+            self.camera_x = node["x"]
+            self.camera_y = node["y"]
+            self.refresh()
+
     def select_waypoint(self):
-        """Sets a waypoint to the city closest to the camera's center."""
+        """Sets a waypoint to the selected node or nearest city."""
         if self.city_mode:
             self.game_state.waypoint = {
                 "x": self.city_grid_x * CITY_SPACING,
@@ -102,6 +247,17 @@ class MapView(Widget):
             }
             return
 
+        # Use selected node if one is highlighted
+        if self.selected_node_index >= 0 and self.selected_node_index < len(self.world_nodes):
+            node = self.world_nodes[self.selected_node_index]
+            self.game_state.waypoint = {
+                "x": node["x"],
+                "y": node["y"],
+                "name": node["short_name"],
+            }
+            return
+
+        # Fallback: nearest city to camera center
         min_dist = float('inf')
         closest_city_coords = None
 
@@ -197,7 +353,7 @@ class MapView(Widget):
         self._draw_text(canvas, styles, title_x, 0, title, Style(color="white", bold=True))
 
         # Draw mode hint
-        hint = "Tab: World Map | Arrows: Next City | C: Center | Enter: Waypoint"
+        hint = "M: World Map | Arrows: Scroll | C: Center | Enter: Waypoint"
         hint_x = max(0, (w - len(hint)) // 2)
         self._draw_text(canvas, styles, hint_x, h - 1, hint, Style(color="rgb(100,100,100)"))
 
@@ -340,6 +496,11 @@ class MapView(Widget):
         map_start_x = self.camera_x - (w / 2) * scale
         map_start_y = self.camera_y - (h / 2) * scale
 
+        # Get selected node info for highlighting
+        selected_node = None
+        if 0 <= self.selected_node_index < len(self.world_nodes):
+            selected_node = self.world_nodes[self.selected_node_index]
+
         # Draw Roads
         if gs.world_details and "roads" in gs.world_details:
             for road in gs.world_details["roads"]:
@@ -360,10 +521,6 @@ class MapView(Widget):
                     sy2 = int((to_wy - map_start_y) / scale)
 
                     self._draw_line(canvas, styles, sx1, sy1, sx2, sy2, "·", Style(color="yellow"))
-
-                    mid_x = (sx1 + sx2) // 2
-                    mid_y = (sy1 + sy2) // 2
-                    self._draw_text(canvas, styles, mid_x + 1, mid_y, road.get("name", ""), Style(color="yellow", italic=True))
                 except (ValueError, KeyError):
                     continue
 
@@ -376,14 +533,24 @@ class MapView(Widget):
                     sy = int((ly - map_start_y) / scale)
 
                     if 0 <= sy < h and 0 <= sx < w:
-                        canvas[sy][sx] = "◊"
-                        styles[sy][sx] = Style(color="magenta", bold=True)
-                        self._draw_text(canvas, styles, sx + 2, sy, landmark.get("name", ""), Style(color="magenta"))
+                        is_selected = (selected_node and selected_node["type"] == "landmark"
+                                       and selected_node["x"] == lx and selected_node["y"] == ly)
+                        short_name = landmark.get("name", "")
+                        if is_selected:
+                            canvas[sy][sx] = "◊"
+                            styles[sy][sx] = Style(color="white", bold=True, bgcolor="magenta")
+                            self._draw_text(canvas, styles, sx + 2, sy, short_name,
+                                            Style(color="white", bold=True))
+                        else:
+                            canvas[sy][sx] = "◊"
+                            styles[sy][sx] = Style(color="magenta", bold=True)
+                            if short_name:
+                                self._draw_text(canvas, styles, sx + 2, sy, short_name,
+                                                Style(color="magenta"))
                 except (ValueError, KeyError):
                     continue
 
-
-        # Draw Cities and Labels
+        # Draw Cities
         for (gx, gy), (symbol, orig_gx, orig_gy) in self.map_data.items():
             city_world_x = gx * CITY_SPACING
             city_world_y = gy * CITY_SPACING
@@ -392,11 +559,19 @@ class MapView(Widget):
             sy = int((city_world_y - map_start_y) / scale)
 
             if 0 <= sy < h and 0 <= sx < w:
-                canvas[sy][sx] = symbol
-                styles[sy][sx] = Style(color="cyan", bold=True)
-
+                is_selected = (selected_node and selected_node["type"] == "city"
+                               and selected_node["grid_x"] == orig_gx and selected_node["grid_y"] == orig_gy)
                 city_name = gs.world_details.get("cities", {}).get(f"{orig_gx},{orig_gy}", "Unknown City")
-                self._draw_text(canvas, styles, sx + 2, sy, city_name, Style(color="white"))
+                if is_selected:
+                    canvas[sy][sx] = symbol
+                    styles[sy][sx] = Style(color="white", bold=True, bgcolor="cyan")
+                    self._draw_text(canvas, styles, sx + 2, sy, city_name,
+                                    Style(color="white", bold=True))
+                else:
+                    canvas[sy][sx] = symbol
+                    styles[sy][sx] = Style(color="cyan", bold=True)
+                    self._draw_text(canvas, styles, sx + 2, sy, city_name,
+                                    Style(color="cyan"))
 
         # Draw Player
         player_x = int((self.game_state.car_world_x - map_start_x) / scale)
@@ -406,9 +581,27 @@ class MapView(Widget):
                 canvas[player_y][player_x] = "●"
                 styles[player_y][player_x] = Style(color="red", bold=True)
 
-        # Mode hint
-        hint = "Tab: City Map"
-        self._draw_text(canvas, styles, w - len(hint) - 1, h - 1, hint, Style(color="rgb(100,100,100)"))
+        # Bottom bar: selected node info or hint
+        if selected_node:
+            # Show name and distance
+            dist = math.sqrt((gs.car_world_x - selected_node["x"])**2 +
+                             (gs.car_world_y - selected_node["y"])**2)
+            dist_str = f"{dist:.0f}m" if dist < 10000 else f"{dist/1000:.1f}km"
+            node_type_label = selected_node["type"].upper()
+            info = f" [{node_type_label}] {selected_node['long_name']}  --  {dist_str} away "
+            idx_str = f" {self.selected_node_index + 1}/{len(self.world_nodes)} "
+            # Draw info bar background
+            for sx in range(w):
+                canvas[h - 1][sx] = ' '
+                styles[h - 1][sx] = Style(bgcolor="rgb(40,40,40)")
+            self._draw_text(canvas, styles, 0, h - 1, info,
+                            Style(color="white", bold=True, bgcolor="rgb(40,40,40)"))
+            self._draw_text(canvas, styles, w - len(idx_str), h - 1, idx_str,
+                            Style(color="rgb(150,150,150)", bgcolor="rgb(40,40,40)"))
+        else:
+            hint = "WASD: Navigate | Arrows: Scroll | M: City Map | Enter: Waypoint"
+            hint_x = max(0, (w - len(hint)) // 2)
+            self._draw_text(canvas, styles, hint_x, h - 1, hint, Style(color="rgb(100,100,100)"))
 
         # Convert to Rich Text
         text = Text()

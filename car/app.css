@@ -176,6 +176,8 @@ InventoryScreen #inventory_grid {
 
 #car_preview {
     border: heavy white;
+    text-align: center;
+    content-align: center middle;
 }
 
 #attachments {
@@ -212,31 +214,48 @@ ShopScreen {
     height: 100%;
 }
 
-ShopScreen #shop_grid {
-    grid-size: 2 2;
-    grid-rows: 2fr 1fr;
-    grid-columns: 1fr 1fr;
-    grid-gutter: 1;
+ShopScreen #shop_page {
     padding: 1;
 }
 
-ShopScreen #shop_inventory, ShopScreen #player_inventory {
+ShopScreen #shop_lists_row {
+    height: auto;
+    max-height: 16;
+}
+
+ShopScreen #shop_inventory_pane, ShopScreen #player_inventory_pane {
+    width: 1fr;
+    height: auto;
+    max-height: 16;
     border: heavy white;
-    height: 100%;
+    overflow-y: auto;
+    margin: 0 1 0 0;
+}
+
+ShopScreen #player_inventory_pane {
+    margin: 0;
+}
+
+ShopScreen #shop_inventory, ShopScreen #player_inventory {
+    height: auto;
 }
 
 ShopScreen #shop_dialog {
     border: heavy white;
     padding: 1;
+    height: auto;
+    max-height: 6;
+    margin-top: 1;
 }
 
-ShopScreen #shop_dialog, ShopScreen Vertical {
-    height: 100%;
+ShopScreen ItemInfoWidget {
+    margin-top: 1;
 }
 
 ShopScreen #stats_action_row {
     height: auto;
     width: 100%;
+    margin-top: 1;
 }
 
 ShopScreen #stats_action_row MenuStatsHUD {
@@ -246,12 +265,8 @@ ShopScreen #stats_action_row MenuStatsHUD {
 ShopScreen #action_button {
     width: auto;
     min-width: 20;
-    height: 100%;
+    height: auto;
     margin-left: 1;
-}
-
-ShopScreen ItemInfoWidget {
-    margin-top: 1;
 }
 
 /* --- Shop-Specific Themes --- */
@@ -259,7 +274,7 @@ ShopScreen ItemInfoWidget {
     background: #2d2d2d; /* Dark grey */
     color: #e0e0e0; /* Light grey text */
 }
-.mechanic-shop #shop_inventory, .mechanic-shop #player_inventory, .mechanic-shop #shop_dialog {
+.mechanic-shop #shop_inventory_pane, .mechanic-shop #player_inventory_pane, .mechanic-shop #shop_dialog {
     border: heavy #ff8c00; /* Dark orange */
 }
 
@@ -267,7 +282,7 @@ ShopScreen ItemInfoWidget {
     background: #f5f5dc; /* Beige */
     color: #8b0000; /* Dark red text */
 }
-.gas-station #shop_inventory, .gas-station #player_inventory, .gas-station #shop_dialog {
+.gas-station #shop_inventory_pane, .gas-station #player_inventory_pane, .gas-station #shop_dialog {
     border: heavy #008080; /* Teal */
 }
 
@@ -275,7 +290,7 @@ ShopScreen ItemInfoWidget {
     background: #000000; /* Black */
     color: #00ff00; /* Green text */
 }
-.weapon-shop #shop_inventory, .weapon-shop #player_inventory, .weapon-shop #shop_dialog {
+.weapon-shop #shop_inventory_pane, .weapon-shop #player_inventory_pane, .weapon-shop #shop_dialog {
     border: heavy #808080; /* Grey */
 }
 

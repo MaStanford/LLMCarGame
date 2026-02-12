@@ -8,7 +8,7 @@ class SaveGameScreen(ModalScreen):
     """A modal screen for naming and saving the game."""
 
     BINDINGS = [
-        Binding("escape", "app.pop_screen", "Back"),
+        Binding("escape", "app.pop_screen", "Back", show=True),
     ]
 
     def compose(self):

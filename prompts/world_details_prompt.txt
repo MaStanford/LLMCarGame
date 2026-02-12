@@ -33,7 +33,8 @@ Based on the provided theme and faction data, generate a JSON object containing 
     {{
       "x": <int>,
       "y": <int>,
-      "name": "<Generated Landmark Name>"
+      "name": "<Short 1-2 word name>",
+      "description": "<One sentence description of this landmark>"
     }}
   ]
 }}
