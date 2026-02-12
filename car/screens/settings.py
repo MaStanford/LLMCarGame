@@ -11,12 +11,17 @@ class SettingsScreen(Screen):
     """A screen for changing game settings."""
 
     BINDINGS = [
+        Binding("up", "focus_previous", "Up"),
+        Binding("down", "focus_next", "Down"),
+        Binding("enter", "select_button", "Select"),
         Binding("escape", "app.pop_screen", "Back"),
     ]
 
     def __init__(self) -> None:
         super().__init__()
         self.settings = load_settings()
+        self.focusable_widgets = []
+        self.current_focus_index = 0
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=False)
@@ -42,6 +47,31 @@ class SettingsScreen(Screen):
     def on_mount(self) -> None:
         """Update the sub-option to match the current mode."""
         self._refresh_sub_option()
+        self.focusable_widgets = list(self.query("Button"))
+        self.current_focus_index = 0
+        self._update_focus()
+
+    def _update_focus(self) -> None:
+        """Update which widget has focus."""
+        if self.focusable_widgets:
+            self.focusable_widgets[self.current_focus_index].focus()
+
+    def action_focus_previous(self) -> None:
+        """Focus the previous widget."""
+        if self.focusable_widgets:
+            self.current_focus_index = (self.current_focus_index - 1 + len(self.focusable_widgets)) % len(self.focusable_widgets)
+            self._update_focus()
+
+    def action_focus_next(self) -> None:
+        """Focus the next widget."""
+        if self.focusable_widgets:
+            self.current_focus_index = (self.current_focus_index + 1) % len(self.focusable_widgets)
+            self._update_focus()
+
+    def action_select_button(self) -> None:
+        """Press the focused button."""
+        if self.focusable_widgets:
+            self.focusable_widgets[self.current_focus_index].press()
 
     # --- Label helpers ---
 

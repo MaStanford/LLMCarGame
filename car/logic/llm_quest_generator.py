@@ -34,7 +34,16 @@ def _instantiate_objectives(raw_objectives):
 
         obj_class = OBJECTIVE_CLASS_MAP.get(class_name)
         if obj_class:
-            objectives.append(obj_class(*args))
+            try:
+                objectives.append(obj_class(*args))
+            except TypeError as e:
+                logging.warning(f"Failed to instantiate {class_name} with args {args}: {e}")
+                # Try with just the last arg (often the count) as a fallback
+                if args:
+                    try:
+                        objectives.append(obj_class(args[-1]))
+                    except TypeError:
+                        logging.warning(f"Fallback instantiation also failed for {class_name}")
         else:
             logging.warning(f"Unknown objective class: {class_name}")
 

@@ -53,4 +53,4 @@ class WeaponHUD(Widget):
                     Text(ammo_str, style=ammo_style),
                 )
 
-        return Panel(table, title="Weapons", border_style="white")
+        return Panel(table, title="Weapons [1-9] Toggle", border_style="white")

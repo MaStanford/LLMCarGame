@@ -1,6 +1,6 @@
 You are a dialog writer for the post-apocalyptic RPG "Car."
 
-Your task is to write a short, in-character greeting from a shopkeeper to the player.
+Your task is to write two short, in-character lines from a shopkeeper to the player.
 
 # CONTEXT
 - **Theme:** {{ theme }}
@@ -10,7 +10,9 @@ Your task is to write a short, in-character greeting from a shopkeeper to the pl
 - **Player Reputation:** The player's reputation with this faction is {{ player_reputation }}. (A score from -100 to 100, where > 50 is liked, < -50 is hated).
 
 # INSTRUCTIONS
-- Write a single, short greeting (1-3 sentences).
-- The greeting's tone should perfectly match the theme, the faction's vibe, and how they would feel about the player's reputation.
-- For example, a high reputation with a friendly faction should result in a warm welcome. A low reputation with a hostile faction should result in a gruff or threatening greeting.
-- Output *only* the text of the greeting. Do not include any other text, explanation, or markdown formatting.
+- Write TWO lines separated by "---" on its own line.
+- **Line 1 (Greeting):** A short greeting when the player enters the shop (1-3 sentences).
+- **Line 2 (Can't Afford):** A short quip the shopkeeper says when the player tries to buy something they can't afford (1 sentence).
+- Both lines should perfectly match the theme, the faction's vibe, and how they would feel about the player's reputation.
+- For example, a high reputation with a friendly faction should result in warm, sympathetic dialog. A low reputation with a hostile faction should result in mocking or threatening dialog.
+- Output *only* the two lines separated by "---". Do not include labels, explanation, or markdown formatting.

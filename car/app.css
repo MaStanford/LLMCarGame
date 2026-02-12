@@ -224,7 +224,23 @@ ShopScreen #shop_dialog, ShopScreen Vertical {
     height: 100%;
 }
 
-ShopScreen WeaponInfo, ShopScreen MenuStatsHUD, ShopScreen Button {
+ShopScreen #stats_action_row {
+    height: auto;
+    width: 100%;
+}
+
+ShopScreen #stats_action_row MenuStatsHUD {
+    width: 1fr;
+}
+
+ShopScreen #action_button {
+    width: auto;
+    min-width: 20;
+    height: 100%;
+    margin-left: 1;
+}
+
+ShopScreen ItemInfoWidget {
     margin-top: 1;
 }
 
@@ -575,9 +591,9 @@ WorldBuildingScreen .world-building-animation {
 }
 
 
-WorldBuildingScreen #retry {
-    text-align: center;
-    align: center middle;
+WorldBuildingScreen Button {
+    width: 30;
+    margin-top: 1;
 }
 
 ThemeSelectionScreen {
@@ -605,6 +621,19 @@ ThemeSelectionScreen #theme-buttons-container Button {
     width: 100%;
     height: 5;
     margin-bottom: 1;
+}
+
+ThemeSelectionScreen ProgressBar {
+    width: 60%;
+    margin-bottom: 1;
+}
+
+ThemeSelectionScreen .theme-animation {
+    text-align: center;
+    height: 8;
+    color: $text-muted;
+    margin-bottom: 1;
+    border: heavy gray;
 }
 
 IntroCutsceneScreen {

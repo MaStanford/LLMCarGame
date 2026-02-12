@@ -39,9 +39,16 @@ class KillBossObjective(Objective):
         return obj
 
 class KillCountObjective(Objective):
-    def __init__(self, target_count):
+    def __init__(self, target_name_or_count, target_count=None):
         super().__init__()
-        self.target_count = target_count
+        if target_count is None:
+            # Called with just a count: KillCountObjective(5)
+            self.target_name = None
+            self.target_count = target_name_or_count
+        else:
+            # Called with name and count: KillCountObjective("RustySedan", 5)
+            self.target_name = target_name_or_count
+            self.target_count = target_count
         self.kill_count = 0
 
     def update(self, game_state):
@@ -52,6 +59,7 @@ class KillCountObjective(Objective):
     def to_dict(self):
         data = super().to_dict()
         data.update({
+            "target_name": self.target_name,
             "target_count": self.target_count,
             "kill_count": self.kill_count
         })
@@ -59,7 +67,11 @@ class KillCountObjective(Objective):
 
     @classmethod
     def from_dict(cls, data):
-        obj = cls(data["target_count"])
+        target_name = data.get("target_name")
+        if target_name:
+            obj = cls(target_name, data["target_count"])
+        else:
+            obj = cls(data["target_count"])
         obj.kill_count = data["kill_count"]
         obj.completed = data["completed"]
         return obj

@@ -108,7 +108,20 @@ def generate_with_cli(prompt: str, parse_json: bool = True, timeout: int = 120,
             return raw_output
 
         cleaned_json = raw_output.strip().replace("```json", "").replace("```", "")
-        return json.loads(cleaned_json)
+        try:
+            return json.loads(cleaned_json)
+        except json.JSONDecodeError:
+            # Try to extract JSON object/array from surrounding text
+            # (Claude may wrap JSON with explanatory text)
+            import re
+            json_match = re.search(r'(\{[\s\S]*\}|\[[\s\S]*\])', cleaned_json)
+            if json_match:
+                try:
+                    return json.loads(json_match.group(1))
+                except json.JSONDecodeError:
+                    pass
+            logging.error(f"Failed to parse JSON from {tool_name} output. Raw: {raw_output[:500]}")
+            return raw_output
 
     except subprocess.TimeoutExpired:
         logging.error(f"{tool_name} call timed out after {timeout} seconds.")
@@ -117,9 +130,6 @@ def generate_with_cli(prompt: str, parse_json: bool = True, timeout: int = 120,
         logging.error(f"{tool_name} call failed with exit code {e.returncode}.")
         logging.error(f"Stderr: {e.stderr}")
         return {"error": f"{tool_name} call failed.", "details": e.stderr}
-    except json.JSONDecodeError as e:
-        logging.error(f"Failed to parse JSON from {tool_name} output: {e}")
-        return raw_output
     except Exception as e:
         logging.error(f"An unexpected error occurred with {tool_name}: {e}", exc_info=True)
         return {"error": "An unexpected error occurred.", "details": str(e)}

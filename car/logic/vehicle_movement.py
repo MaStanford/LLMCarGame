@@ -9,6 +9,17 @@ def _is_terrain_enterable(terrain):
     building = terrain.get("building", {})
     return building.get("enterable", False)
 
+def _is_enterable_building(terrain):
+    """Check if terrain is specifically an enterable building (not just passable ground)."""
+    return not terrain.get("passable", True) and terrain.get("building", {}).get("enterable", False)
+
+def _stop_car(game_state):
+    """Bring the car to a complete stop."""
+    game_state.car_speed = 0
+    game_state.car_velocity_x = 0
+    game_state.car_velocity_y = 0
+    game_state.pedal_position = 0.0
+
 def update_vehicle_movement(game_state, world, audio_manager, dt):
     """
     Handles the player's vehicle movement, including acceleration, braking, turning, and gas consumption.
@@ -110,11 +121,8 @@ def update_vehicle_movement(game_state, world, audio_manager, dt):
         game_state.car_world_x = next_world_x
         game_state.car_world_y = next_world_y
         # Auto-stop when entering a building (non-passable but enterable)
-        if not next_terrain.get("passable", True) and next_terrain.get("building", {}).get("enterable", False):
-            game_state.car_speed = 0
-            game_state.car_velocity_x = 0
-            game_state.car_velocity_y = 0
-            game_state.pedal_position = 0.0
+        if _is_enterable_building(next_terrain):
+            _stop_car(game_state)
     else:
         # Wall-sliding: try each axis independently so the player slides along walls
         # instead of getting stuck when hitting buildings at an angle.
@@ -130,6 +138,8 @@ def update_vehicle_movement(game_state, world, audio_manager, dt):
         if _is_terrain_enterable(terrain_x):
             game_state.car_world_x = test_x
             moved = True
+            if _is_enterable_building(terrain_x):
+                _stop_car(game_state)
 
         # Try moving in Y only
         test_y = game_state.car_world_y + dy
@@ -139,31 +149,39 @@ def update_vehicle_movement(game_state, world, audio_manager, dt):
         if _is_terrain_enterable(terrain_y):
             game_state.car_world_y = test_y
             moved = True
+            if _is_enterable_building(terrain_y):
+                _stop_car(game_state)
 
         if not moved:
-            # Fully blocked in both axes - apply collision physics
-            audio_manager.play_sfx("crash")
-            prev_speed = game_state.car_speed
-
-            # Apply ram damage to buildings
-            if "building" in next_terrain:
-                ram_damage = max(1, abs(prev_speed) * BUILDING_RAM_DAMAGE)
-                city_key, b_idx, b_data = find_building_at(next_center_x, next_center_y)
-                if city_key is not None:
-                    bld_notes = damage_building(game_state, city_key, b_idx, b_data, ram_damage)
-                    notifications.extend(bld_notes)
-
-            if prev_speed < 2.0:
-                game_state.car_speed = 0
-                game_state.car_velocity_x = 0
-                game_state.car_velocity_y = 0
+            if _is_enterable_building(next_terrain):
+                # Blocked but terrain is enterable — move in and stop
+                game_state.car_world_x = next_world_x
+                game_state.car_world_y = next_world_y
+                _stop_car(game_state)
             else:
-                game_state.car_speed *= 0.5
-                game_state.deflection_vx = -game_state.car_velocity_x * 0.3
-                game_state.deflection_vy = -game_state.car_velocity_y * 0.3
-                game_state.deflection_frames = 10
-            game_state.current_durability -= max(1, int(prev_speed * 0.2)) if not game_state.god_mode else 0
-            audio_manager.play_sfx("player_hit")
+                # Fully blocked in both axes - apply collision physics
+                audio_manager.play_sfx("crash")
+                prev_speed = game_state.car_speed
+
+                # Apply ram damage to buildings
+                if "building" in next_terrain:
+                    ram_damage = max(1, abs(prev_speed) * BUILDING_RAM_DAMAGE)
+                    city_key, b_idx, b_data = find_building_at(next_center_x, next_center_y)
+                    if city_key is not None:
+                        bld_notes = damage_building(game_state, city_key, b_idx, b_data, ram_damage)
+                        notifications.extend(bld_notes)
+
+                if prev_speed < 2.0:
+                    game_state.car_speed = 0
+                    game_state.car_velocity_x = 0
+                    game_state.car_velocity_y = 0
+                else:
+                    game_state.car_speed *= 0.5
+                    game_state.deflection_vx = -game_state.car_velocity_x * 0.3
+                    game_state.deflection_vy = -game_state.car_velocity_y * 0.3
+                    game_state.deflection_frames = 10
+                game_state.current_durability -= max(1, int(prev_speed * 0.2)) if not game_state.god_mode else 0
+                audio_manager.play_sfx("player_hit")
         elif abs(game_state.car_speed) > 1.0:
             # Sliding along a wall - reduce speed moderately and play a scrape
             game_state.car_speed *= 0.85

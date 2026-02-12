@@ -46,6 +46,7 @@ def get_shop_inventory(shop_type, game_state):
                 "damage": weapon.damage,
                 "range": weapon.range,
                 "fire_rate": weapon.fire_rate,
+                "ammo_type": weapon.ammo_type,
                 "price": int(weapon.price * price_modifier),
                 "item_id": weapon_id,
                 "modifiers": weapon.modifiers,

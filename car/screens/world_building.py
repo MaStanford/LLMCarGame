@@ -6,22 +6,30 @@ from textual.app import ComposeResult
 from textual.containers import Vertical
 from textual.screen import Screen
 from textual.widgets import Button, Static, Header, Footer, ProgressBar
+from textual.binding import Binding
 from textual.worker import Worker, WorkerState
 
 from ..game_state import GameState
 from ..world import World
 from ..workers.world_generator import generate_initial_world_worker, StageUpdate
 from ..data.difficulty import DIFFICULTY_MODIFIERS
+from ..animations.reveal_animation import RevealAnimation
 
 class WorldBuildingScreen(Screen):
     """A screen that shows the progress of the world being built, with flair."""
 
-    BINDINGS = []
+    BINDINGS = [
+        Binding("up", "focus_previous", "Up"),
+        Binding("down", "focus_next", "Down"),
+        Binding("enter", "select_button", "Select"),
+    ]
 
     def __init__(self, new_game_settings: dict) -> None:
         super().__init__()
         self.new_game_settings = new_game_settings
         self.world_data = None
+        self.focusable_widgets = []
+        self.current_focus_index = 0
         self.status_messages = [
             "Calibrating wasteland frequencies...",
             "Reticulating splines...",
@@ -38,7 +46,9 @@ class WorldBuildingScreen(Screen):
             "Finalizing timeline...",
         ]
         self.current_message_index = 0
-        self.animation_chars = "░▒▓█▄▀▌▐─█│┌┐└┘ℍ├┤┬┴┼═‗║₪╔╗╚╝╠╣╦╩╬▤▥▦▧▨▩"
+        self.reveal_anim = RevealAnimation()
+        self._status_timer = None
+        self._animation_timer = None
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=False)
@@ -55,8 +65,8 @@ class WorldBuildingScreen(Screen):
         theme_name = self.new_game_settings.get("theme", {}).get("name", "the Wasteland")
         self.query_one("#title", Static).update(f"[bold]Bringing '{theme_name}' to Life...[/bold]\nThis may take a few minutes.")
 
-        self.set_interval(2.5, self.update_status_message)
-        self.set_interval(0.05, self.update_animation)
+        self._status_timer = self.set_interval(2.5, self.update_status_message)
+        self._animation_timer = self.set_interval(0.05, self.update_animation)
 
         # Start the world generation worker
         self.run_worker(
@@ -72,26 +82,56 @@ class WorldBuildingScreen(Screen):
         self.query_one("#status_message", Static).update(self.status_messages[self.current_message_index])
 
     def update_animation(self) -> None:
-        """Update the decorative animation with random characters."""
+        """Update the reveal-crystallization animation."""
         animation_widget = self.query_one("#animation_display")
-        width = 50
-        height = 8
-        lines = []
-        for _ in range(height):
-            lines.append("".join(random.choice(self.animation_chars) for _ in range(width)))
-        animation_widget.update("\n".join(lines))
+        animation_widget.update(self.reveal_anim.tick())
+
+    def _get_cli_test_hint(self) -> str:
+        """Returns a helpful hint for testing the CLI LLM tool."""
+        if self.app.generation_mode == "gemini_cli":
+            preset = getattr(self.app, 'cli_preset', 'gemini')
+            if preset == "claude":
+                return '\nTest your Claude CLI with: [bold]claude -p "say hi"[/bold]'
+            elif preset == "gemini":
+                return '\nTest your Gemini CLI with: [bold]gemini "say hi"[/bold]'
+            else:
+                return "\nCheck that your custom CLI tool is installed and working."
+        return ""
+
+    def _stop_timers(self) -> None:
+        """Stop the cycling status and animation timers."""
+        if self._status_timer:
+            self._status_timer.stop()
+            self._status_timer = None
+        if self._animation_timer:
+            self._animation_timer.stop()
+            self._animation_timer = None
 
     def on_worker_state_changed(self, event: Worker.StateChanged) -> None:
         """Called when the worker state changes."""
         if event.worker.name == "WorldGenerator":
+            if event.worker.state in (WorkerState.SUCCESS, WorkerState.ERROR):
+                self._stop_timers()
             if event.worker.state == WorkerState.SUCCESS:
                 self.world_data = event.worker.result
                 if self.world_data:
-                    if self.world_data.get("used_fallback"):
+                    if self.world_data.get("error"):
+                        error_detail = self.world_data["error"]
+                        logging.error(f"World generation returned error: {error_detail}")
+                        cli_hint = self._get_cli_test_hint()
+                        self.query_one("#status_message").update(
+                            f"[bold red]Error: {error_detail}[/bold red]\n"
+                            f"Check Settings > Generation Mode and ensure your LLM is configured.{cli_hint}"
+                        )
+                        self.query_one(ProgressBar).display = False
+                        self.query_one("#world-building-container").mount(Button("Retry", id="retry", variant="error"))
+                        self._refresh_focusable_widgets()
+                    elif self.world_data.get("used_fallback"):
                         logging.warning("World generation used fallback data — LLM was unavailable.")
+                        cli_hint = self._get_cli_test_hint()
                         self.query_one("#status_message").update(
                             "[bold yellow]Warning: LLM unavailable — using default world data.[/bold yellow]\n"
-                            "Check Settings > Generation Mode and ensure your LLM is configured.\n"
+                            f"Check Settings > Generation Mode and ensure your LLM is configured.{cli_hint}\n"
                             "Press Retry to try again, or Continue to play with defaults."
                         )
                         self.query_one(ProgressBar).display = False
@@ -101,20 +141,59 @@ class WorldBuildingScreen(Screen):
                         self.query_one("#world-building-container").mount(
                             Button("Retry", id="retry", variant="error")
                         )
+                        self._refresh_focusable_widgets()
                     else:
                         logging.info("World generation successful. Starting game.")
                         self.start_game()
                 else:
                     logging.error("World generation failed: No data returned.")
-                    self.query_one("#status_message").update("[bold red]Error: LLM returned no data.[/bold red]")
+                    cli_hint = self._get_cli_test_hint()
+                    self.query_one("#status_message").update(
+                        "[bold red]Error: LLM returned no data.[/bold red]\n"
+                        f"Check Settings > Generation Mode and ensure your LLM is configured.{cli_hint}"
+                    )
                     self.query_one(ProgressBar).display = False
                     self.query_one("#world-building-container").mount(Button("Retry", id="retry", variant="error"))
+                    self._refresh_focusable_widgets()
             elif event.worker.state == WorkerState.ERROR:
                 error_message = str(event.worker.error)
                 logging.error(f"World generator worker failed: {error_message}")
-                self.query_one("#status_message").update(f"[bold red]Error: {error_message}[/bold red]")
+                cli_hint = self._get_cli_test_hint()
+                self.query_one("#status_message").update(
+                    f"[bold red]Error: {error_message}[/bold red]\n"
+                    f"Check Settings > Generation Mode and ensure your LLM is configured.{cli_hint}"
+                )
                 self.query_one(ProgressBar).display = False
                 self.query_one("#world-building-container").mount(Button("Retry", id="retry", variant="error"))
+                self._refresh_focusable_widgets()
+
+    def _refresh_focusable_widgets(self) -> None:
+        """Rebuild the focusable widget list after buttons change."""
+        self.focusable_widgets = list(self.query("Button"))
+        self.current_focus_index = 0
+        self._update_focus()
+
+    def _update_focus(self) -> None:
+        """Update which widget has focus."""
+        if self.focusable_widgets:
+            self.focusable_widgets[self.current_focus_index].focus()
+
+    def action_focus_previous(self) -> None:
+        """Focus the previous widget."""
+        if self.focusable_widgets:
+            self.current_focus_index = (self.current_focus_index - 1 + len(self.focusable_widgets)) % len(self.focusable_widgets)
+            self._update_focus()
+
+    def action_focus_next(self) -> None:
+        """Focus the next widget."""
+        if self.focusable_widgets:
+            self.current_focus_index = (self.current_focus_index + 1) % len(self.focusable_widgets)
+            self._update_focus()
+
+    def action_select_button(self) -> None:
+        """Press the focused button."""
+        if self.focusable_widgets:
+            self.focusable_widgets[self.current_focus_index].press()
 
     def on_stage_update(self, event: StageUpdate) -> None:
         """Handle stage update messages from the worker."""
@@ -128,6 +207,7 @@ class WorldBuildingScreen(Screen):
             # Remove all dynamic buttons
             for btn in self.query("#retry, #continue_fallback"):
                 btn.remove()
+            self.focusable_widgets = []
             self.query_one(ProgressBar).display = True
             self.query_one("#status_message").update(self.status_messages[0])
             self.on_mount()

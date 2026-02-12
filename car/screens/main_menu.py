@@ -37,7 +37,7 @@ class MainMenuScreen(Screen):
                 yield Button("Quit", id="quit", variant="error")
             with Vertical(id="model-loader-container"):
                 yield Static("Loading LLM Model...", id="model_status")
-                yield ProgressBar(id="model_progress", show_eta=False)
+                yield ProgressBar(id="model_progress", show_eta=False, show_percentage=False)
         yield Footer()
 
     def on_mount(self) -> None:

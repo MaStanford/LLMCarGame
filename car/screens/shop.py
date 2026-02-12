@@ -2,7 +2,7 @@ import math
 from functools import partial
 from textual.screen import Screen
 from textual.widgets import Header, Footer, Static, Button
-from textual.containers import Grid, Vertical
+from textual.containers import Grid, Vertical, Horizontal
 from textual.binding import Binding
 from textual.worker import Worker, WorkerState
 
@@ -32,6 +32,7 @@ class ShopScreen(Screen):
         self.shop_inventory = []
         self.focused_list = "shop"  # "shop" or "player"
         self.sell_confirmation_item = None
+        self.no_cash_dialog = "Not enough cash!"
 
     def _notify(self, message: str):
         """Post a notification to the WorldScreen."""
@@ -72,7 +73,11 @@ class ShopScreen(Screen):
         """Handle completed dialog worker."""
         if event.worker.name == "DialogGenerator" and event.worker.state == WorkerState.SUCCESS:
             dialog = event.worker.result
-            self.query_one("#shop_dialog", Static).update(dialog)
+            if isinstance(dialog, dict):
+                self.query_one("#shop_dialog", Static).update(dialog.get("greeting", "..."))
+                self.no_cash_dialog = dialog.get("no_cash", "Not enough cash!")
+            else:
+                self.query_one("#shop_dialog", Static).update(str(dialog))
 
     def on_unmount(self) -> None:
         """Called when the screen is unmounted."""
@@ -107,9 +112,9 @@ class ShopScreen(Screen):
         shop_widget = self.query_one("#shop_inventory", ItemListWidget)
         shop_widget.items = self.shop_inventory
         
-        # Player Inventory
+        # Player Inventory (copy list so reactive detects the change)
         player_widget = self.query_one("#player_inventory", ItemListWidget)
-        player_widget.items = gs.player_inventory
+        player_widget.items = list(gs.player_inventory)
         
         # Stats
         self.query_one(MenuStatsHUD).update_stats(gs)
@@ -190,6 +195,11 @@ class ShopScreen(Screen):
             self._sell_item()
         self.update_action_button()
 
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle the action button being clicked."""
+        if event.button.id == "action_button":
+            self.action_select_item()
+
     def _buy_item(self):
         """Logic for purchasing an item."""
         gs = self.app.game_state
@@ -204,6 +214,7 @@ class ShopScreen(Screen):
             self._notify(f"Purchased {selected_item['name']}!")
             self.update_displays()
         else:
+            self.query_one("#shop_dialog", Static).update(self.no_cash_dialog)
             self._notify("Not enough cash!")
 
     def _sell_item(self):
@@ -245,6 +256,9 @@ class ShopScreen(Screen):
             # Bottom-Right: Player Info & Actions
             with Vertical():
                 yield ItemInfoWidget()
-                yield MenuStatsHUD()
-                yield Button("Buy/Sell", id="action_button", variant="primary")
+                with Horizontal(id="stats_action_row"):
+                    yield MenuStatsHUD()
+                    btn = Button("Buy", id="action_button", variant="primary")
+                    btn.can_focus = False
+                    yield btn
         yield Footer()

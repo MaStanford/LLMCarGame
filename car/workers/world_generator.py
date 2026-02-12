@@ -106,4 +106,4 @@ def generate_initial_world_worker(app: Any, new_game_settings: dict) -> Dict:
     except Exception as e:
         end_time = time.time()
         logging.error(f"Initial world generation worker failed after {end_time - start_time:.2f} seconds: {e}", exc_info=True)
-        return None
+        return {"error": str(e)}

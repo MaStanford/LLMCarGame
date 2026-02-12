@@ -190,15 +190,17 @@ class GenesisModuleApp(App):
         if abs(gs.car_speed) > SHOP_INTERACTION_SPEED_THRESHOLD:
             return
 
-        grid_x = round(gs.car_world_x / CITY_SPACING)
-        grid_y = round(gs.car_world_y / CITY_SPACING)
+        car_cx = gs.car_world_x + gs.player_car.width / 2
+        car_cy = gs.car_world_y + gs.player_car.height / 2
+        grid_x = round(car_cx / CITY_SPACING)
+        grid_y = round(car_cy / CITY_SPACING)
         buildings = get_buildings_in_city(grid_x, grid_y)
         for idx, building in enumerate(buildings):
             # Skip destroyed buildings
             if (grid_x, grid_y, idx) in gs.destroyed_buildings:
                 continue
-            if (building['x'] <= gs.car_world_x < building['x'] + building['w'] and
-                building['y'] <= gs.car_world_y < building['y'] + building['h']):
+            if (building['x'] <= car_cx < building['x'] + building['w'] and
+                building['y'] <= car_cy < building['y'] + building['h']):
                 
                 building_type = building.get("type")
                 if building_type in ["mechanic_shop", "gas_station", "weapon_shop"]:
