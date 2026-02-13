@@ -120,7 +120,7 @@ class FactionScreen(ModalScreen):
         hub_x, hub_y = faction_data["hub_city_coordinates"]
         grid_x = round(hub_x / CITY_SPACING)
         grid_y = round(hub_y / CITY_SPACING)
-        capital_name = get_city_name(grid_x, grid_y, gs.factions)
+        capital_name = get_city_name(grid_x, grid_y, gs.factions, gs.world_details)
         
         unit_names = []
         for unit_id in faction_data.get("units", []):

@@ -8,10 +8,11 @@ Faction Data: {{ factions }}
 ---
 
 # INSTRUCTIONS
-Based on the provided theme and faction data, generate a JSON object containing names for cities, roads, and landmarks.
+Based on the provided theme and faction data, generate a JSON object containing names for cities, roads, landmarks, and city name building blocks.
 - All names MUST be consistent with the world theme and the factions that control the surrounding territory.
 - The world map is a grid. The coordinates provided for cities and landmarks are on this grid.
-- Roads connect two cities. The "from" and "to" fields should be the generated names of the cities they connect.
+- Roads connect two cities. The "from" and "to" fields should be "grid_x,grid_y" coordinate strings matching the cities they connect.
+- The `city_name_parts` field provides themed building blocks for procedurally generating names for minor cities not listed in `cities`. Include 10-15 prefixes (first parts like "Iron", "Shadow", "Bone") and 8-12 suffixes (endings like "town", " Falls", "burg", " Crossing"). These MUST fit the theme. For example, a horror theme might use prefixes like "Dead", "Hollow", "Wither" and suffixes like "moor", " Crypts", " Depths".
 - Do NOT invent new factions or concepts. Use only the provided information.
 - Provide a single, clean JSON object matching the format below exactly.
 
@@ -24,8 +25,8 @@ Based on the provided theme and faction data, generate a JSON object containing 
   }},
   "roads": [
     {{
-      "from": "<Generated City Name>",
-      "to": "<Generated City Name>",
+      "from": "0,0",
+      "to": "100,100",
       "name": "<Generated Road Name>"
     }}
   ],
@@ -36,7 +37,11 @@ Based on the provided theme and faction data, generate a JSON object containing 
       "name": "<Short 1-2 word name>",
       "description": "<One sentence description of this landmark>"
     }}
-  ]
+  ],
+  "city_name_parts": {{
+    "prefixes": ["Themed", "Name", "Parts", "For", "Cities"],
+    "suffixes": ["town", "burg", " Falls", " Crossing", "vale"]
+  }}
 }}
 ```
 

@@ -29,6 +29,7 @@ _RUBBLE_STYLE = Style(color="rgb(100,100,90)")    # Grey for destroyed
 class MapView(Widget):
     """A widget to display the world map or city map."""
     can_focus = True
+    WORLD_MAP_SCALE = 80  # World units per screen character
 
     def __init__(self, game_state, world, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -82,8 +83,8 @@ class MapView(Widget):
             self.city_grid_x += dx
             self.city_grid_y += dy
         else:
-            self.camera_x += dx * 200
-            self.camera_y += dy * 200
+            self.camera_x += dx * 80
+            self.camera_y += dy * 80
             self.selected_node_index = -1
         self.refresh()
 
@@ -106,7 +107,7 @@ class MapView(Widget):
         for (gx_jitter, gy_jitter), (symbol, orig_gx, orig_gy) in self.map_data.items():
             city_world_x = orig_gx * CITY_SPACING
             city_world_y = orig_gy * CITY_SPACING
-            city_name = gs.world_details.get("cities", {}).get(f"{orig_gx},{orig_gy}", "Unknown City")
+            city_name = get_city_name(orig_gx, orig_gy, gs.factions, gs.world_details)
 
             # Build long description from faction data
             long_desc = city_name
@@ -235,7 +236,7 @@ class MapView(Widget):
             node = self.world_nodes[best_i]
             # Only move camera if the node is near the edge of the screen
             w, h = self.size
-            scale = 200
+            scale = self.WORLD_MAP_SCALE
             screen_x = (node["x"] - self.camera_x) / scale + w / 2
             screen_y = (node["y"] - self.camera_y) / scale + h / 2
             margin_x = w * 0.25
@@ -246,13 +247,29 @@ class MapView(Widget):
                 self.camera_y = node["y"]
             self.refresh()
 
+    def open_selected_city(self):
+        """Switch to city map mode for the currently selected node (if it's a city)."""
+        if self.selected_node_index >= 0 and self.selected_node_index < len(self.world_nodes):
+            node = self.world_nodes[self.selected_node_index]
+            if node["type"] == "city" and node["grid_x"] is not None:
+                self.city_grid_x = node["grid_x"]
+                self.city_grid_y = node["grid_y"]
+                self.city_mode = True
+                self.refresh()
+                return
+        # Fallback: open the nearest city to the camera
+        self.city_grid_x = round(self.camera_x / CITY_SPACING)
+        self.city_grid_y = round(self.camera_y / CITY_SPACING)
+        self.city_mode = True
+        self.refresh()
+
     def select_waypoint(self):
         """Sets a waypoint to the selected node or nearest city."""
         if self.city_mode:
             self.game_state.waypoint = {
                 "x": self.city_grid_x * CITY_SPACING,
                 "y": self.city_grid_y * CITY_SPACING,
-                "name": get_city_name(self.city_grid_x, self.city_grid_y, self.game_state.factions),
+                "name": get_city_name(self.city_grid_x, self.city_grid_y, self.game_state.factions, self.game_state.world_details),
             }
             return
 
@@ -286,11 +303,67 @@ class MapView(Widget):
                 "name": "Waypoint"
             }
 
+    def fast_travel(self):
+        """Attempt to fast travel to the selected city. Returns (success, message)."""
+        gs = self.game_state
+
+        # Determine target city
+        target_gx, target_gy = None, None
+        if self.city_mode:
+            target_gx = self.city_grid_x
+            target_gy = self.city_grid_y
+        elif self.selected_node_index >= 0 and self.selected_node_index < len(self.world_nodes):
+            node = self.world_nodes[self.selected_node_index]
+            if node["type"] == "city" and node["grid_x"] is not None:
+                target_gx = node["grid_x"]
+                target_gy = node["grid_y"]
+
+        if target_gx is None:
+            return False, "No city selected."
+
+        # Check if visited
+        if (target_gx, target_gy) not in gs.visited_cities:
+            return False, "You haven't visited this city yet."
+
+        # Check if already there
+        player_gx = round(gs.car_world_x / CITY_SPACING)
+        player_gy = round(gs.car_world_y / CITY_SPACING)
+        if target_gx == player_gx and target_gy == player_gy:
+            return False, "You're already here."
+
+        # Calculate gas cost based on distance
+        target_wx = target_gx * CITY_SPACING
+        target_wy = target_gy * CITY_SPACING
+        dist = math.sqrt((gs.car_world_x - target_wx)**2 + (gs.car_world_y - target_wy)**2)
+        gas_cost = dist * gs.gas_consumption_rate * 0.5  # Half the gas of driving there
+
+        if gs.current_gas < gas_cost:
+            return False, f"Not enough gas. Need {gas_cost:.0f}, have {gs.current_gas:.0f}."
+
+        # Perform fast travel
+        gs.current_gas -= gas_cost
+        gs.car_world_x = float(target_wx)
+        gs.car_world_y = float(target_wy)
+        gs.car_speed = 0
+        gs.car_velocity_x = 0
+        gs.car_velocity_y = 0
+        gs.pedal_position = 0.0
+        gs.player_car.x = gs.car_world_x
+        gs.player_car.y = gs.car_world_y
+
+        # Clear enemies and obstacles (they'd be from the old location)
+        gs.active_enemies.clear()
+        gs.active_obstacles.clear()
+        gs.active_fauna.clear()
+
+        city_name = get_city_name(target_gx, target_gy, gs.factions, gs.world_details)
+        return True, f"Fast traveled to {city_name}. Used {gas_cost:.0f} gas."
+
 
     def _generate_map_chunk(self):
         """Generates a large chunk of the map around the player."""
         gs = self.game_state
-        chunk_size = 100000 # World units for the chunk
+        chunk_size = 20000 # World units for the chunk
 
         center_grid_x = round(self.camera_x / CITY_SPACING)
         center_grid_y = round(self.camera_y / CITY_SPACING)
@@ -356,13 +429,13 @@ class MapView(Widget):
                 styles[sy][sx] = Style(color="rgb(60,60,60)", bgcolor="rgb(20,20,20)")
 
         # Draw title
-        city_name = get_city_name(gx, gy, gs.factions)
+        city_name = get_city_name(gx, gy, gs.factions, gs.world_details)
         title = f"[ {city_name} ({gx},{gy}) ]"
         title_x = max(0, (w - len(title)) // 2)
         self._draw_text(canvas, styles, title_x, 0, title, Style(color="white", bold=True))
 
         # Draw mode hint
-        hint = "M: World Map | Arrows: Scroll | C: Center | Enter: Waypoint"
+        hint = "Esc: World Map | Arrows: Scroll | C: Center | Enter: Set Waypoint | F: Fast Travel"
         hint_x = max(0, (w - len(hint)) // 2)
         self._draw_text(canvas, styles, hint_x, h - 1, hint, Style(color="rgb(100,100,100)"))
 
@@ -501,7 +574,7 @@ class MapView(Widget):
         styles = [[Style(bgcolor="black") for _ in range(w)] for _ in range(h)]
 
         gs = self.game_state
-        scale = 200
+        scale = self.WORLD_MAP_SCALE
         map_start_x = self.camera_x - (w / 2) * scale
         map_start_y = self.camera_y - (h / 2) * scale
 
@@ -570,19 +643,37 @@ class MapView(Widget):
             if 0 <= sy < h and 0 <= sx < w:
                 is_selected = (selected_node and selected_node["type"] == "city"
                                and selected_node["grid_x"] == orig_gx and selected_node["grid_y"] == orig_gy)
-                city_name = gs.world_details.get("cities", {}).get(f"{orig_gx},{orig_gy}", "Unknown City")
+                is_visited = (orig_gx, orig_gy) in gs.visited_cities
+                city_name = get_city_name(orig_gx, orig_gy, gs.factions, gs.world_details)
                 if is_selected:
                     canvas[sy][sx] = symbol
                     styles[sy][sx] = Style(color="white", bold=True, bgcolor="cyan")
                     self._draw_text(canvas, styles, sx + 2, sy, city_name,
                                     Style(color="white", bold=True))
+                elif is_visited:
+                    canvas[sy][sx] = symbol
+                    styles[sy][sx] = Style(color="green", bold=True)
+                    self._draw_text(canvas, styles, sx + 2, sy, city_name,
+                                    Style(color="green"))
                 else:
                     canvas[sy][sx] = symbol
-                    styles[sy][sx] = Style(color="cyan", bold=True)
+                    styles[sy][sx] = Style(color="rgb(100,100,100)")
                     self._draw_text(canvas, styles, sx + 2, sy, city_name,
-                                    Style(color="cyan"))
+                                    Style(color="rgb(100,100,100)"))
 
-        # Draw Quest Objective Marker
+        # Draw Waypoint Marker
+        quest_screen_pos = None
+        if gs.waypoint:
+            wp_sx = int((gs.waypoint["x"] - map_start_x) / scale)
+            wp_sy = int((gs.waypoint["y"] - map_start_y) / scale)
+            if 0 <= wp_sy < h - 1 and 0 <= wp_sx < w:
+                wp_style = Style(color="rgb(255,100,255)", bold=True)
+                canvas[wp_sy][wp_sx] = "⊕"
+                styles[wp_sy][wp_sx] = wp_style
+                wp_name = gs.waypoint.get("name", "Waypoint")
+                self._draw_text(canvas, styles, wp_sx + 2, wp_sy, wp_name, wp_style)
+
+        # Draw Quest Objective Marker (on top of waypoint if overlapping)
         if gs.current_quest:
             from ..logic.quest_logic import get_quest_target_location
             qt_x, qt_y, qt_label = get_quest_target_location(gs.current_quest, gs)
@@ -601,15 +692,6 @@ class MapView(Widget):
                     if qt_label:
                         self._draw_text(canvas, styles, qsx + 2, qsy, qt_label, marker_style)
 
-        # Draw Waypoint Marker
-        if gs.waypoint:
-            wp_sx = int((gs.waypoint["x"] - map_start_x) / scale)
-            wp_sy = int((gs.waypoint["y"] - map_start_y) / scale)
-            if 0 <= wp_sy < h - 1 and 0 <= wp_sx < w:
-                wp_style = Style(color="rgb(255,100,255)", bold=True)
-                canvas[wp_sy][wp_sx] = "⊕"
-                styles[wp_sy][wp_sx] = wp_style
-
         # Draw Player
         player_x = int((self.game_state.car_world_x - map_start_x) / scale)
         player_y = int((self.game_state.car_world_y - map_start_y) / scale)
@@ -625,7 +707,14 @@ class MapView(Widget):
                              (gs.car_world_y - selected_node["y"])**2)
             dist_str = f"{dist:.0f}m" if dist < 10000 else f"{dist/1000:.1f}km"
             node_type_label = selected_node["type"].upper()
-            info = f" [{node_type_label}] {selected_node['long_name']}  --  {dist_str} away "
+            # Show visited/fast travel status for cities
+            ft_tag = ""
+            if selected_node["type"] == "city" and selected_node["grid_x"] is not None:
+                if (selected_node["grid_x"], selected_node["grid_y"]) in gs.visited_cities:
+                    ft_tag = " [F: Fast Travel]"
+                else:
+                    ft_tag = " (Not Visited)"
+            info = f" [{node_type_label}] {selected_node['long_name']}  --  {dist_str}{ft_tag} "
             idx_str = f" {self.selected_node_index + 1}/{len(self.world_nodes)} "
             # Draw info bar background
             for sx in range(w):
@@ -636,7 +725,7 @@ class MapView(Widget):
             self._draw_text(canvas, styles, w - len(idx_str), h - 1, idx_str,
                             Style(color="rgb(150,150,150)", bgcolor="rgb(40,40,40)"))
         else:
-            hint = "WASD: Navigate | Arrows: Scroll | M: City Map | Enter: Waypoint"
+            hint = "WASD: Navigate | Arrows: Scroll | M: City Map | Enter: View City | F: Fast Travel"
             hint_x = max(0, (w - len(hint)) // 2)
             self._draw_text(canvas, styles, hint_x, h - 1, hint, Style(color="rgb(100,100,100)"))
 

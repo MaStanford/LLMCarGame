@@ -106,9 +106,17 @@ WORLD_DETAILS_SCHEMA = {
                     "description": {"type": "string"}
                 }
             }
+        },
+        "city_name_parts": {
+            "type": "object",
+            "properties": {
+                "prefixes": {"type": "array", "items": {"type": "string"}},
+                "suffixes": {"type": "array", "items": {"type": "string"}}
+            },
+            "required": ["prefixes", "suffixes"]
         }
     },
-    "required": ["cities", "roads", "landmarks"]
+    "required": ["cities", "roads", "landmarks", "city_name_parts"]
 }
 
 ITEM_SCHEMA = {

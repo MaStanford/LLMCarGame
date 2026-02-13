@@ -131,9 +131,8 @@ def _spawn_retaliation_wave(game_state, faction_id):
     """Spawn a wave of enemies near the player as retaliation."""
     import math
     from ..logic.entity_loader import ENEMY_VEHICLES
-    from ..logic.data_loader import FACTION_DATA
 
-    faction_units = FACTION_DATA.get(faction_id, {}).get("units", [])
+    faction_units = game_state.factions.get(faction_id, {}).get("units", [])
     possible_vehicles = [
         e for e in ENEMY_VEHICLES
         if any(e.__name__.lower() == unit.lower() for unit in faction_units)

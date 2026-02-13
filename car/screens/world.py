@@ -26,6 +26,7 @@ from .pause_menu import PauseScreen
 from .map import MapScreen
 from .faction import FactionScreen
 from .quest_detail import QuestDetailScreen
+from .story import StoryScreen
 
 from textual.events import Key
 from textual.binding import Binding
@@ -47,6 +48,7 @@ ONE_SHOT_ACTIONS = {
     "m": "show_map",
     "f": "show_factions",
     "q": "show_quests",
+    "j": "show_story",
     "enter": "show_notifications",
     "grave_accent": "toggle_console",
     "tilde": "toggle_console",
@@ -69,21 +71,13 @@ class WorldScreen(Screen):
         Binding("left", "noop", "Aim Left", show=False),
         Binding("right", "noop", "Aim Right", show=False),
         Binding("space", "noop", "Fire", show=False),
-        Binding("1", "toggle_weapon(1)", "Wpn 1", show=False),
-        Binding("2", "toggle_weapon(2)", "Wpn 2", show=False),
-        Binding("3", "toggle_weapon(3)", "Wpn 3", show=False),
-        Binding("4", "toggle_weapon(4)", "Wpn 4", show=False),
-        Binding("5", "toggle_weapon(5)", "Wpn 5", show=False),
-        Binding("6", "toggle_weapon(6)", "Wpn 6", show=False),
-        Binding("7", "toggle_weapon(7)", "Wpn 7", show=False),
-        Binding("8", "toggle_weapon(8)", "Wpn 8", show=False),
-        Binding("9", "toggle_weapon(9)", "Wpn 9", show=False),
         Binding("escape", "toggle_pause", "Pause", show=True),
         Binding("tab", "toggle_inventory", "Inventory", show=False),
         Binding("i", "toggle_inventory", "Inventory", show=True),
         Binding("m", "show_map", "Map", show=True),
         Binding("f", "show_factions", "Factions", show=True),
         Binding("q", "show_quests", "Quests", show=True),
+        Binding("j", "show_story", "Journal", show=True),
         Binding("enter", "show_notifications", "Show Log", show=False),
         Binding("grave_accent", "toggle_console", "Console", show=False),
         Binding("tilde", "toggle_console", "~ Console", show=False),
@@ -114,6 +108,8 @@ class WorldScreen(Screen):
         # (e.g. Escape still held from closing the pause menu) are ignored.
         now = time.time()
         self._oneshot_active = {k: now for k in ONE_SHOT_ACTIONS}
+        for d in "123456789":
+            self._oneshot_active[d] = now
         self.app.game_state.pause_menu_open = False
         self.app.game_state.menu_open = False
         self.focus()
@@ -238,6 +234,10 @@ class WorldScreen(Screen):
         """Pushes the quest detail screen."""
         self.app.push_screen(QuestDetailScreen())
 
+    def action_show_story(self) -> None:
+        """Pushes the story journal screen."""
+        self.app.push_screen(StoryScreen())
+
     def action_show_notifications(self) -> None:
         """Re-show recent notification history."""
         self.query_one("#notifications", Notifications).show_history()
@@ -338,11 +338,10 @@ class WorldScreen(Screen):
         location.y = int(gs.car_world_y)
         grid_x = round(gs.car_world_x / CITY_SPACING)
         grid_y = round(gs.car_world_y / CITY_SPACING)
-        location.city_name = get_city_name(grid_x, grid_y, gs.factions)
+        location.city_name = get_city_name(grid_x, grid_y, gs.factions, gs.world_details)
 
         compass = self.query_one("#compass_hud", CompassHUD)
-        compass.target_angle = gs.compass_info["target_angle"]
-        compass.player_angle = gs.compass_info["player_angle"]
+        compass.absolute_bearing = gs.compass_info["absolute_bearing"]
         compass.target_name = gs.compass_info["target_name"]
 
         # Update Entity Modal (always visible)

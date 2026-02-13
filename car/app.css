@@ -536,6 +536,41 @@ QuestBriefingScreen {
     align: center middle;
 }
 
+QuestDetailScreen {
+    align: center middle;
+}
+
+#quest-detail-container {
+    width: 70;
+    height: auto;
+    max-height: 24;
+    border: heavy white;
+    background: $panel;
+    padding: 1;
+}
+
+#quest_description {
+    margin-bottom: 1;
+}
+
+#quest_objectives {
+    margin-bottom: 1;
+}
+
+#quest_rewards {
+    margin-bottom: 1;
+}
+
+#quest-buttons {
+    height: auto;
+    width: 100%;
+}
+
+#quest-buttons Button {
+    width: 1fr;
+    margin: 0 1;
+}
+
 #quest-briefing-dialog {
     width: 70;
     height: 22;
@@ -722,4 +757,44 @@ SettingsScreen Button {
 
 SettingsScreen #back {
     margin-top: 2;
+}
+
+StoryScreen {
+    align: center middle;
+}
+
+#story-scroll {
+    width: 80%;
+    max-width: 100;
+    height: 100%;
+    background: $panel;
+    border: heavy white;
+    padding: 1 2;
+}
+
+#story_title {
+    text-align: center;
+    text-style: bold;
+    margin-bottom: 1;
+}
+
+#story_theme {
+    margin-bottom: 1;
+    color: $text-muted;
+}
+
+#story_intro {
+    margin-bottom: 1;
+}
+
+#story_chronicle {
+    margin-bottom: 1;
+}
+
+#story_current {
+    margin-bottom: 1;
+}
+
+#story_world_state {
+    margin-bottom: 1;
 }

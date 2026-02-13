@@ -38,10 +38,9 @@ def _get_spawn_coordinates(game_state):
 
 def spawn_enemy(game_state, world):
     """Spawns a new enemy."""
-    # --- Prevent spawning in the neutral hub city ---
-    grid_x = round(game_state.car_world_x / CITY_SPACING)
-    grid_y = round(game_state.car_world_y / CITY_SPACING)
-    if grid_x == 0 and grid_y == 0:
+    # --- Prevent spawning in the neutral hub city (radius-based) ---
+    dist_to_origin = math.sqrt(game_state.car_world_x**2 + game_state.car_world_y**2)
+    if dist_to_origin < CITY_SIZE * 1.5:
         return
 
     max_enemies = game_state.difficulty_mods.get("max_enemies", 5)
@@ -79,13 +78,16 @@ def spawn_enemy(game_state, world):
 
     # Decide whether to spawn a vehicle or a character (e.g., 70/30 split)
     if random.random() < 0.7:
-        # Spawn a faction-specific vehicle
-        faction_units = FACTION_DATA[current_faction_id]["units"]
+        # Try faction-specific vehicle first, fall back to random enemy vehicle
+        faction_units = game_state.factions.get(current_faction_id, {}).get("units", [])
         possible_vehicles = [unit for unit in faction_units if any(e.__name__.lower() == unit.lower() for e in ENEMY_VEHICLES)]
-        if not possible_vehicles:
-            return
-        enemy_name = random.choice(possible_vehicles)
-        enemy_class = next((e for e in ENEMY_VEHICLES if e.__name__.lower() == enemy_name.lower()), None)
+        if possible_vehicles:
+            enemy_name = random.choice(possible_vehicles)
+            enemy_class = next((e for e in ENEMY_VEHICLES if e.__name__.lower() == enemy_name.lower()), None)
+        else:
+            # Faction units don't match any known vehicle classes — spawn a random enemy vehicle
+            enemy_class = random.choice(ENEMY_VEHICLES)
+            enemy_name = enemy_class.__name__
     else:
         # Spawn a random character (neutral)
         enemy_class = random.choice(ENEMY_CHARACTERS)

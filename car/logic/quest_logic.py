@@ -227,6 +227,10 @@ def update_quests(game_state, audio_manager, app):
                 notifications.append(f"Reputation with {game_state.factions[giver_faction_id]['name']} decreased.")
             
             notifications.append(f"Quest Failed: {game_state.current_quest.name}")
+            game_state.story_events.append({
+                "text": f"Failed '{game_state.current_quest.name}'. Reputation suffered.",
+                "event_type": "quest_failed",
+            })
             game_state.current_quest = None
             audio_manager.stop_music()
             audio_manager.play_music("car/sounds/world.mid")
@@ -337,6 +341,13 @@ def complete_quest(game_state, app):
     rewards = quest.rewards
     game_state.gain_xp(rewards.get("xp", 0))
     game_state.player_cash += rewards.get("cash", 0)
+
+    # Log to story journal
+    giver_name = game_state.factions.get(quest.quest_giver_faction, {}).get("name", "Unknown") if quest.quest_giver_faction else "an unknown patron"
+    game_state.story_events.append({
+        "text": f"Completed '{quest.name}' for the {giver_name}. Earned {rewards.get('xp', 0)} XP and ${rewards.get('cash', 0)}.",
+        "event_type": "quest_complete",
+    })
     
     # Update reputation
     giver_faction_id = quest.quest_giver_faction

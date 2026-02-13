@@ -37,8 +37,14 @@ def get_city_faction(x, y, faction_data):
             closest_faction = faction_id
     return closest_faction
 
-def get_city_name(grid_x, grid_y, faction_data):
+def get_city_name(grid_x, grid_y, faction_data, world_details=None):
     """Generates a consistent name for a city at the given grid coordinates."""
+    # Check if the LLM gave this city a specific name
+    if world_details and "cities" in world_details:
+        coords_key = f"{grid_x},{grid_y}"
+        if coords_key in world_details["cities"]:
+            return world_details["cities"][coords_key]
+
     # Check if it's a hub city
     for faction_id, data in faction_data.items():
         hub_coords = data.get("hub_city_coordinates")
@@ -48,11 +54,20 @@ def get_city_name(grid_x, grid_y, faction_data):
             if hub_x == grid_x * CITY_SPACING and hub_y == grid_y * CITY_SPACING:
                  return f"{data['name']} Hub"
 
-    # Procedural name for non-hub cities
+    # Procedural name using themed parts if available
     local_random = random.Random(f"city_name_{grid_x}_{grid_y}")
+
+    if world_details and "city_name_parts" in world_details:
+        parts = world_details["city_name_parts"]
+        prefixes = parts.get("prefixes", [])
+        suffixes = parts.get("suffixes", [])
+        if prefixes and suffixes:
+            return f"{local_random.choice(prefixes)}{local_random.choice(suffixes)}"
+
+    # Hardcoded fallback
     prefixes = ["New", "Old", "Fort", "Mount", "Lake", "Iron", "Rust", "Dust", "Scrap"]
     suffixes = ["ton", "ville", "burg", "haven", " City", " Outpost", " Junction"]
-    
+
     return f"{local_random.choice(prefixes)}{local_random.choice(suffixes)}"
 
 def does_city_exist_at(grid_x, grid_y, seed, factions):
@@ -67,7 +82,7 @@ def does_city_exist_at(grid_x, grid_y, seed, factions):
     
     # Adjust probability based on distance from the center (0,0)
     distance = math.sqrt(grid_x**2 + grid_y**2)
-    probability = max(0.1, 0.8 - distance * 0.02) # Decrease probability farther out
+    probability = max(0.05, 0.35 - distance * 0.02) # Fewer cities, sparser farther out
     
     return local_random.random() < probability
 

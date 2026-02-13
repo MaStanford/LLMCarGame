@@ -145,6 +145,12 @@ class GameState:
         self.combat_enemy = None
         self.quest_cache = {}
 
+        # --- Story / Journal ---
+        self.story_events = []  # List of {"text": str, "event_type": str}
+
+        # --- Fast Travel ---
+        self.visited_cities = {(0, 0)}  # Set of (grid_x, grid_y) tuples; start city is always visited
+
         # --- Building Destruction State ---
         self.damaged_buildings = {}      # {(gx,gy,idx): current_hp}
         self.destroyed_buildings = set() # {(gx,gy,idx)}
@@ -172,7 +178,7 @@ class GameState:
         self.notifications = []
         self.closest_entity_info = None
         self.tracked_entity = None
-        self.compass_info = {"target_angle": 0, "player_angle": 0, "target_name": ""}
+        self.compass_info = {"absolute_bearing": 0, "target_name": ""}
 
         self.world_triggers = []
         self.triggered_triggers = set()
@@ -314,6 +320,8 @@ class GameState:
             "activated_triggers": list(self.activated_triggers),
             "current_quest": self.current_quest.to_dict() if self.current_quest else None,
             "karma": self.karma,
+            "story_events": self.story_events,
+            "visited_cities": [list(c) for c in self.visited_cities],
 
             # Building Destruction
             "damaged_buildings": {f"{k[0]},{k[1]},{k[2]}": v for k, v in self.damaged_buildings.items()},
@@ -392,6 +400,8 @@ class GameState:
         gs.defeated_bosses = set(data["defeated_bosses"]) # Convert list back to set
         gs.activated_triggers = set(data.get("activated_triggers", []))
         gs.karma = data.get("karma", 0)
+        gs.story_events = data.get("story_events", [])
+        gs.visited_cities = {tuple(c) for c in data.get("visited_cities", [(0, 0)])}
 
         # --- Restore Building Destruction State ---
         raw_damaged = data.get("damaged_buildings", {})

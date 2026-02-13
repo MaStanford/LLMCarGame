@@ -7,6 +7,7 @@ from .main_menu import MainMenuScreen
 from .quest_detail import QuestDetailScreen
 from .inventory import InventoryScreen
 from .faction import FactionScreen
+from .story import StoryScreen
 from .save_game import SaveGameScreen
 import time
 
@@ -34,6 +35,7 @@ class PauseScreen(ModalScreen):
         yield Button("Inventory", id="inventory", variant="default")
         yield Button("Quests", id="quests", variant="default")
         yield Button("Factions", id="factions", variant="default")
+        yield Button("Journal", id="story", variant="default")
         yield Button("Save Game", id="save_game", variant="default")
         yield Button("Main Menu", id="main_menu", variant="default")
         yield Button("Quit", id="quit", variant="error")
@@ -80,6 +82,8 @@ class PauseScreen(ModalScreen):
             self.app.push_screen(QuestDetailScreen())
         elif event.button.id == "factions":
             self.app.push_screen(FactionScreen())
+        elif event.button.id == "story":
+            self.app.push_screen(StoryScreen())
         elif event.button.id == "save_game":
             self.app.push_screen(SaveGameScreen())
         elif event.button.id == "main_menu":

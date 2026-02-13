@@ -22,7 +22,7 @@ from .widgets.entity_modal import EntityModal
 from .widgets.explosion import Explosion
 from .widgets.notifications import Notifications
 from .widgets.fps_counter import FPSCounter
-from .world.generation import get_buildings_in_city
+from .world.generation import get_buildings_in_city, does_city_exist_at
 from .data import factions as faction_data_module
 from .config import load_settings
 import random
@@ -158,6 +158,9 @@ class GenesisModuleApp(App):
             if (current_grid_x, current_grid_y) != self.last_grid_pos:
                 self.check_and_cache_quests_for_nearby_cities()
                 self.last_grid_pos = (current_grid_x, current_grid_y)
+                # Mark city as visited for fast travel
+                if does_city_exist_at(current_grid_x, current_grid_y, self.world.seed, gs.factions):
+                    gs.visited_cities.add((current_grid_x, current_grid_y))
             
             # Fallback timer to retry failed generations or catch edge cases
             if self.frame_count % 300 == 0: # Every 10 seconds (assuming 30 FPS)
@@ -289,14 +292,16 @@ class GenesisModuleApp(App):
             target_x, target_y, target_name = get_quest_target_location(gs.current_quest, gs)
 
         if target_x is not None:
+            # atan2 gives angle in screen coords: 0=east, pi/2=south, -pi/2=north
             angle_to_target = math.atan2(target_y - gs.car_world_y, target_x - gs.car_world_x)
+            # Convert to compass degrees: 0=north, 90=east, 180=south, 270=west
+            compass_deg = (math.degrees(angle_to_target) + 90) % 360
             gs.compass_info = {
-                "target_angle": math.degrees(angle_to_target),
-                "player_angle": gs.car_angle,
+                "absolute_bearing": compass_deg,
                 "target_name": target_name
             }
         else:
-            gs.compass_info = {"target_angle": 0, "player_angle": 0, "target_name": ""}
+            gs.compass_info = {"absolute_bearing": 0, "target_name": ""}
 
     def on_worker_state_changed(self, event: "Worker.StateChanged") -> None:
         """Handles completed quest generation workers."""

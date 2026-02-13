@@ -126,15 +126,19 @@ class ShopScreen(Screen):
 
     def update_focus(self) -> None:
         """Update the visual focus indicator."""
-        shop_widget = self.query_one("#shop_inventory", ItemListWidget)
-        player_widget = self.query_one("#player_inventory", ItemListWidget)
-        
+        shop_pane = self.query_one("#shop_inventory_pane", Vertical)
+        player_pane = self.query_one("#player_inventory_pane", Vertical)
+
         if self.focused_list == "shop":
-            shop_widget.border_title = "Shop (Selected)"
-            player_widget.border_title = "Your Inventory"
+            shop_pane.border_title = "Shop (Selected)"
+            player_pane.border_title = "Your Inventory"
+            shop_pane.styles.border = ("heavy", "yellow")
+            player_pane.styles.border = ("heavy", "white")
         else:
-            shop_widget.border_title = "Shop"
-            player_widget.border_title = "Your Inventory (Selected)"
+            shop_pane.border_title = "Shop"
+            player_pane.border_title = "Your Inventory (Selected)"
+            shop_pane.styles.border = ("heavy", "white")
+            player_pane.styles.border = ("heavy", "yellow")
 
     def update_action_button(self) -> None:
         """Update the main action button's label and state."""

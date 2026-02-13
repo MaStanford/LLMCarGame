@@ -14,4 +14,8 @@ def check_triggers(app, game_state):
                 game_state.triggered_triggers.add(trigger_id)
                 if trigger["type"] == "dialog":
                     app.screen.query_one("#notifications", Notifications).add_notification(trigger["data"])
+                    game_state.story_events.append({
+                        "text": trigger["data"],
+                        "event_type": "discovery",
+                    })
                 # TODO: Implement other trigger types (combat, quest)

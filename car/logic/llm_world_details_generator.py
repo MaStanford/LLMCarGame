@@ -20,6 +20,12 @@ def generate_world_details_from_llm(app: Any, theme: Dict, factions: Dict) -> Di
     response = generate_json(app, prompt, json_schema=WORLD_DETAILS_SCHEMA, max_tokens=1024, temperature=0.7)
 
     if response is not None:
+        # Ensure city_name_parts exists even if LLM omitted it
+        if "city_name_parts" not in response:
+            response["city_name_parts"] = {
+                "prefixes": ["New", "Old", "Fort", "Iron", "Rust", "Dust", "Scrap", "Ash", "Storm", "Red"],
+                "suffixes": ["ton", "ville", "burg", "haven", " City", " Outpost", " Junction", " Crossing"]
+            }
         return response
 
     # Fallback: build basic city names from faction data
@@ -32,5 +38,9 @@ def generate_world_details_from_llm(app: Any, theme: Dict, factions: Dict) -> Di
     return {
         "cities": cities,
         "roads": [],
-        "landmarks": []
+        "landmarks": [],
+        "city_name_parts": {
+            "prefixes": ["New", "Old", "Fort", "Iron", "Rust", "Dust", "Scrap", "Ash", "Storm", "Red"],
+            "suffixes": ["ton", "ville", "burg", "haven", " City", " Outpost", " Junction", " Crossing"]
+        }
     }
