@@ -14,7 +14,7 @@ building_cache = {}
 def _get_neutral_faction_id(faction_data):
     """Finds the ID of the neutral faction."""
     for faction_id, data in faction_data.items():
-        if data.get("hub_city_coordinates") == [0, 0]:
+        if data.get("hub_city_coordinates") == (0, 0):
             return faction_id
     return None # Fallback
 
@@ -50,8 +50,7 @@ def get_city_name(grid_x, grid_y, faction_data, world_details=None):
         hub_coords = data.get("hub_city_coordinates")
         if hub_coords:
             hub_x, hub_y = hub_coords
-            # Coordinates in faction_data are world coords, compare with grid coords * spacing
-            if hub_x == grid_x * CITY_SPACING and hub_y == grid_y * CITY_SPACING:
+            if hub_x == grid_x and hub_y == grid_y:
                  return f"{data['name']} Hub"
 
     # Procedural name using themed parts if available
@@ -74,7 +73,7 @@ def does_city_exist_at(grid_x, grid_y, seed, factions):
     """Deterministically checks if a city exists at a given grid coordinate."""
     # Hub cities always exist
     for faction in factions.values():
-        if faction.get("hub_city_coordinates") == [grid_x, grid_y]:
+        if faction.get("hub_city_coordinates") == (grid_x, grid_y):
             return True
         
     # Use a deterministic random number generator based on the world seed and coordinates

@@ -10,6 +10,21 @@ TEMP_WORLD_DETAILS_PATH = "temp/world_details.json"
 TEMP_TRIGGERS_PATH = "temp/triggers.json"
 
 
+def _normalize_hub_coordinates(faction_data):
+    """Convert hub_city_coordinates to grid-space tuples.
+    Handles both world coords (large values from LLM) and grid coords (small values from fallback).
+    """
+    from ..data.game_constants import CITY_SPACING
+    for fid, fdata in faction_data.items():
+        coords = fdata.get("hub_city_coordinates")
+        if coords:
+            x, y = coords
+            if abs(x) > 50 or abs(y) > 50:
+                x = round(x / CITY_SPACING)
+                y = round(y / CITY_SPACING)
+            fdata["hub_city_coordinates"] = (x, y)
+
+
 def load_faction_data():
     """
     Dynamically loads the FACTION_DATA dictionary.
@@ -58,5 +73,6 @@ def load_triggers_data():
 
 # Load the data once on startup
 FACTION_DATA = load_faction_data()
+_normalize_hub_coordinates(FACTION_DATA)
 WORLD_DETAILS_DATA = load_world_details_data()
 TRIGGERS_DATA = load_triggers_data()

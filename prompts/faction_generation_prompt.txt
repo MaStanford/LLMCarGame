@@ -8,9 +8,9 @@ You are a JSON data generator. Your only task is to create a valid JSON object b
 # RULES
 1.  The JSON object must contain exactly 5 top-level keys.
 2.  Each top-level key must be a unique, snake_case string representing a faction's ID.
-3.  The `hub_city_coordinates` must be **WORLD COORDINATES**. Each value (x and y) must be a multiple of 1000, between -5000 and 5000 (inclusive).
+3.  The `hub_city_coordinates` must be **GRID COORDINATES**. Each value (x and y) must be an integer between -6 and 6 (inclusive). No two factions may share the same coordinates.
 4.  Exactly ONE of the 5 factions must have its `hub_city_coordinates` set to `[0, 0]`. This is the neutral faction.
-5.  The other four factions should be spaced out and not directly adjacent to each other or the center.
+5.  The other four factions should be spaced out across different quadrants of the grid.
 6.  The `relationships` dictionary for each faction must ONLY contain keys that are present as top-level faction IDs.
 7.  The `faction_boss` `vehicle` MUST be chosen from the `Enemy Vehicles` list in the **Available Entities** section of the game context.
 8.  The `units` list MUST contain 2-4 vehicle names chosen ONLY from the `Enemy Vehicles` list in the **Available Entities** section of the game context.
@@ -23,7 +23,7 @@ You are a JSON data generator. Your only task is to create a valid JSON object b
   "scrap_vultures": {
     "name": "Scrap Vultures",
     "description": "Vicious scavengers who adorn their vehicles with the bones of their enemies.",
-    "hub_city_coordinates": [-4000, 3000],
+    "hub_city_coordinates": [-5, 4],
     "control": 50,
     "relationships": { "neon_runners": "Hostile", "aether_syndicate": "Hostile", "iron_pioneers": "Neutral", "the_junction": "Neutral" },
     "units": ["RaiderBuggy", "Technical", "RustySedan"],
@@ -32,7 +32,7 @@ You are a JSON data generator. Your only task is to create a valid JSON object b
   "neon_runners": {
     "name": "Neon Runners",
     "description": "Speed-obsessed racers who value style and velocity above all else.",
-    "hub_city_coordinates": [3000, -5000],
+    "hub_city_coordinates": [4, -6],
     "control": 50,
     "relationships": { "scrap_vultures": "Hostile", "aether_syndicate": "Hostile", "iron_pioneers": "Allied", "the_junction": "Neutral" },
     "units": ["SportsCar", "Hotrod", "MuscleCar"],
@@ -41,7 +41,7 @@ You are a JSON data generator. Your only task is to create a valid JSON object b
   "aether_syndicate": {
     "name": "Aether Syndicate",
     "description": "A shadowy corporation that deals in pre-apocalypse technology and information.",
-    "hub_city_coordinates": [5000, 4000],
+    "hub_city_coordinates": [6, 5],
     "control": 50,
     "relationships": { "scrap_vultures": "Hostile", "neon_runners": "Hostile", "iron_pioneers": "Hostile", "the_junction": "Neutral" },
     "units": ["Sedan", "Hatchback", "Technical"],
@@ -50,7 +50,7 @@ You are a JSON data generator. Your only task is to create a valid JSON object b
   "iron_pioneers": {
     "name": "Iron Pioneers",
     "description": "Hardy survivalists and builders, focused on creating a new civilization from the ashes.",
-    "hub_city_coordinates": [-3000, -4000],
+    "hub_city_coordinates": [-4, -5],
     "control": 50,
     "relationships": { "scrap_vultures": "Neutral", "neon_runners": "Allied", "aether_syndicate": "Hostile", "the_junction": "Neutral" },
     "units": ["Truck", "Van", "PanelWagon"],

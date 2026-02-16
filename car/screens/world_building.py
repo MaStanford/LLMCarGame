@@ -224,13 +224,23 @@ class WorldBuildingScreen(Screen):
         import pprint
         import json
 
-        # Save the new faction data
+        # Save the new faction data (convert world coords to grid coords)
         if os.path.exists("temp"):
             shutil.rmtree("temp")
         os.makedirs("temp")
+        from ..data.game_constants import CITY_SPACING
+        factions_to_save = self.world_data["factions"]
+        for fdata in factions_to_save.values():
+            coords = fdata.get("hub_city_coordinates")
+            if coords:
+                x, y = coords
+                if abs(x) > 50 or abs(y) > 50:
+                    fdata["hub_city_coordinates"] = (round(x / CITY_SPACING), round(y / CITY_SPACING))
+                else:
+                    fdata["hub_city_coordinates"] = (x, y)
         with open("temp/factions.py", "w") as f:
             f.write("FACTION_DATA = ")
-            pprint.pprint(self.world_data["factions"], stream=f, indent=4)
+            pprint.pprint(factions_to_save, stream=f, indent=4)
             
         # Save the new world details
         with open("temp/world_details.json", "w") as f:

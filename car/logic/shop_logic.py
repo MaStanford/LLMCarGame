@@ -155,7 +155,7 @@ def get_shop_inventory(shop_type, game_state):
     price_modifier = 1 + ((50 - faction_control) / 50) * price_volatility
 
     # The neutral hub always has stable prices
-    if game_state.factions[local_faction_id].get("hub_city_coordinates") == [0, 0]:
+    if game_state.factions[local_faction_id].get("hub_city_coordinates") == (0, 0):
         price_modifier = 1.0
 
     # Determine which rarity tiers the player has unlocked via reputation

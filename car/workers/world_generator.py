@@ -59,7 +59,7 @@ def generate_initial_world_worker(app: Any, new_game_settings: dict) -> Dict:
         if not factions or (isinstance(factions, dict) and "error" in factions):
             raise ValueError(f"Faction generation failed: {factions.get('details', 'No details') if isinstance(factions, dict) else 'No data'}")
 
-        neutral_faction_id = next((fid for fid, data in factions.items() if data.get("hub_city_coordinates") == [0, 0]), None)
+        neutral_faction_id = next((fid for fid, data in factions.items() if data.get("hub_city_coordinates") in ([0, 0], (0, 0))), None)
         if not neutral_faction_id:
             raise ValueError("Could not find a neutral faction at (0,0) in the generated data.")
         neutral_faction_name = factions[neutral_faction_id]['name']

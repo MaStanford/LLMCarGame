@@ -112,7 +112,7 @@ class MapView(Widget):
             # Build long description from faction data
             long_desc = city_name
             for fid, fdata in gs.factions.items():
-                if fdata.get("hub_city_coordinates") == [orig_gx, orig_gy]:
+                if fdata.get("hub_city_coordinates") == (orig_gx, orig_gy):
                     long_desc = f"{city_name} -- Capital of {fdata.get('name', 'Unknown')}"
                     break
 
@@ -363,7 +363,7 @@ class MapView(Widget):
         for gx in range(center_grid_x - grid_radius, center_grid_x + grid_radius):
             for gy in range(center_grid_y - grid_radius, center_grid_y + grid_radius):
                 if does_city_exist_at(gx, gy, self.world.seed, gs.factions):
-                    is_hub = any(faction.get("hub_city_coordinates") == [gx, gy] for faction in gs.factions.values())
+                    is_hub = any(faction.get("hub_city_coordinates") == (gx, gy) for faction in gs.factions.values())
 
                     local_random = random.Random(f"{self.world.seed}-{gx}-{gy}")
                     jitter_x = local_random.uniform(-0.3, 0.3)
@@ -420,7 +420,7 @@ class MapView(Widget):
 
         # Draw title
         city_name = get_city_name(gx, gy, gs.factions, gs.world_details)
-        title = f"[ {city_name} ({gx},{gy}) ]"
+        title = f"[ {city_name} ({gx * CITY_SPACING},{gy * CITY_SPACING}) ]"
         title_x = max(0, (w - len(title)) // 2)
         self._draw_text(canvas, styles, title_x, 0, title, Style(color="white", bold=True))
 

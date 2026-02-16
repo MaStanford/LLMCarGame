@@ -241,6 +241,20 @@ def _spawn_quest_enemies(game_state, wx, wy, count):
         game_state.active_enemies.append(new_enemy)
 
 
+def _despawn_quest_enemies(game_state, wx, wy):
+    """Remove all non-boss enemies near a quest combat zone after objective completion."""
+    import math
+    despawn_radius_sq = 150 ** 2
+    survivors = []
+    for enemy in game_state.active_enemies:
+        dist_sq = (enemy.x - wx) ** 2 + (enemy.y - wy) ** 2
+        is_boss = getattr(enemy, 'is_faction_boss', False) or getattr(enemy, 'is_major_enemy', False)
+        if dist_sq <= despawn_radius_sq and not is_boss:
+            continue  # Remove this enemy
+        survivors.append(enemy)
+    game_state.active_enemies = survivors
+
+
 def update_quests(game_state, audio_manager, app):
     """
     Updates the state of all active quests.
@@ -337,6 +351,8 @@ def update_quests(game_state, audio_manager, app):
                     if objective.timer <= 0:
                         objective.completed = True
                         notifications.append("You survived!")
+                        # Despawn quest enemies near the combat zone
+                        _despawn_quest_enemies(game_state, wx, wy)
                 elif objective.active:
                     notifications.append("Return to the survival zone!")
 
@@ -361,6 +377,8 @@ def update_quests(game_state, audio_manager, app):
                         else:
                             objective.completed = True
                             notifications.append("All waves cleared!")
+                            # Despawn quest enemies near the combat zone
+                            _despawn_quest_enemies(game_state, wx, wy)
                 elif objective.wave_active:
                     notifications.append("Return to the combat zone!")
 

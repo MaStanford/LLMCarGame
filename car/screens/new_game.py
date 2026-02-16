@@ -268,7 +268,7 @@ class NewGameScreen(Screen):
         # Find neutral faction at (0,0)
         neutral_faction_id = next(
             (fid for fid, data in factions.items()
-             if data.get("hub_city_coordinates") == [0, 0]),
+             if data.get("hub_city_coordinates") in ([0, 0], (0, 0))),
             list(factions.keys())[0]
         )
 
