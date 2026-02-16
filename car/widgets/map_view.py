@@ -432,6 +432,19 @@ class MapView(Widget):
         # Get buildings
         buildings = get_buildings_in_city(gx, gy)
 
+        # Check if any active quest targets this city (for City Hall flashing)
+        quest_flash_style = None
+        quest_flash_marker = None
+        for quest in gs.active_quests:
+            if quest.city_id == (gx, gy):
+                if quest.ready_to_turn_in:
+                    quest_flash_style = Style(color="green", bold=True)
+                    quest_flash_marker = "?"
+                    break  # Turn-in takes priority
+                else:
+                    quest_flash_style = Style(color="yellow", bold=True)
+                    quest_flash_marker = "!"
+
         for idx, building in enumerate(buildings):
             btype = building.get("type", "GENERIC")
             bld_key = (gx, gy, idx)
@@ -499,6 +512,9 @@ class MapView(Widget):
             else:
                 fill_style = _GENERIC_STYLE
 
+            # Flash City Hall border when a quest targets this city
+            is_quest_flash = (btype == "city_hall" and quest_flash_style and self.blink_state)
+
             # Draw building outline
             for sy in range(by1, by2):
                 for sx in range(bx1, bx2):
@@ -516,7 +532,7 @@ class MapView(Widget):
                             canvas[sy][sx] = '─'
                         else:
                             canvas[sy][sx] = '│'
-                        styles[sy][sx] = fill_style
+                        styles[sy][sx] = quest_flash_style if is_quest_flash else fill_style
                     else:
                         # Interior
                         canvas[sy][sx] = '░'
@@ -528,6 +544,12 @@ class MapView(Widget):
                 lx = bx1 + 1 + max(0, (interior_w - len(label)) // 2)
                 ly = by1 + (by2 - by1) // 2
                 self._draw_text(canvas, styles, lx, ly, label, Style(color="white", bold=True))
+                # Draw quest marker next to City Hall label
+                if btype == "city_hall" and quest_flash_marker:
+                    marker_x = lx + len(label)
+                    if marker_x < bx2 - 1:
+                        canvas[ly][marker_x] = quest_flash_marker
+                        styles[ly][marker_x] = quest_flash_style if quest_flash_style else fill_style
 
             # Show HP bar for damaged buildings
             if is_damaged and by2 - by1 > 3 and interior_w >= 3:

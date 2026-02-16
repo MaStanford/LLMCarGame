@@ -217,6 +217,7 @@ class Quest:
         self.requires_turn_in = requires_turn_in
         self.dialog = dialog if dialog else "An old friend has a new job for you."
         self.is_conquest_quest = is_conquest_quest
+        self.combat_waypoint = None  # (x, y) tuple for wave/survival quests outside city
         self.completed = False
         self.failed = False
         self.ready_to_turn_in = False
@@ -237,6 +238,7 @@ class Quest:
             "requires_turn_in": self.requires_turn_in,
             "dialog": self.dialog,
             "is_conquest_quest": self.is_conquest_quest,
+            "combat_waypoint": list(self.combat_waypoint) if self.combat_waypoint else None,
             "completed": self.completed,
             "failed": self.failed,
             "ready_to_turn_in": self.ready_to_turn_in,
@@ -284,6 +286,8 @@ class Quest:
         quest.completed = data["completed"]
         quest.failed = data["failed"]
         quest.ready_to_turn_in = data["ready_to_turn_in"]
+        wp = data.get("combat_waypoint")
+        quest.combat_waypoint = tuple(wp) if wp else None
         return quest
 
     def update(self, game_state):

@@ -74,6 +74,8 @@ def get_quest_target_location(quest, game_state):
         elif isinstance(objective, SurvivalObjective):
             remaining_s = max(0, int(objective.timer))
             label = f"Survive ({remaining_s}s)"
+            if quest.combat_waypoint:
+                return quest.combat_waypoint[0], quest.combat_waypoint[1], label
             if quest.city_id:
                 x = quest.city_id[0] * CITY_SPACING
                 y = quest.city_id[1] * CITY_SPACING
@@ -85,6 +87,8 @@ def get_quest_target_location(quest, game_state):
                 label = f"Wave {objective.current_wave}/{objective.total_waves} ({objective.wave_enemies_remaining} left)"
             else:
                 label = f"Wave {objective.current_wave}/{objective.total_waves}"
+            if quest.combat_waypoint:
+                return quest.combat_waypoint[0], quest.combat_waypoint[1], label
             if quest.city_id:
                 x = quest.city_id[0] * CITY_SPACING
                 y = quest.city_id[1] * CITY_SPACING
@@ -148,6 +152,18 @@ def handle_quest_acceptance(game_state, quest):
 
     game_state.active_quests.append(quest)
 
+    # For wave/survival quests, place the combat waypoint on a road just outside the city
+    has_outdoor_combat = any(
+        isinstance(obj, (WaveSpawnObjective, SurvivalObjective))
+        for obj in quest.objectives
+    )
+    if has_outdoor_combat and quest.city_id:
+        cx = quest.city_id[0] * CITY_SPACING
+        cy = quest.city_id[1] * CITY_SPACING
+        # Pick a random cardinal direction and offset 150 units along the road
+        direction = random.choice([(0, -150), (0, 150), (150, 0), (-150, 0)])
+        quest.combat_waypoint = (cx + direction[0], cy + direction[1])
+
     # Add QuestItem to inventory for delivery quests
     for objective in quest.objectives:
         if isinstance(objective, DeliverPackageObjective):
@@ -184,6 +200,8 @@ from .quest_caching import trigger_quest_prefetching
 
 def _get_quest_waypoint(quest):
     """Returns (x, y) for the quest's combat waypoint, or (None, None)."""
+    if quest.combat_waypoint:
+        return quest.combat_waypoint
     if quest.city_id:
         return quest.city_id[0] * CITY_SPACING, quest.city_id[1] * CITY_SPACING
     return None, None
