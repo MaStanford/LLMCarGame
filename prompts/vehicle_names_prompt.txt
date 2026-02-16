@@ -1,0 +1,26 @@
+You are naming enemy vehicles for the post-apocalyptic RPG "Genesis Module."
+
+## Game Theme
+{{ theme }}
+
+## Faction
+- **Name:** {{ faction_name }}
+- **Vibe:** {{ faction_description }}
+
+## Vehicle Types to Name
+These are the base vehicle classes this faction uses. Give each one a custom name and short description that fits the faction's identity.
+
+{{ vehicle_list }}
+
+## Rules
+- Each name should be 1-3 words, evocative of the faction's personality.
+- Each description should be a single sentence, max 15 words.
+- The name should hint at the vehicle's combat role (fast attacker, heavy tank, suicide rammer, etc.).
+- Do NOT reuse the base vehicle class name as-is.
+
+## Output Format
+Return a single JSON object mapping each vehicle ID to its name and description.
+Do not include any text outside the JSON.
+
+Example:
+{"armored_truck": {"name": "Iron Coffin", "description": "A rolling fortress bristling with welded armor plates."}, "technical": {"name": "Scorpion", "description": "Fast gun-truck with a mounted cannon on the flatbed."}}

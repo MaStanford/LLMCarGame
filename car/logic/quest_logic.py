@@ -523,6 +523,21 @@ def complete_quest(game_state, app, quest=None):
     _clamp_selected_quest(game_state)
     check_for_faction_takeover(game_state)
 
+    # If no more active quests remain from this city AND the cache is empty,
+    # delete the cache entry so new quests will be generated on next visit.
+    if quest.city_id:
+        city_id = f"city_{quest.city_id[0]}_{quest.city_id[1]}"
+        has_remaining = any(
+            q.city_id == quest.city_id
+            for q in game_state.active_quests
+        )
+        cached = game_state.quest_cache.get(city_id)
+        cache_empty = isinstance(cached, list) and len(cached) == 0
+
+        if not has_remaining and cache_empty:
+            # All quests from this city done — allow regeneration
+            del game_state.quest_cache[city_id]
+
     # Trigger pre-fetching for the next set of quests
     trigger_quest_prefetching(app)
 

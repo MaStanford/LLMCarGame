@@ -308,9 +308,19 @@ class CityHallScreen(ModalScreen):
                 if not accept_button.disabled:
                     selected_quest = self.available_quests[avail_idx]
                     if handle_quest_acceptance(gs, selected_quest):
-                        if self.current_city_id in gs.quest_cache:
-                            del gs.quest_cache[self.current_city_id]
-                        self.app.pop_screen()
+                        # Remove the accepted quest from the cache list.
+                        # available_quests may be the same object as the cache list,
+                        # so we only need to remove once.
+                        cached = gs.quest_cache.get(self.current_city_id)
+                        if isinstance(cached, list) and selected_quest in cached:
+                            cached.remove(selected_quest)
+                        elif selected_quest in self.available_quests:
+                            self.available_quests.remove(selected_quest)
+                        self.selected_index = 0
+                        self.update_quest_display()
+                        # If quest log is now full or no more quests, exit
+                        if len(gs.active_quests) >= 3 or not self.available_quests:
+                            self.app.pop_screen()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle accept button presses."""

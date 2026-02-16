@@ -57,6 +57,7 @@ class EntityModal(Widget):
     max_hp = reactive(0)
     art = reactive([])
     bearing = reactive(-1.0)  # -1 = no bearing, 0-360 = direction to target
+    description = reactive("")
     destroyed_name = reactive("")
     destroyed_timer = reactive(0.0)
 
@@ -161,6 +162,8 @@ class EntityModal(Widget):
         art_str = "\n".join(self.art) if self.art else ""
 
         parts = [hp_bar]
+        if self.description:
+            parts.append(f"[dim italic]{self.description}[/dim italic]")
         if direction_line:
             parts.append(direction_line)
         if art_str:

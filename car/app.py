@@ -233,7 +233,8 @@ class GenesisModuleApp(App):
                     art = enemy.art.get("N") if isinstance(enemy.art, dict) else enemy.art
                     closest = {
                         "name": enemy.name, "hp": enemy.durability, "max_hp": enemy.max_durability,
-                        "art": art, "x": enemy.x, "y": enemy.y
+                        "art": art, "x": enemy.x, "y": enemy.y,
+                        "description": getattr(enemy, "description", ""),
                     }
 
         # If no boss is nearby, find the closest normal enemy
@@ -244,9 +245,10 @@ class GenesisModuleApp(App):
                     min_dist_sq = dist_sq
                     art = enemy.art.get("N") if isinstance(enemy.art, dict) else enemy.art
                     closest = {
-                        "name": enemy.__class__.__name__.replace("_", " ").title(),
+                        "name": getattr(enemy, "name", enemy.__class__.__name__.replace("_", " ").title()),
                         "hp": enemy.durability, "max_hp": enemy.max_durability,
-                        "art": art, "x": enemy.x, "y": enemy.y
+                        "art": art, "x": enemy.x, "y": enemy.y,
+                        "description": getattr(enemy, "description", ""),
                     }
 
         # Also check obstacles (only if damaged by player)
@@ -259,9 +261,10 @@ class GenesisModuleApp(App):
                     min_dist_sq = dist_sq
                     art = obstacle.art.get("N") if isinstance(obstacle.art, dict) else obstacle.art
                     closest = {
-                        "name": obstacle.__class__.__name__.replace("_", " ").title(),
+                        "name": getattr(obstacle, "name", obstacle.__class__.__name__.replace("_", " ").title()),
                         "hp": obstacle.durability, "max_hp": obstacle.max_durability,
-                        "art": art, "x": obstacle.x, "y": obstacle.y
+                        "art": art, "x": obstacle.x, "y": obstacle.y,
+                        "description": getattr(obstacle, "description", ""),
                     }
 
         # Also check fauna (only if damaged by player)
@@ -274,9 +277,10 @@ class GenesisModuleApp(App):
                     min_dist_sq = dist_sq
                     art = fauna.art.get("N") if isinstance(fauna.art, dict) else fauna.art
                     closest = {
-                        "name": fauna.__class__.__name__.replace("_", " ").title(),
+                        "name": getattr(fauna, "name", fauna.__class__.__name__.replace("_", " ").title()),
                         "hp": fauna.durability, "max_hp": fauna.max_durability,
-                        "art": art, "x": fauna.x, "y": fauna.y
+                        "art": art, "x": fauna.x, "y": fauna.y,
+                        "description": getattr(fauna, "description", ""),
                     }
 
         return closest

@@ -7,9 +7,9 @@ class Bandit(Character):
     def __init__(self, x, y):
         art = [
             "  _  ",
-            " / \ ",
+            r" / \ ",
             "|o.o|",
-            " \_/ ",
+            r" \_/ ",
         ]
         super().__init__(x, y, art, durability=10, speed=0.25 * GLOBAL_SPEED_MULTIPLIER)
         self.xp_value = 5

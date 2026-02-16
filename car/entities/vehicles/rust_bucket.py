@@ -19,6 +19,8 @@ class RustBucket(Vehicle):
         ]
         super().__init__(x, y, art, durability=45, speed=9.3 * GLOBAL_SPEED_MULTIPLIER, acceleration=0.4, handling=0.08)
         self.name = "Rust Bucket"
+        self.xp_value = 20
+        self.cash_value = 15
         self.collision_damage = 15
         self.shoot_damage = 0
         self.phases = [

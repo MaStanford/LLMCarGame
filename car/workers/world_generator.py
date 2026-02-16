@@ -8,6 +8,7 @@ from textual.message import Message
 from ..logic.llm_faction_generator import generate_factions_from_llm, _get_fallback_factions
 from ..logic.llm_quest_generator import generate_quest_from_llm, _get_fallback_quest
 from ..logic.llm_world_details_generator import generate_world_details_from_llm
+from ..logic.llm_vehicle_namer import generate_vehicle_names
 from ..logic.prompt_builder import _format_world_state
 from ..logic.llm_inference import generate_text
 
@@ -62,6 +63,14 @@ def generate_initial_world_worker(app: Any, new_game_settings: dict) -> Dict:
         if not neutral_faction_id:
             raise ValueError("Could not find a neutral faction at (0,0) in the generated data.")
         neutral_faction_name = factions[neutral_faction_id]['name']
+
+        # Stage 1.5: Name faction vehicles
+        app.post_message(StageUpdate(("stage", "Customizing fleet rosters...")))
+        time.sleep(0.25)
+        for faction_id, faction_info in factions.items():
+            unit_names = generate_vehicle_names(app, theme, faction_id, faction_info)
+            if unit_names:
+                faction_info["unit_names"] = unit_names
 
         # Stage 2: Generate World Details
         app.post_message(StageUpdate(("stage", "Naming the dust bowls...")))

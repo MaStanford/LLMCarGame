@@ -394,6 +394,7 @@ class WorldScreen(Screen):
             entity_modal.hp = closest_entity["hp"]
             entity_modal.max_hp = closest_entity["max_hp"]
             entity_modal.art = closest_entity["art"]
+            entity_modal.description = closest_entity.get("description", "")
             # Compute bearing from player to target entity
             dx = closest_entity["x"] - gs.car_world_x
             dy = closest_entity["y"] - gs.car_world_y
@@ -405,6 +406,7 @@ class WorldScreen(Screen):
             entity_modal.max_hp = 0
             entity_modal.art = []
             entity_modal.bearing = -1.0
+            entity_modal.description = ""
 
         # Handle explosions — add to game_state for canvas-based rendering
         for destroyed in gs.destroyed_this_frame:
@@ -420,9 +422,6 @@ class WorldScreen(Screen):
                 "last_update": time.time(),
             })
             # Show destruction feedback in entity modal
-            if getattr(destroyed, "is_faction_boss", False) and hasattr(destroyed, "name"):
-                entity_modal.destroyed_name = destroyed.name
-            else:
-                entity_modal.destroyed_name = destroyed.__class__.__name__.replace("_", " ").title()
+            entity_modal.destroyed_name = getattr(destroyed, "name", destroyed.__class__.__name__.replace("_", " ").title())
             entity_modal.destroyed_timer = time.time()
         gs.destroyed_this_frame.clear()

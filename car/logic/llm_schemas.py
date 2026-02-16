@@ -119,6 +119,18 @@ WORLD_DETAILS_SCHEMA = {
     "required": ["cities", "roads", "landmarks", "city_name_parts"]
 }
 
+VEHICLE_NAMES_SCHEMA = {
+    "type": "object",
+    "additionalProperties": {
+        "type": "object",
+        "properties": {
+            "name": {"type": "string"},
+            "description": {"type": "string"}
+        },
+        "required": ["name", "description"]
+    }
+}
+
 ITEM_SCHEMA = {
     "type": "object",
     "properties": {

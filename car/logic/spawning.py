@@ -5,6 +5,14 @@ from ..data.game_constants import CITY_SPACING, CITY_SIZE, SAFE_ZONE_RADIUS, DES
 from ..logic.data_loader import FACTION_DATA
 from ..world.generation import get_city_faction
 
+def _apply_faction_name(entity, unit_id, faction_id, game_state):
+    """Apply LLM-generated faction name and description to a spawned entity."""
+    unit_names = game_state.factions.get(faction_id, {}).get("unit_names", {})
+    unit_info = unit_names.get(unit_id, {})
+    if unit_info:
+        entity.name = unit_info.get("name", getattr(entity, "name", "Unknown"))
+        entity.description = unit_info.get("description", "")
+
 def _get_distance_to_nearest_city_center(x, y):
     """Calculates the distance to the nearest city center."""
     grid_x = round(x / CITY_SPACING)
@@ -109,6 +117,8 @@ def spawn_enemy(game_state, world):
             new_enemy.collision_damage = int(new_enemy.collision_damage * dmg_mult)
         else:
             new_enemy.collision_damage = int(5 * dmg_mult)
+        # Apply faction-specific vehicle names
+        _apply_faction_name(new_enemy, enemy_name, current_faction_id, game_state)
         new_enemy.patrol_target_x = sx + random.uniform(-100, 100)
         new_enemy.patrol_target_y = sy + random.uniform(-100, 100)
         game_state.active_enemies.append(new_enemy)
@@ -135,6 +145,7 @@ def spawn_enemy(game_state, world):
                     extra.collision_damage = int(extra.collision_damage * dmg_mult)
                 else:
                     extra.collision_damage = int(5 * dmg_mult)
+                _apply_faction_name(extra, enemy_name, current_faction_id, game_state)
                 extra.patrol_target_x = offset_x + random.uniform(-100, 100)
                 extra.patrol_target_y = offset_y + random.uniform(-100, 100)
                 game_state.active_enemies.append(extra)
