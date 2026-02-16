@@ -1,6 +1,4 @@
-import random
 from ..vehicle import Vehicle
-from ...logic.ai_behaviors import execute_behavior
 
 from ...data.game_constants import GLOBAL_SPEED_MULTIPLIER
 
@@ -10,13 +8,64 @@ class RustBucket(Vehicle):
     Its only goal is to collide with the player. Explodes on death.
     """
     def __init__(self, x, y):
-        # New art for a beat-up 70s American sedan
-        art = [
-            "   ▄▄▄▄▄▄▄   ",
-            "  ▟█░▒▒▒░█▙ ",
-            " ██▄▄▄▄▄▄██ ",
-            " (O)▀▀▀▀▀(X) "
-        ]
+        art = {
+            # North (Facing Up) - hood at top, O=good headlight (left), X=broken (right)
+            "N": [
+                " ▄▓▄ ",
+                "O░░░X",
+                "█▒▓▒█",
+                "●█▒█●",
+                " ▀█▀ "
+            ],
+            # South (Facing Down) - vertical mirror of N, X now on left viewed from behind
+            "S": [
+                " ▄█▄ ",
+                "●█▒█●",
+                "█▒▓▒█",
+                "X░░░O",
+                " ▀▓▀ "
+            ],
+            # East (Facing Right) - O=front-left (top), X=front-right (bottom)
+            "E": [
+                "●▒██░▓▄O",
+                "█▒██▓░░▌",
+                "●▒██░▓▀X"
+            ],
+            # West (Facing Left) - horizontal mirror of E
+            "W": [
+                "X▄▓░██▒●",
+                "▐░░▓██▒█",
+                "O▀▓░██▒●"
+            ],
+            # North-East - front at upper-right, X on outer edge
+            "NE": [
+                "  ▄░▓▄X",
+                " O█░░▓█",
+                "▐█▒▓██●",
+                " ▀██▀  "
+            ],
+            # North-West - horizontal mirror of NE, X on outer edge
+            "NW": [
+                "X▄▓░▄  ",
+                "█▓░░█O ",
+                "●██▓▒█▌",
+                "  ▀██▀ "
+            ],
+            # South-East - vertical mirror of NE
+            "SE": [
+                " ▄██▄  ",
+                "▐█▒▓██●",
+                " O█░░▓█",
+                "  ▀░▓▀X"
+            ],
+            # South-West - horizontal mirror of SE
+            "SW": [
+                "  ▄██▄ ",
+                "●██▓▒█▌",
+                "█▓░░█O ",
+                "X▀▓░▀  "
+            ]
+        }
         super().__init__(x, y, art, durability=45, speed=9.3 * GLOBAL_SPEED_MULTIPLIER, acceleration=0.4, handling=0.08)
         self.name = "Rust Bucket"
         self.xp_value = 20
@@ -27,23 +76,6 @@ class RustBucket(Vehicle):
             {"name": "Kamikaze", "duration": (10, 10), "behavior": "RAM", "next_phases": {"Kamikaze": 1.0}}
         ]
         self._initialize_ai()
-        # This vehicle could have an on_death callback that creates an explosion
-
-    def _initialize_ai(self):
-        """Initializes the AI state."""
-        self.current_phase = self.phases[0]
-        self.phase_timer = random.uniform(*self.current_phase["duration"])
-
-    def update(self, game_state, world, dt):
-        """Updates the vehicle's state and AI logic each frame."""
-        self.ai_state["elapsed"] = self.ai_state.get("elapsed", 0) + dt
-
-        # This AI is simple, it just rams forever.
-        execute_behavior(self.current_phase["behavior"], self, game_state, self)
-
-        # Update position
-        self.x += self.vx * dt
-        self.y += self.vy * dt
 
     def draw(self, stdscr, game_state, world_start_x, world_start_y, color_map):
         """Draws the vehicle on the screen."""

@@ -100,7 +100,11 @@ class GenesisModuleApp(App):
         """The main game loop, called by a timer."""
         if not isinstance(self.screen, WorldScreen):
             return
-        
+
+        # Cache the WorldScreen reference. Physics/triggers may push new screens
+        # mid-tick (CombatScreen, NarrativeDialogScreen, etc.), which would change
+        # self.screen and cause NoMatches errors when querying WorldScreen widgets.
+        world_screen = self.screen
         gs = self.game_state
         
         # --- Delta Time Calculation ---
@@ -119,11 +123,11 @@ class GenesisModuleApp(App):
                 return
 
             # Process continuous input (held keys) before physics
-            self.screen.process_input(dt)
+            world_screen.process_input(dt)
 
             notifications = update_physics_and_collisions(gs, self.world, self.audio_manager, dt, self)
             for notification in notifications:
-                self.screen.query_one("#notifications", Notifications).add_notification(notification)
+                world_screen.query_one("#notifications", Notifications).add_notification(notification)
 
             # Spawning logic
             spawn_rate = gs.difficulty_mods.get("spawn_rate_mult", 1.0)
@@ -144,7 +148,7 @@ class GenesisModuleApp(App):
             
             quest_notifications = update_quests(gs, self.audio_manager, self)
             for notification in quest_notifications:
-                self.screen.query_one("#notifications", Notifications).add_notification(notification)
+                world_screen.query_one("#notifications", Notifications).add_notification(notification)
 
             # --- Throttled UI Updates ---
             # These calculations are expensive, so we only run them a few times per second.
@@ -170,7 +174,7 @@ class GenesisModuleApp(App):
                 self.check_and_cache_quests_for_nearby_cities()
 
             # --- Update UI Widgets ---
-            self.screen.update_widgets()
+            world_screen.update_widgets()
 
             # Check for building interactions
             self.check_building_interaction()
@@ -183,10 +187,10 @@ class GenesisModuleApp(App):
         if isinstance(self.screen, WorldScreen):
             # Use a simple moving average for FPS to smooth it out
             # This part of the code is for display only and doesn't affect game logic timing
-            if current_time - self.screen.query_one("#fps_counter").last_fps_update_time >= 1.0:
-                fps = self.frame_count / (current_time - self.screen.query_one("#fps_counter").last_fps_update_time)
-                self.screen.query_one("#fps_counter").fps = fps
-                self.screen.query_one("#fps_counter").last_fps_update_time = current_time
+            if current_time - world_screen.query_one("#fps_counter").last_fps_update_time >= 1.0:
+                fps = self.frame_count / (current_time - world_screen.query_one("#fps_counter").last_fps_update_time)
+                world_screen.query_one("#fps_counter").fps = fps
+                world_screen.query_one("#fps_counter").last_fps_update_time = current_time
                 self.frame_count = 0
 
     def check_building_interaction(self):
@@ -230,7 +234,7 @@ class GenesisModuleApp(App):
                 dist_sq = (enemy.x - gs.car_world_x)**2 + (enemy.y - gs.car_world_y)**2
                 if dist_sq < min_dist_sq:
                     min_dist_sq = dist_sq
-                    art = enemy.art.get("N") if isinstance(enemy.art, dict) else enemy.art
+                    art = enemy.get_static_art()
                     closest = {
                         "name": enemy.name, "hp": enemy.durability, "max_hp": enemy.max_durability,
                         "art": art, "x": enemy.x, "y": enemy.y,
@@ -243,7 +247,7 @@ class GenesisModuleApp(App):
                 dist_sq = (enemy.x - gs.car_world_x)**2 + (enemy.y - gs.car_world_y)**2
                 if dist_sq < min_dist_sq:
                     min_dist_sq = dist_sq
-                    art = enemy.art.get("N") if isinstance(enemy.art, dict) else enemy.art
+                    art = enemy.get_static_art()
                     closest = {
                         "name": getattr(enemy, "name", enemy.__class__.__name__.replace("_", " ").title()),
                         "hp": enemy.durability, "max_hp": enemy.max_durability,
@@ -259,7 +263,7 @@ class GenesisModuleApp(App):
                 dist_sq = (obstacle.x - gs.car_world_x)**2 + (obstacle.y - gs.car_world_y)**2
                 if dist_sq < min_dist_sq:
                     min_dist_sq = dist_sq
-                    art = obstacle.art.get("N") if isinstance(obstacle.art, dict) else obstacle.art
+                    art = obstacle.get_static_art()
                     closest = {
                         "name": getattr(obstacle, "name", obstacle.__class__.__name__.replace("_", " ").title()),
                         "hp": obstacle.durability, "max_hp": obstacle.max_durability,
@@ -275,7 +279,7 @@ class GenesisModuleApp(App):
                 dist_sq = (fauna.x - gs.car_world_x)**2 + (fauna.y - gs.car_world_y)**2
                 if dist_sq < min_dist_sq:
                     min_dist_sq = dist_sq
-                    art = fauna.art.get("N") if isinstance(fauna.art, dict) else fauna.art
+                    art = fauna.get_static_art()
                     closest = {
                         "name": getattr(fauna, "name", fauna.__class__.__name__.replace("_", " ").title()),
                         "hp": fauna.durability, "max_hp": fauna.max_durability,
@@ -342,7 +346,7 @@ class GenesisModuleApp(App):
     def check_and_cache_quests_for_nearby_cities(self):
         """
         Checks for cities near the player and dispatches workers to generate quests
-        for them if they aren't already cached.
+        for them if they aren't already cached. Prioritizes the current city.
         """
         from .workers.quest_generator import generate_quests_worker
         from .world.generation import get_city_faction
@@ -352,10 +356,15 @@ class GenesisModuleApp(App):
         player_grid_x = round(gs.car_world_x / CITY_SPACING)
         player_grid_y = round(gs.car_world_y / CITY_SPACING)
 
-        # Check a 3x3 grid around the player
+        # Build list of cities to check, current city first
+        cities_to_check = [(player_grid_x, player_grid_y)]
         for dx in range(-1, 2):
             for dy in range(-1, 2):
-                check_x, check_y = player_grid_x + dx, player_grid_y + dy
+                if dx == 0 and dy == 0:
+                    continue
+                cities_to_check.append((player_grid_x + dx, player_grid_y + dy))
+
+        for check_x, check_y in cities_to_check:
                 city_id = f"city_{check_x}_{check_y}"
 
                 # Don't generate quests for cities that are already cached or pending
@@ -366,7 +375,7 @@ class GenesisModuleApp(App):
                 gs.quest_cache[city_id] = "pending"
 
                 city_faction_id = get_city_faction(check_x * CITY_SPACING, check_y * CITY_SPACING, gs.factions)
-                
+
                 logging.info(f"No quests cached for nearby city {city_id}. Starting pre-fetch worker.")
 
                 worker_callable = partial(
@@ -378,7 +387,7 @@ class GenesisModuleApp(App):
                     faction_data=gs.factions,
                     story_intro=gs.story_intro
                 )
-                
+
                 worker = self.run_worker(
                     worker_callable,
                     exclusive=False, # Allow multiple quest generators to run

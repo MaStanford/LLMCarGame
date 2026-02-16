@@ -11,6 +11,14 @@ ENEMY_SHOOT_COOLDOWN = 1.5  # seconds between shots
 ENEMY_SNIPE_COOLDOWN = 2.0
 
 
+BEHAVIOR_COSTS = {
+    "RAM": 3,
+    "STRAFE": 2, "FLANK": 2,
+    "CHASE": 1, "SHOOT": 1, "SNIPE": 1, "DEPLOY_MINE": 1,
+    "EVADE": 0, "PATROL": 0, "STATIONARY": 0, "IDLE": 0,
+}
+
+
 def _get_aim_spread(game_state):
     """Returns the difficulty-scaled aim spread multiplier."""
     return game_state.difficulty_mods.get("enemy_aim_spread", 1.0)
@@ -234,6 +242,12 @@ def _execute_flank_behavior(enemy, game_state, edata):
     _try_shoot(enemy, game_state, ENEMY_SHOOT_COOLDOWN, shoot_damage, accuracy=0.2)
 
 
+def _execute_idle_behavior(enemy, game_state, edata):
+    """Decelerate and drift. Gives the player breathing room."""
+    enemy.vx *= 0.9
+    enemy.vy *= 0.9
+
+
 # --- Behavior dispatch map ---
 BEHAVIOR_MAP = {
     "CHASE": _execute_chase_behavior,
@@ -246,6 +260,7 @@ BEHAVIOR_MAP = {
     "SHOOT": _execute_shoot_behavior,
     "SNIPE": _execute_snipe_behavior,
     "FLANK": _execute_flank_behavior,
+    "IDLE": _execute_idle_behavior,
 }
 
 

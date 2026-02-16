@@ -38,4 +38,8 @@ class NarrativeDialogScreen(ModalScreen):
                 "y": self.narrative_data.get("target_y", 0),
                 "name": self.narrative_data.get("title", "Waypoint")
             }
-            self.app.screen.query_one("#notifications").add_notification("New waypoint set.")
+            for screen in self.app.screen_stack:
+                notifications = screen.query("#notifications")
+                if notifications:
+                    notifications.first().add_notification("New waypoint set.")
+                    break

@@ -1,6 +1,4 @@
-import random
 from ..vehicle import Vehicle
-from ...logic.ai_behaviors import execute_behavior
 from ...data.game_constants import GLOBAL_SPEED_MULTIPLIER
 
 class RaiderBuggy(Vehicle):
@@ -9,11 +7,62 @@ class RaiderBuggy(Vehicle):
     It harasses from a distance before closing in for a ramming attack.
     """
     def __init__(self, x, y):
-        art = [
-            "  ▄-▲-▄  ",
-            " ▗█-█-█▖ ",
-            "(●)---(●)"
-        ]
+        art = {
+            # North (Facing Up) - aggressive front wedge at top
+            "N": [
+                " ▄▲▄ ",
+                "▗░▓░▖",
+                "●-█-●",
+                " ▀ ▀ "
+            ],
+            # South (Facing Down) - rear at top
+            "S": [
+                " ▄ ▄ ",
+                "●-█-●",
+                "▝░▓░▘",
+                " ▀▼▀ "
+            ],
+            # East (Facing Right) - front on right
+            "E": [
+                "●░░-▲▄",
+                "█▓█-█░▌",
+                "●░░-▼▀"
+            ],
+            # West (Facing Left) - front on left
+            "W": [
+                "▄▲-░░●",
+                "▐░█-█▓█",
+                "▀▼-░░●"
+            ],
+            # North-East - front at upper-right
+            "NE": [
+                "  ▄░▲",
+                " ●▓█░",
+                "▗█▓█●",
+                " ▀▀  "
+            ],
+            # North-West - front at upper-left (mirror NE)
+            "NW": [
+                "▲░▄  ",
+                "░█▓● ",
+                "●█▓█▖",
+                "  ▀▀ "
+            ],
+            # South-East - front at lower-right (mirror NE vertically)
+            "SE": [
+                " ▄▄  ",
+                "▗█▓█●",
+                " ●▓█░",
+                "  ▀░▼"
+            ],
+            # South-West - front at lower-left (mirror SE)
+            "SW": [
+                "  ▄▄ ",
+                "●█▓█▖",
+                "░█▓● ",
+                "▼░▀  "
+            ]
+        }
         super().__init__(x, y, art, durability=40, speed=9.0 * GLOBAL_SPEED_MULTIPLIER, acceleration=0.7, handling=0.8)
         self.name = "Raider Buggy"
         self.xp_value = 15
@@ -28,26 +77,6 @@ class RaiderBuggy(Vehicle):
             {"name": "Ram", "duration": (2, 3), "behavior": "RAM", "next_phases": {"Harass": 1.0}}
         ]
         self._initialize_ai()
-
-    def _initialize_ai(self):
-        self.current_phase = self.phases[0]
-        self.phase_timer = random.uniform(*self.current_phase["duration"])
-
-    def update(self, game_state, world, dt):
-        self.ai_state["elapsed"] = self.ai_state.get("elapsed", 0) + dt
-        self.phase_timer -= dt
-
-        if self.phase_timer <= 0:
-            next_phase_options = list(self.current_phase["next_phases"].keys())
-            next_phase_weights = list(self.current_phase["next_phases"].values())
-            new_phase_name = random.choices(next_phase_options, weights=next_phase_weights, k=1)[0]
-            self.current_phase = next((p for p in self.phases if p["name"] == new_phase_name), self.phases[0])
-            self.phase_timer = random.uniform(*self.current_phase["duration"])
-
-        execute_behavior(self.current_phase["behavior"], self, game_state, self)
-
-        self.x += self.vx * dt
-        self.y += self.vy * dt
 
     def draw(self, stdscr, game_state, world_start_x, world_start_y, color_map):
         from ...rendering.draw_utils import draw_sprite

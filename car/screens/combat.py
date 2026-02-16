@@ -38,13 +38,15 @@ class CombatScreen(ModalScreen):
     def update_display(self) -> None:
         """Update the display."""
         player_art = self.query_one("#player_art", Static)
-        player_art.update("\n".join(self.player.art.get("N", [])))
-        
+        p_art = self.player.get_static_art()
+        player_art.update("\n".join(p_art))
+
         player_stats = self.query_one("#player_stats", Static)
         player_stats.update(f"HP: {self.player.durability}/{self.player.max_durability}")
-        
+
         enemy_art = self.query_one("#enemy_art", Static)
-        enemy_art.update("\n".join(self.enemy.art.get("N", [])))
+        e_art = self.enemy.get_static_art()
+        enemy_art.update("\n".join(e_art))
         
         enemy_stats = self.query_one("#enemy_stats", Static)
         enemy_stats.update(f"HP: {self.enemy.durability}/{self.enemy.max_durability}")
@@ -77,7 +79,11 @@ class CombatScreen(ModalScreen):
         if result == "victory":
             self.app.game_state.active_enemies.remove(self.enemy)
             # (Add XP and loot rewards)
-            self.app.screen.query_one("#notifications").add_notification(f"You defeated the {self.enemy.name}!")
+            for screen in self.app.screen_stack:
+                notifications = screen.query("#notifications")
+                if notifications:
+                    notifications.first().add_notification(f"You defeated the {self.enemy.name}!")
+                    break
             self.app.game_state.menu_open = False
             self.app.pop_screen()
         elif result == "defeat":

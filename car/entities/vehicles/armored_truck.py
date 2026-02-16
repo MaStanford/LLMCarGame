@@ -1,6 +1,4 @@
-import random
 from ..vehicle import Vehicle
-from ...logic.ai_behaviors import execute_behavior
 
 from ...data.game_constants import GLOBAL_SPEED_MULTIPLIER
 
@@ -10,13 +8,73 @@ class ArmoredTruck(Vehicle):
     Its AI is simple and direct: close the distance and crush the target.
     """
     def __init__(self, x, y):
-        # New art for a Brinks-style armored truck
-        art = [
-            "  ▄▄▄▄▄▄▄  ",
-            " ▟█▒▒▒▒▒▒█▙ ",
-            "███████████",
-            "▀(●)▀▀▀(●)▀"
-        ]
+        # 8-directional art for a Brinks-style armored truck
+        art = {
+            # North (Facing Up) - cab at top, heavy boxy body
+            "N": [
+                "  ▄▓▓▓▄  ",
+                " ▟▒▒▒▒▒▙ ",
+                "●█▒▒▒▒▒█●",
+                "█████████",
+                "●███████●",
+                " ▀█████▀ "
+            ],
+            # South (Facing Down) - cab at bottom
+            "S": [
+                " ▄█████▄ ",
+                "●███████●",
+                "█████████",
+                "●█▒▒▒▒▒█●",
+                " ▜▒▒▒▒▒▛ ",
+                "  ▀▓▓▓▀  "
+            ],
+            # East (Facing Right) - cab on right
+            "E": [
+                "●▓██████▒▒▓▄ ",
+                "████████▒▒▒▒▌",
+                "████████▒▒▒▒▌",
+                "●▓██████▒▒▓▀ "
+            ],
+            # West (Facing Left) - cab on left
+            "W": [
+                " ▄▓▒▒██████▓●",
+                "▐▒▒▒▒████████",
+                "▐▒▒▒▒████████",
+                " ▀▓▒▒██████▓●"
+            ],
+            # North-East - front at upper-right
+            "NE": [
+                "   ▄▄▒▒▓▄",
+                "  ●█▒▒▒▒█",
+                " ▐██████●",
+                "▐████████",
+                " ▀██████▀"
+            ],
+            # North-West - front at upper-left (mirror NE)
+            "NW": [
+                "▄▓▒▒▄▄   ",
+                "█▒▒▒▒█●  ",
+                "●██████▌ ",
+                "████████▌",
+                "▀██████▀ "
+            ],
+            # South-East - front at lower-right
+            "SE": [
+                " ▄██████▄",
+                "▐████████",
+                " ▐██████●",
+                "  ●█▒▒▒▒█",
+                "   ▀▀▒▒▓▀"
+            ],
+            # South-West - front at lower-left (mirror SE)
+            "SW": [
+                "▄██████▄ ",
+                "████████▌",
+                "●██████▌ ",
+                "█▒▒▒▒█●  ",
+                "▀▓▒▒▀▀   "
+            ]
+        }
         # Upgraded stats to match its appearance
         super().__init__(x, y, art, durability=250, speed=2.7 * GLOBAL_SPEED_MULTIPLIER, acceleration=0.2, handling=0.05)
         self.name = "Armored Truck"
@@ -35,33 +93,6 @@ class ArmoredTruck(Vehicle):
             {"name": "Ram", "duration": (3, 4), "behavior": "RAM", "next_phases": {"Chase": 1.0}},
         ]
         self._initialize_ai()
-
-    def _initialize_ai(self):
-        """Initializes the AI state."""
-        self.current_phase = self.phases[0]
-        self.phase_timer = random.uniform(self.current_phase["duration"][0], self.current_phase["duration"][1])
-
-    def update(self, game_state, world, dt):
-        """Updates the vehicle's state and AI logic each frame."""
-        self.ai_state["elapsed"] = self.ai_state.get("elapsed", 0) + dt
-
-        # Countdown the phase timer
-        self.phase_timer -= dt
-
-        # Transition to a new phase if the timer runs out
-        if self.phase_timer <= 0:
-            next_phase_options = list(self.current_phase["next_phases"].keys())
-            next_phase_weights = list(self.current_phase["next_phases"].values())
-            new_phase_name = random.choices(next_phase_options, weights=next_phase_weights, k=1)[0]
-            self.current_phase = next((p for p in self.phases if p["name"] == new_phase_name), self.phases[0])
-            self.phase_timer = random.uniform(self.current_phase["duration"][0], self.current_phase["duration"][1])
-
-        # Execute the current AI behavior
-        execute_behavior(self.current_phase["behavior"], self, game_state, self)
-
-        # Update position based on velocity
-        self.x += self.vx * dt
-        self.y += self.vy * dt
 
     def draw(self, stdscr, game_state, world_start_x, world_start_y, color_map):
         """Draws the vehicle on the screen."""

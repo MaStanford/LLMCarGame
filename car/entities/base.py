@@ -48,3 +48,9 @@ class Entity(ABC):
     @abstractmethod
     def update(self, game_state, world, dt):
         pass
+
+    def get_static_art(self):
+        """Return a single art sprite (list of strings) regardless of art format."""
+        if isinstance(self.art, dict):
+            return self.art.get("N", ["?"])
+        return self.art

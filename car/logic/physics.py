@@ -47,10 +47,8 @@ def update_physics_and_collisions(game_state, world, audio_manager, dt, app):
             if dist_sq < 225: # 15 units aggro radius
                 from ..screens.combat import CombatScreen
                 game_state.combat_enemy = enemy
-                game_state.menu_open = True # Pause the game
-                # This is a bit of a hack. We should probably have a dedicated
-                # app-level method for this.
-                game_state.player_car.app.push_screen(CombatScreen(game_state.player_car, enemy))
+                game_state.menu_open = True
+                app.push_screen(CombatScreen(game_state.player_car, enemy))
 
     for fauna in game_state.active_fauna:
         fauna.update(game_state, world, dt)

@@ -35,9 +35,10 @@ from textual.binding import Binding
 # Keys that are tracked for continuous (hold-to-act) input.
 # These are handled via on_key + staleness expiry, NOT Textual bindings,
 # so that multiple gameplay keys can be held simultaneously.
-GAMEPLAY_KEYS = {"w", "s", "a", "d", "space", "left", "right"}
+GAMEPLAY_KEYS = {"a", "d", "space", "left", "right"}  # continuous keys (binary hold)
+PEDAL_KEYS = {"w", "s"}  # pedal keys (event-driven steps, not per-frame ramp)
 KEY_STALE_THRESHOLD = 0.15  # seconds — if no repeat event arrives within this window, the key is considered released
-PEDAL_RAMP_RATE = 4.0       # pedal units per second (0 to 1.0 in ~0.25s)
+PEDAL_STEP = 0.10           # pedal change per key event (terminal repeat provides hold behavior)
 
 # One-shot keys for menu/UI actions.
 # Handled directly in on_key for reliability (bypasses binding dispatch lag).
@@ -124,14 +125,20 @@ class WorldScreen(Screen):
     def on_key(self, event: Key) -> None:
         """Handle all gameplay input directly for reliability.
 
-        Continuous keys (WASD, arrows, space) are tracked by timestamp for
-        hold-to-act behavior. One-shot keys (menus, toggles) are debounced:
-        they fire once on initial press, then ignore repeats until the key
-        is released (no event within KEY_STALE_THRESHOLD).
+        Continuous keys (arrows, space) are tracked by timestamp for
+        hold-to-act behavior. Pedal keys (W/S) apply a fixed step per
+        event — terminal key repeat provides natural hold-to-ramp.
+        One-shot keys (menus, toggles) are debounced.
         """
         now = time.time()
 
-        if event.key in GAMEPLAY_KEYS:
+        if event.key in PEDAL_KEYS:
+            gs = self.app.game_state
+            if event.key == "w":
+                gs.pedal_position = min(1.0, gs.pedal_position + PEDAL_STEP)
+            elif event.key == "s":
+                gs.pedal_position = max(-1.0, gs.pedal_position - PEDAL_STEP)
+        elif event.key in GAMEPLAY_KEYS:
             self._pressed_keys[event.key] = now
         elif event.key in ONE_SHOT_ACTIONS:
             # Debounce: only fire if this key wasn't already held
@@ -167,11 +174,7 @@ class WorldScreen(Screen):
         gs.actions["turn_left"] = "a" in self._pressed_keys
         gs.actions["turn_right"] = "d" in self._pressed_keys
 
-        # --- Throttle / Brake (ramp while held, sticky on release) ---
-        if "w" in self._pressed_keys:
-            gs.pedal_position = min(1.0, gs.pedal_position + PEDAL_RAMP_RATE * dt)
-        if "s" in self._pressed_keys:
-            gs.pedal_position = max(-1.0, gs.pedal_position - PEDAL_RAMP_RATE * dt)
+        # --- Pedal is set directly by on_key events (no per-frame ramp) ---
 
         # --- Firing (continuous while held, gated by weapon cooldowns) ---
         gs.actions["fire"] = "space" in self._pressed_keys
@@ -410,7 +413,7 @@ class WorldScreen(Screen):
 
         # Handle explosions — add to game_state for canvas-based rendering
         for destroyed in gs.destroyed_this_frame:
-            art = destroyed.art.get("N") if isinstance(destroyed.art, dict) else destroyed.art
+            art = destroyed.get_static_art()
             gs.active_explosions.append({
                 "x": destroyed.x,
                 "y": destroyed.y,
