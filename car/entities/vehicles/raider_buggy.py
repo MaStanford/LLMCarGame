@@ -1,7 +1,6 @@
 import random
 from ..vehicle import Vehicle
-from ...logic.ai_behaviors import _execute_chase_behavior, _execute_strafe_behavior, _execute_ram_behavior
-
+from ...logic.ai_behaviors import execute_behavior
 from ...data.game_constants import GLOBAL_SPEED_MULTIPLIER
 
 class RaiderBuggy(Vehicle):
@@ -19,10 +18,13 @@ class RaiderBuggy(Vehicle):
         self.name = "Raider Buggy"
         self.xp_value = 15
         self.cash_value = 20
+        self.collision_damage = 5
+        self.shoot_damage = 3
         self.drop_item = "ammo_bullet"
         self.drop_rate = 0.15
         self.phases = [
-            {"name": "Harass", "duration": (3, 5), "behavior": "STRAFE", "next_phases": {"Ram": 0.6, "Harass": 0.4}},
+            {"name": "Harass", "duration": (3, 5), "behavior": "STRAFE", "next_phases": {"Shoot": 0.5, "Ram": 0.5}},
+            {"name": "Shoot", "duration": (2, 4), "behavior": "SHOOT", "next_phases": {"Harass": 0.6, "Ram": 0.4}},
             {"name": "Ram", "duration": (2, 3), "behavior": "RAM", "next_phases": {"Harass": 1.0}}
         ]
         self._initialize_ai()
@@ -32,6 +34,7 @@ class RaiderBuggy(Vehicle):
         self.phase_timer = random.uniform(*self.current_phase["duration"])
 
     def update(self, game_state, world, dt):
+        self.ai_state["elapsed"] = self.ai_state.get("elapsed", 0) + dt
         self.phase_timer -= dt
 
         if self.phase_timer <= 0:
@@ -41,12 +44,8 @@ class RaiderBuggy(Vehicle):
             self.current_phase = next((p for p in self.phases if p["name"] == new_phase_name), self.phases[0])
             self.phase_timer = random.uniform(*self.current_phase["duration"])
 
-        behavior = self.current_phase["behavior"]
-        if behavior == "STRAFE":
-            _execute_strafe_behavior(self, game_state, self)
-        elif behavior == "RAM":
-            _execute_ram_behavior(self, game_state, self)
-        
+        execute_behavior(self.current_phase["behavior"], self, game_state, self)
+
         self.x += self.vx * dt
         self.y += self.vy * dt
 

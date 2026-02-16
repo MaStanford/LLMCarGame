@@ -126,7 +126,7 @@ class GameState:
         self.obstacle_spawn_timer = 0
         self.active_particles = []
         self.active_flames = []
-        self.active_explosions = [] # This will be removed
+        self.active_explosions = []
         self.destroyed_this_frame = []
         self.active_pickups = {}
         self.next_pickup_id = 0
@@ -136,12 +136,14 @@ class GameState:
         self.enemy_spawn_timer = 0
         
         # --- Quest State ---
-        self.current_quest = None
+        self.active_quests = []         # List of Quest objects, max 3
+        self.selected_quest_index = 0   # Which quest compass/map tracks
         self.faction_reputation = {}
         self.faction_control = {}
         self.waypoint = None
         self.can_challenge_boss = {}
         self.defeated_bosses = set()
+        self.active_bosses = []
         self.combat_enemy = None
         self.quest_cache = {}
 
@@ -318,7 +320,8 @@ class GameState:
             "faction_control": self.faction_control,
             "defeated_bosses": list(self.defeated_bosses), # Convert set to list
             "activated_triggers": list(self.activated_triggers),
-            "current_quest": self.current_quest.to_dict() if self.current_quest else None,
+            "active_quests": [q.to_dict() for q in self.active_quests],
+            "selected_quest_index": self.selected_quest_index,
             "karma": self.karma,
             "story_events": self.story_events,
             "visited_cities": [list(c) for c in self.visited_cities],
@@ -411,8 +414,11 @@ class GameState:
         raw_per_city = data.get("buildings_destroyed_per_city", {})
         gs.buildings_destroyed_per_city = {tuple(int(x) for x in k.split(",")): v for k, v in raw_per_city.items()}
         
-        if data.get("current_quest"):
-            from .data.quests import Quest
-            gs.current_quest = Quest.from_dict(data["current_quest"])
+        # Multi-quest deserialization with backward compat
+        from .data.quests import Quest
+        gs.active_quests = [Quest.from_dict(qd) for qd in data.get("active_quests", [])]
+        if not gs.active_quests and data.get("current_quest"):
+            gs.active_quests = [Quest.from_dict(data["current_quest"])]
+        gs.selected_quest_index = data.get("selected_quest_index", 0)
         
         return gs

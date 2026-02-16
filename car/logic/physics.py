@@ -18,16 +18,16 @@ def update_physics_and_collisions(game_state, world, audio_manager, dt, app):
     # 3. Update projectile positions and check ranges
     particles_to_keep = []
     for p_state in game_state.active_particles:
-        p_x, p_y, p_angle, p_speed, p_power, max_range, p_char, origin_x, origin_y = p_state
-        
+        p_x, p_y, p_angle, p_speed, p_power, max_range, p_char, origin_x, origin_y = p_state[:9]
+
         # Move projectile
         p_dist = p_speed * dt
         p_x += p_dist * math.cos(p_angle)
         p_y += p_dist * math.sin(p_angle)
-        
+
         # Check range
         distance_traveled = math.sqrt((p_x - origin_x)**2 + (p_y - origin_y)**2)
-        
+
         if distance_traveled < max_range:
             p_state[0], p_state[1] = p_x, p_y
             particles_to_keep.append(p_state)

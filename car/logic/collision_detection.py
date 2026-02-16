@@ -4,7 +4,7 @@ from .loot_generation import handle_enemy_loot_drop
 from .building_damage import find_building_at, damage_building
 from ..world.generation import get_buildings_in_city
 from ..data.game_constants import CITY_SPACING
-from ..data.quests import KillCountObjective
+from ..data.quests import KillCountObjective, WaveSpawnObjective
 
 # Collision physics constants
 STOP_THRESHOLD = 2.0  # Speed below which collisions stop the car completely
@@ -124,15 +124,19 @@ def _drop_meat(game_state, x, y):
 
 
 def _update_kill_objectives(game_state, enemy):
-    """Increments kill_count on any active KillCountObjective that matches the enemy."""
-    quest = game_state.current_quest
-    if quest is None or quest.completed:
-        return
+    """Increments kill_count on any active KillCountObjective that matches the enemy,
+    and decrements wave_enemies_remaining on any active WaveSpawnObjective."""
     enemy_class_name = enemy.__class__.__name__
-    for objective in quest.objectives:
-        if isinstance(objective, KillCountObjective) and not objective.completed:
-            if objective.target_name is None or objective.target_name == enemy_class_name:
-                objective.kill_count += 1
+    for quest in game_state.active_quests:
+        if quest.completed:
+            continue
+        for objective in quest.objectives:
+            if isinstance(objective, KillCountObjective) and not objective.completed:
+                if objective.target_name is None or objective.target_name == enemy_class_name:
+                    objective.kill_count += 1
+            elif isinstance(objective, WaveSpawnObjective) and not objective.completed:
+                if objective.wave_active and objective.wave_enemies_remaining > 0:
+                    objective.wave_enemies_remaining -= 1
 
 
 def handle_collisions(game_state, world, audio_manager, app):
@@ -152,7 +156,9 @@ def handle_collisions(game_state, world, audio_manager, app):
     for i, p_state in enumerate(game_state.active_particles):
         if i in projectiles_to_remove:
             continue
-        p_x, p_y, _, _, p_power, _, _, _, _ = p_state
+        p_x, p_y = p_state[0], p_state[1]
+        p_power = p_state[4]
+        p_owner = p_state[9] if len(p_state) > 9 else "player"
 
         # Check for collisions with terrain
         p_terrain = world.get_terrain_at(p_x, p_y)
@@ -166,62 +172,76 @@ def handle_collisions(game_state, world, audio_manager, app):
             projectiles_to_remove.add(i)
             continue
 
-        # Check for collisions with enemies
-        hit = False
-        for enemy in game_state.active_enemies:
-            if (enemy.x <= p_x < enemy.x + enemy.width and
-                enemy.y <= p_y < enemy.y + enemy.height):
-                enemy.durability -= p_power
-                audio_manager.play_sfx("enemy_hit")
+        # Enemy projectiles hit the player
+        if p_owner == "enemy":
+            player = game_state.player_car
+            if (player.x <= p_x < player.x + player.width and
+                player.y <= p_y < player.y + player.height):
+                if game_state.collision_iframes <= 0 and not game_state.god_mode:
+                    game_state.current_durability -= p_power
+                    game_state.collision_iframes = 8  # Brief i-frames for projectile hits
+                    audio_manager.play_sfx("crash")
+                    notifications.append(f"Hit by enemy fire! (-{int(p_power)} HP)")
                 projectiles_to_remove.add(i)
-                if enemy.durability <= 0:
-                    game_state.destroyed_this_frame.append(enemy)
-                    handle_enemy_loot_drop(game_state, enemy, app)
-                    xp = getattr(enemy, 'xp_value', 5)
-                    game_state.gain_xp(xp)
-                    _update_kill_objectives(game_state, enemy)
-                    notifications.append(f"Destroyed {enemy.__class__.__name__}! (+{xp} XP)")
-                    game_state.active_enemies.remove(enemy)
-                hit = True
-                break
-        if hit:
-            continue
+                continue
 
-        # Check for collisions with obstacles
-        for obstacle in game_state.active_obstacles[:]:
-            if (obstacle.x <= p_x < obstacle.x + obstacle.width and
-                obstacle.y <= p_y < obstacle.y + obstacle.height):
-                obstacle.durability -= p_power
-                audio_manager.play_sfx("enemy_hit")
-                projectiles_to_remove.add(i)
-                if obstacle.durability <= 0:
-                    game_state.destroyed_this_frame.append(obstacle)
-                    game_state.active_obstacles.remove(obstacle)
-                    game_state.gain_xp(obstacle.xp_value)
-                    notifications.append(f"Destroyed {obstacle.__class__.__name__}!")
-                    if obstacle.cash_value > 0:
-                        game_state.player_cash += obstacle.cash_value
-                hit = True
-                break
-        if hit:
-            continue
+        # Player projectiles hit enemies
+        if p_owner == "player":
+            hit = False
+            for enemy in game_state.active_enemies:
+                if (enemy.x <= p_x < enemy.x + enemy.width and
+                    enemy.y <= p_y < enemy.y + enemy.height):
+                    enemy.durability -= p_power
+                    audio_manager.play_sfx("enemy_hit")
+                    projectiles_to_remove.add(i)
+                    if enemy.durability <= 0:
+                        game_state.destroyed_this_frame.append(enemy)
+                        handle_enemy_loot_drop(game_state, enemy, app)
+                        xp = getattr(enemy, 'xp_value', 5)
+                        game_state.gain_xp(xp)
+                        _update_kill_objectives(game_state, enemy)
+                        notifications.append(f"Destroyed {enemy.__class__.__name__}! (+{xp} XP)")
+                        game_state.active_enemies.remove(enemy)
+                    hit = True
+                    break
+            if hit:
+                continue
 
-        # Check for collisions with fauna
-        for fauna in game_state.active_fauna[:]:
-            if (fauna.x <= p_x < fauna.x + fauna.width and
-                fauna.y <= p_y < fauna.y + fauna.height):
-                fauna.durability -= p_power
-                audio_manager.play_sfx("enemy_hit")
-                projectiles_to_remove.add(i)
-                if fauna.durability <= 0:
-                    game_state.active_fauna.remove(fauna)
-                    xp = getattr(fauna, 'xp_value', 1)
-                    game_state.gain_xp(xp)
-                    game_state.karma -= 1  # Negative karma for killing fauna
-                    _drop_meat(game_state, fauna.x, fauna.y)
-                    notifications.append(f"Killed {fauna.__class__.__name__}! (-1 Karma)")
-                hit = True
-                break
+            # Check for collisions with obstacles
+            for obstacle in game_state.active_obstacles[:]:
+                if (obstacle.x <= p_x < obstacle.x + obstacle.width and
+                    obstacle.y <= p_y < obstacle.y + obstacle.height):
+                    obstacle.durability -= p_power
+                    audio_manager.play_sfx("enemy_hit")
+                    projectiles_to_remove.add(i)
+                    if obstacle.durability <= 0:
+                        game_state.destroyed_this_frame.append(obstacle)
+                        game_state.active_obstacles.remove(obstacle)
+                        game_state.gain_xp(obstacle.xp_value)
+                        notifications.append(f"Destroyed {obstacle.__class__.__name__}!")
+                        if obstacle.cash_value > 0:
+                            game_state.player_cash += obstacle.cash_value
+                    hit = True
+                    break
+            if hit:
+                continue
+
+            # Check for collisions with fauna
+            for fauna in game_state.active_fauna[:]:
+                if (fauna.x <= p_x < fauna.x + fauna.width and
+                    fauna.y <= p_y < fauna.y + fauna.height):
+                    fauna.durability -= p_power
+                    audio_manager.play_sfx("enemy_hit")
+                    projectiles_to_remove.add(i)
+                    if fauna.durability <= 0:
+                        game_state.active_fauna.remove(fauna)
+                        xp = getattr(fauna, 'xp_value', 1)
+                        game_state.gain_xp(xp)
+                        game_state.karma -= 1  # Negative karma for killing fauna
+                        _drop_meat(game_state, fauna.x, fauna.y)
+                        notifications.append(f"Killed {fauna.__class__.__name__}! (-1 Karma)")
+                    hit = True
+                    break
 
     # Remove projectiles that have collided
     if projectiles_to_remove:
@@ -325,14 +345,13 @@ def handle_collisions(game_state, world, audio_manager, app):
                 break
 
     # --- Pickup Collisions ---
-    # Pickups have a 3x3 collection area for more forgiving collection
-    PICKUP_SIZE = 3
+    # Pickups have a collection area for forgiving collection
+    PICKUP_RADIUS = 5
     pickups_to_remove = []
     for pickup_id, pickup in game_state.active_pickups.items():
-        if (game_state.player_car.x < pickup["x"] + PICKUP_SIZE and
-            game_state.player_car.x + game_state.player_car.width > pickup["x"] - PICKUP_SIZE // 2 and
-            game_state.player_car.y < pickup["y"] + PICKUP_SIZE and
-            game_state.player_car.y + game_state.player_car.height > pickup["y"] - PICKUP_SIZE // 2):
+        dx = game_state.player_car.x + game_state.player_car.width / 2 - pickup["x"]
+        dy = game_state.player_car.y + game_state.player_car.height / 2 - pickup["y"]
+        if dx * dx + dy * dy < PICKUP_RADIUS * PICKUP_RADIUS:
 
             if pickup["type"] == "cash":
                 game_state.player_cash += pickup["value"]
@@ -346,7 +365,7 @@ def handle_collisions(game_state, world, audio_manager, app):
             elif pickup["type"] == "narrative":
                 from ..screens.narrative_dialog import NarrativeDialogScreen
                 game_state.menu_open = True
-                game_state.player_car.app.push_screen(NarrativeDialogScreen(pickup["data"]))
+                app.push_screen(NarrativeDialogScreen(pickup["data"]))
 
             pickups_to_remove.append(pickup_id)
 

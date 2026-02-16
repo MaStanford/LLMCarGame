@@ -77,24 +77,16 @@ class KillCountObjective(Objective):
         return obj
 
 class SurvivalObjective(Objective):
-    def __init__(self, duration, mini_boss_name):
+    def __init__(self, duration):
         super().__init__()
-        self.duration = duration
+        self.duration = duration  # seconds
         self.timer = duration
-        self.mini_boss_name = mini_boss_name
-        self.mini_boss_spawned = False
+        self.active = False  # True when player is at the quest location
 
     def update(self, game_state):
-        if self.timer > 0:
-            self.timer -= 1
-        elif not self.mini_boss_spawned:
-            # Logic to spawn mini-boss will be in game.py
-            self.mini_boss_spawned = True
-        
-        if self.mini_boss_spawned and not any(
-            getattr(e, 'name', '') == self.mini_boss_name
-            for e in game_state.active_enemies
-        ):
+        # Timer is decremented externally in quest_logic.py only when
+        # the player is within range of the quest waypoint.
+        if self.timer <= 0:
             self.completed = True
 
     def to_dict(self):
@@ -102,16 +94,15 @@ class SurvivalObjective(Objective):
         data.update({
             "duration": self.duration,
             "timer": self.timer,
-            "mini_boss_name": self.mini_boss_name,
-            "mini_boss_spawned": self.mini_boss_spawned
+            "active": self.active
         })
         return data
 
     @classmethod
     def from_dict(cls, data):
-        obj = cls(data["duration"], data["mini_boss_name"])
+        obj = cls(data["duration"])
         obj.timer = data["timer"]
-        obj.mini_boss_spawned = data["mini_boss_spawned"]
+        obj.active = data.get("active", False)
         obj.completed = data["completed"]
         return obj
 
@@ -164,6 +155,53 @@ class DefendLocationObjective(Objective):
         obj.timer = data["timer"]
         obj.completed = data["completed"]
         return obj
+
+
+class WaveSpawnObjective(Objective):
+    """Survive multiple waves of enemies spawning at a quest waypoint."""
+    def __init__(self, total_waves, enemies_per_wave):
+        super().__init__()
+        self.total_waves = total_waves
+        self.enemies_per_wave = enemies_per_wave
+        self.current_wave = 0
+        self.wave_enemies_remaining = 0
+        self.wave_active = False  # True once the player arrives at the location
+
+    def update(self, game_state):
+        # Wave progression is handled externally in quest_logic.py
+        if self.current_wave >= self.total_waves and self.wave_enemies_remaining <= 0:
+            self.completed = True
+
+    def to_dict(self):
+        data = super().to_dict()
+        data.update({
+            "total_waves": self.total_waves,
+            "enemies_per_wave": self.enemies_per_wave,
+            "current_wave": self.current_wave,
+            "wave_enemies_remaining": self.wave_enemies_remaining,
+            "wave_active": self.wave_active,
+        })
+        return data
+
+    @classmethod
+    def from_dict(cls, data):
+        obj = cls(data["total_waves"], data["enemies_per_wave"])
+        obj.current_wave = data["current_wave"]
+        obj.wave_enemies_remaining = data["wave_enemies_remaining"]
+        obj.wave_active = data.get("wave_active", False)
+        obj.completed = data["completed"]
+        return obj
+
+
+class QuestItem:
+    """A lightweight item added to the player's inventory for delivery quests.
+    Cannot be sold at shops."""
+    def __init__(self, name, description, quest_name):
+        self.name = name
+        self.description = description
+        self.quest_name = quest_name
+        self.sellable = False
+        self.price = 0  # Not sellable, but shops check this attribute
 
 class Quest:
     def __init__(self, name, description, objectives, rewards, city_id=None, quest_giver_faction=None, target_faction=None, time_limit=None, next_quest_id=None, requires_turn_in=True, dialog=None, is_conquest_quest=False):
@@ -226,6 +264,8 @@ class Quest:
                 objectives.append(DeliverPackageObjective.from_dict(obj_data))
             elif obj_type == "DefendLocationObjective":
                 objectives.append(DefendLocationObjective.from_dict(obj_data))
+            elif obj_type == "WaveSpawnObjective":
+                objectives.append(WaveSpawnObjective.from_dict(obj_data))
         
         quest = cls(
             name=data["name"],
@@ -308,7 +348,7 @@ QUEST_TEMPLATES = {
         "detail_dialog": "The enemy is throwing everything they have at us. Survive their assault for a few minutes. A lieutenant is leading the final wave; take them out to break their morale and secure the outpost.",
         "completion_dialog": "You saved those people! We were cutting it close, but you bought us the time we needed. We're in your debt.",
         "objectives": [
-            (SurvivalObjective, [3000, "rival_lieutenant"]), # 150 seconds
+            (SurvivalObjective, [120]),  # 120 seconds
         ],
         "rewards": {
             "xp": 1000,
@@ -328,5 +368,35 @@ QUEST_TEMPLATES = {
             "xp": 1000,
             "cash": 2000,
         }
-    }
+    },
+    "wave_assault": {
+        "name": "Clear the {target_faction_name} Encampment",
+        "description": "The {target_faction_name} have set up an encampment nearby. Fight through multiple waves of their forces to clear them out.",
+        "offer_dialog": "We've located a {target_faction_name} encampment not far from here. They're dug in and getting bolder. We need someone to go in there and wipe them out, wave after wave. Think you can handle it?",
+        "detail_dialog": "Get to the encampment and engage. Expect multiple waves of resistance. Each wave will be tougher than the last. Clear all waves to complete the mission.",
+        "completion_dialog": "You cleared the entire encampment. The {target_faction_name} won't be setting up shop around here again. Outstanding work.",
+        "objectives": [
+            (WaveSpawnObjective, [3, 4]),  # 3 waves, 4 enemies per wave
+        ],
+        "rewards": {
+            "xp": 1500,
+            "cash": 800,
+        },
+        "time_limit": 5400,  # 3 minutes
+    },
+    "courier_run": {
+        "name": "Courier Run to {destination}",
+        "description": "Deliver a sensitive package to {destination}. The {target_faction_name} would love to intercept it.",
+        "offer_dialog": "We've got a package that needs to get to {destination}, and it needs to get there fast. The {target_faction_name} have been intercepting our deliveries lately, so expect trouble on the road.",
+        "detail_dialog": "Take the package and drive to {destination}. Enter the city to complete the delivery. Watch your back — they'll be looking for you.",
+        "completion_dialog": "Package delivered safe and sound. You're a lifesaver. Here's your cut.",
+        "objectives": [
+            (DeliverPackageObjective, ["{destination}"]),
+        ],
+        "rewards": {
+            "xp": 600,
+            "cash": 1500,
+        },
+        "is_delivery": True,
+    },
 }

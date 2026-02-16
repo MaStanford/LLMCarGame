@@ -2,7 +2,7 @@ import math
 from functools import partial
 from textual.screen import Screen
 from textual.widgets import Header, Footer, Static, Button
-from textual.containers import Vertical, Horizontal, ScrollableContainer
+from textual.containers import Vertical, Horizontal
 from textual.binding import Binding
 from textual.worker import Worker, WorkerState
 
@@ -24,8 +24,8 @@ class ShopScreen(Screen):
         Binding("left", "switch_focus", "Switch", show=True),
         Binding("right", "switch_focus", "Switch", show=True),
         Binding("enter", "select_item", "Select", show=True),
-        Binding("shift+up", "scroll_page(-3)", "Scroll Up", show=False),
-        Binding("shift+down", "scroll_page(3)", "Scroll Down", show=False),
+        Binding("shift+up", "scroll_pane(-3)", "Scroll Up", show=True),
+        Binding("shift+down", "scroll_pane(3)", "Scroll Down", show=True),
     ]
 
     def __init__(self, shop_type: str, *args, **kwargs) -> None:
@@ -201,6 +201,14 @@ class ShopScreen(Screen):
             self._sell_item()
         self.update_action_button()
 
+    def action_scroll_pane(self, amount: int) -> None:
+        """Scroll the focused inventory pane."""
+        if self.focused_list == "shop":
+            pane = self.query_one("#shop_inventory_pane")
+        else:
+            pane = self.query_one("#player_inventory_pane")
+        pane.scroll_relative(y=amount)
+
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle the action button being clicked."""
         if event.button.id == "action_button":
@@ -236,6 +244,12 @@ class ShopScreen(Screen):
 
         if self.sell_confirmation_item == selected_item:
             # Second press: confirm sell
+            # Block selling quest items
+            from ..data.quests import QuestItem
+            if isinstance(selected_item, QuestItem):
+                self._notify("Quest items cannot be sold!")
+                self.sell_confirmation_item = None
+                return
             price = calculate_sell_price(selected_item, gs)
             gs.player_cash += price
             gs.player_inventory.remove(selected_item)
@@ -246,27 +260,24 @@ class ShopScreen(Screen):
             # First press: stage for confirmation
             self.sell_confirmation_item = selected_item
 
-    def action_scroll_page(self, amount: int) -> None:
-        """Scroll the entire shop page."""
-        self.query_one("#shop_page", ScrollableContainer).scroll_relative(y=amount)
-
     def compose(self):
         """Compose the layout of the screen."""
         yield Header(show_clock=True)
-        with ScrollableContainer(id="shop_page"):
-            # Inventories side by side
+        with Vertical(id="shop_page"):
+            # Top: inventory lists side by side
             with Horizontal(id="shop_lists_row"):
                 with Vertical(id="shop_inventory_pane"):
                     yield ItemListWidget(id="shop_inventory")
                 with Vertical(id="player_inventory_pane"):
                     yield ItemListWidget(id="player_inventory")
-            # Shopkeeper dialog
-            yield Static("Welcome, traveler!", id="shop_dialog")
-            # Item info and action row
-            yield ItemInfoWidget()
-            with Horizontal(id="stats_action_row"):
-                yield MenuStatsHUD()
-                btn = Button("Buy", id="action_button", variant="primary")
-                btn.can_focus = False
-                yield btn
+            # Bottom: 2-column detail area
+            with Horizontal(id="shop_detail_row"):
+                with Vertical(id="shop_left_col"):
+                    yield Static("Welcome, traveler!", id="shop_dialog")
+                    yield ItemInfoWidget()
+                with Vertical(id="shop_right_col"):
+                    yield MenuStatsHUD()
+                    btn = Button("Buy", id="action_button", variant="primary")
+                    btn.can_focus = False
+                    yield btn
         yield Footer()

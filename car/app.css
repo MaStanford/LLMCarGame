@@ -216,17 +216,19 @@ ShopScreen {
 
 ShopScreen #shop_page {
     padding: 1;
+    height: 1fr;
 }
 
+/* --- Top row: inventory lists side by side --- */
 ShopScreen #shop_lists_row {
     height: auto;
-    max-height: 16;
+    max-height: 50%;
 }
 
 ShopScreen #shop_inventory_pane, ShopScreen #player_inventory_pane {
     width: 1fr;
     height: auto;
-    max-height: 16;
+    max-height: 14;
     border: heavy white;
     overflow-y: auto;
     margin: 0 1 0 0;
@@ -240,33 +242,44 @@ ShopScreen #shop_inventory, ShopScreen #player_inventory {
     height: auto;
 }
 
+/* --- Bottom row: 2-column detail area --- */
+ShopScreen #shop_detail_row {
+    height: 1fr;
+    margin-top: 1;
+}
+
+ShopScreen #shop_left_col {
+    width: 1fr;
+    margin-right: 1;
+}
+
+ShopScreen #shop_right_col {
+    width: 1fr;
+}
+
 ShopScreen #shop_dialog {
     border: heavy white;
     padding: 1;
     height: auto;
-    max-height: 6;
-    margin-top: 1;
+    max-height: 5;
 }
 
 ShopScreen ItemInfoWidget {
     margin-top: 1;
+    height: 1fr;
+    overflow-y: auto;
 }
 
-ShopScreen #stats_action_row {
-    height: auto;
-    width: 100%;
-    margin-top: 1;
-}
-
-ShopScreen #stats_action_row MenuStatsHUD {
-    width: 1fr;
+ShopScreen #shop_right_col MenuStatsHUD {
+    height: 1fr;
+    overflow-y: auto;
 }
 
 ShopScreen #action_button {
-    width: auto;
+    width: 100%;
     min-width: 20;
     height: auto;
-    margin-left: 1;
+    margin-top: 1;
 }
 
 /* --- Shop-Specific Themes --- */

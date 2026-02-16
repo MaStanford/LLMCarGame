@@ -14,7 +14,7 @@ WEAPONS_DATA = {
         "speed": 28,
         "ammo_type": AMMO_BULLET,
         "particle": "∙",
-        "price": 500,
+        "price": 1200,
         "art": {
             "N":  ["╨"],
             "NE": ["╲"],
@@ -36,7 +36,7 @@ WEAPONS_DATA = {
         "speed": 30,
         "ammo_type": AMMO_HEAVY_BULLET,
         "particle": "■",
-        "price": 1500,
+        "price": 3500,
         "art": {
             "N":  ["█▄"],
             "NE": ["▚"],
@@ -58,7 +58,7 @@ WEAPONS_DATA = {
         "speed": 20,
         "ammo_type": AMMO_FUEL,
         "particle": FLAME_CHAR,
-        "price": 2500,
+        "price": 8000,
         "art": {
             "N":  ["≈^"],
             "NE": ["╱"],
@@ -75,12 +75,12 @@ WEAPONS_DATA = {
         "name": "Mine Launcher",
         "slots": 2,
         "fire_rate": 20,
-        "power": 20,
+        "power": 200,
         "range": 1,
         "speed": 0,
         "ammo_type": AMMO_MINES,
         "particle": "¤",
-        "price": 1000,
+        "price": 2000,
         "art": {
             "N":  ["(O)"],
             "NE": ["(O)"],
@@ -102,7 +102,7 @@ WEAPONS_DATA = {
         "speed": 28,
         "ammo_type": AMMO_BULLET,
         "particle": "·",
-        "price": 100,
+        "price": 250,
         "art": {
             "N":  ["ı"],
             "NE": ["╱"],
@@ -124,7 +124,7 @@ WEAPONS_DATA = {
         "speed": 25,
         "ammo_type": AMMO_SHOTGUN,
         "particle": "•",
-        "price": 750,
+        "price": 2000,
         "pellet_count": 5,
         "spread_angle": 0.5,
         "art": {

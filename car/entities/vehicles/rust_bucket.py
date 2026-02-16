@@ -1,6 +1,6 @@
 import random
 from ..vehicle import Vehicle
-from ...logic.ai_behaviors import _execute_ram_behavior
+from ...logic.ai_behaviors import execute_behavior
 
 from ...data.game_constants import GLOBAL_SPEED_MULTIPLIER
 
@@ -19,6 +19,8 @@ class RustBucket(Vehicle):
         ]
         super().__init__(x, y, art, durability=45, speed=9.3 * GLOBAL_SPEED_MULTIPLIER, acceleration=0.4, handling=0.08)
         self.name = "Rust Bucket"
+        self.collision_damage = 15
+        self.shoot_damage = 0
         self.phases = [
             {"name": "Kamikaze", "duration": (10, 10), "behavior": "RAM", "next_phases": {"Kamikaze": 1.0}}
         ]
@@ -32,11 +34,11 @@ class RustBucket(Vehicle):
 
     def update(self, game_state, world, dt):
         """Updates the vehicle's state and AI logic each frame."""
+        self.ai_state["elapsed"] = self.ai_state.get("elapsed", 0) + dt
+
         # This AI is simple, it just rams forever.
-        behavior = self.current_phase["behavior"]
-        if behavior == "RAM":
-            _execute_ram_behavior(self, game_state, self)
-        
+        execute_behavior(self.current_phase["behavior"], self, game_state, self)
+
         # Update position
         self.x += self.vx * dt
         self.y += self.vy * dt

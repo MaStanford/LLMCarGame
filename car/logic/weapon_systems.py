@@ -72,13 +72,14 @@ def update_weapon_systems(game_state, audio_manager):
                             audio_manager.play_sfx("flamethrower")
                         else:
                             game_state.active_particles.append([
-                                p_x, p_y, 
-                                p_math_angle_rad, 
-                                weapon.speed * GLOBAL_SPEED_MULTIPLIER, 
-                                projectile_power, 
-                                weapon.range, 
+                                p_x, p_y,
+                                p_math_angle_rad,
+                                weapon.speed * GLOBAL_SPEED_MULTIPLIER,
+                                projectile_power,
+                                weapon.range,
                                 particle_char,
                                 origin_x,
-                                origin_y
+                                origin_y,
+                                "player"
                             ])
                             audio_manager.play_sfx(weapon.weapon_type_id)

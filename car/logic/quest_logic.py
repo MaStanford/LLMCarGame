@@ -1,11 +1,17 @@
 import random
-from ..data.quests import Quest, KillBossObjective, KillCountObjective, SurvivalObjective, DeliverPackageObjective, DefendLocationObjective, QUEST_TEMPLATES
-from ..logic.entity_loader import PLAYER_CARS
+from ..data.quests import Quest, KillBossObjective, KillCountObjective, SurvivalObjective, DeliverPackageObjective, DefendLocationObjective, WaveSpawnObjective, QuestItem, QUEST_TEMPLATES
+from ..logic.entity_loader import PLAYER_CARS, ENEMY_VEHICLES
 from ..entities.base import Entity
 from ..data.game_constants import CITY_SPACING
 from ..world.generation import get_buildings_in_city, get_city_faction
 from ..logic.data_loader import FACTION_DATA
 from . import faction_logic
+
+# Radius within which quest location objectives are active
+QUEST_LOCATION_RADIUS = 80
+QUEST_LOCATION_RADIUS_SQ = QUEST_LOCATION_RADIUS ** 2
+# Timer for spawning quest enemies during wave/survival objectives
+QUEST_ENEMY_SPAWN_INTERVAL = 2.0  # seconds between spawn checks
 
 def get_quest_target_location(quest, game_state):
     """
@@ -66,8 +72,19 @@ def get_quest_target_location(quest, game_state):
                 return x, y, label
 
         elif isinstance(objective, SurvivalObjective):
-            remaining_s = max(0, objective.timer // 30)
+            remaining_s = max(0, int(objective.timer))
             label = f"Survive ({remaining_s}s)"
+            if quest.city_id:
+                x = quest.city_id[0] * CITY_SPACING
+                y = quest.city_id[1] * CITY_SPACING
+                return x, y, label
+
+        elif isinstance(objective, WaveSpawnObjective):
+            remaining = objective.total_waves - objective.current_wave
+            if objective.wave_enemies_remaining > 0:
+                label = f"Wave {objective.current_wave}/{objective.total_waves} ({objective.wave_enemies_remaining} left)"
+            else:
+                label = f"Wave {objective.current_wave}/{objective.total_waves}"
             if quest.city_id:
                 x = quest.city_id[0] * CITY_SPACING
                 y = quest.city_id[1] * CITY_SPACING
@@ -118,9 +135,29 @@ def get_available_quests(game_state):
 
 
 def handle_quest_acceptance(game_state, quest):
-    """Handles the logic for accepting a quest."""
-    game_state.current_quest = quest
-    
+    """Handles the logic for accepting a quest. Returns False if quest log is full."""
+    if len(game_state.active_quests) >= 3:
+        return False
+
+    # Set the city_id if not already set
+    if not quest.city_id:
+        quest.city_id = (
+            round(game_state.car_world_x / CITY_SPACING),
+            round(game_state.car_world_y / CITY_SPACING),
+        )
+
+    game_state.active_quests.append(quest)
+
+    # Add QuestItem to inventory for delivery quests
+    for objective in quest.objectives:
+        if isinstance(objective, DeliverPackageObjective):
+            quest_item = QuestItem(
+                name=f"Package for {objective.destination}",
+                description=f"A sealed package to be delivered to {objective.destination}.",
+                quest_name=quest.name,
+            )
+            game_state.player_inventory.append(quest_item)
+
     # Check if the quest has a boss and spawn it
     quest_template_key = next((k for k, v in QUEST_TEMPLATES.items() if v["name"] == quest.name.split(" ")[0]), None)
     if quest_template_key:
@@ -139,32 +176,74 @@ def handle_quest_acceptance(game_state, quest):
                 boss.art = boss_car_instance.art
                 boss.width, boss.height = Entity.get_car_dimensions(boss.art)
                 game_state.active_bosses.append(boss)
-                game_state.current_quest.boss = boss # Link boss to quest
-                # audio_manager.stop_music()
-                # audio_manager.play_music("car/sounds/boss.mid")
+                quest.boss = boss
+    return True
 
 from ..screens.quest_complete import QuestCompleteScreen
 from .quest_caching import trigger_quest_prefetching
 
+def _get_quest_waypoint(quest):
+    """Returns (x, y) for the quest's combat waypoint, or (None, None)."""
+    if quest.city_id:
+        return quest.city_id[0] * CITY_SPACING, quest.city_id[1] * CITY_SPACING
+    return None, None
+
+
+def _spawn_quest_enemies(game_state, wx, wy, count):
+    """Spawn a batch of quest enemies around a waypoint location."""
+    import math
+    for _ in range(count):
+        enemy_class = random.choice(ENEMY_VEHICLES)
+        # Spawn in a ring around the waypoint
+        angle = random.uniform(0, 2 * math.pi)
+        dist = random.uniform(30, 70)
+        sx = wx + dist * math.cos(angle)
+        sy = wy + dist * math.sin(angle)
+
+        new_enemy = enemy_class(sx, sy)
+        hp_mult = game_state.difficulty_mods.get("enemy_hp_mult", 1.0)
+        dmg_mult = game_state.difficulty_mods.get("enemy_dmg_mult", 1.0)
+        new_enemy.durability = int(new_enemy.durability * hp_mult)
+        new_enemy.max_durability = new_enemy.durability
+        if hasattr(new_enemy, 'collision_damage'):
+            new_enemy.collision_damage = int(new_enemy.collision_damage * dmg_mult)
+        else:
+            new_enemy.collision_damage = int(5 * dmg_mult)
+        new_enemy.patrol_target_x = wx + random.uniform(-50, 50)
+        new_enemy.patrol_target_y = wy + random.uniform(-50, 50)
+        game_state.active_enemies.append(new_enemy)
+
+
 def update_quests(game_state, audio_manager, app):
     """
-    Updates the state of the current quest.
+    Updates the state of all active quests.
     Returns a list of notification messages.
     """
     notifications = []
-    if game_state.current_quest:
-        # --- Handle Package Delivery Objective ---
-        for objective in game_state.current_quest.objectives:
+    quests_to_remove = []
+
+    for quest in list(game_state.active_quests):
+        wx, wy = _get_quest_waypoint(quest)
+
+        # Calculate distance to quest waypoint (used by multiple objectives)
+        dist_to_waypoint_sq = float('inf')
+        if wx is not None:
+            dist_to_waypoint_sq = (game_state.car_world_x - wx)**2 + (game_state.car_world_y - wy)**2
+        at_waypoint = dist_to_waypoint_sq <= QUEST_LOCATION_RADIUS_SQ
+
+        for objective in quest.objectives:
+            if objective.completed:
+                continue
+
+            # --- Handle Package Delivery Objective ---
             if isinstance(objective, DeliverPackageObjective):
-                # Check if the player is in any city
                 grid_x = round(game_state.car_world_x / CITY_SPACING)
                 grid_y = round(game_state.car_world_y / CITY_SPACING)
                 city_key = f"{grid_x},{grid_y}"
-                
+
                 if city_key in game_state.world_details.get("cities", {}):
                     city_name = game_state.world_details["cities"][city_key]
                     if city_name == objective.destination:
-                        # Check if player is physically in the city bounds
                         half_city = CITY_SPACING / 2
                         city_world_x = grid_x * CITY_SPACING
                         city_world_y = grid_y * CITY_SPACING
@@ -172,69 +251,134 @@ def update_quests(game_state, audio_manager, app):
                             abs(game_state.car_world_y - city_world_y) < half_city):
                             objective.completed = True
                             notifications.append(f"Package delivered to {city_name}!")
+                            # Remove the QuestItem from inventory
+                            game_state.player_inventory = [
+                                item for item in game_state.player_inventory
+                                if not (isinstance(item, QuestItem) and item.quest_name == quest.name)
+                            ]
+
+            # --- Handle Defend Location Objective ---
             elif isinstance(objective, DefendLocationObjective):
-                # Find the location coordinates from world_details
                 location_coords = None
                 for landmark in game_state.world_details.get("landmarks", []):
                     if landmark["name"] == objective.location:
                         location_coords = (landmark["x"], landmark["y"])
                         break
-                
+
                 if location_coords:
-                    # Check if player is near the location
                     player_x = game_state.car_world_x
                     player_y = game_state.car_world_y
                     dist_sq = (player_x - location_coords[0])**2 + (player_y - location_coords[1])**2
-                    
-                    # Define a radius for the defense area (e.g., 50 units)
                     defense_radius_sq = 50**2
-                    
+
                     if dist_sq <= defense_radius_sq:
                         if objective.timer > 0:
                             objective.timer -= 1
-                            if objective.timer % 30 == 0: # Notify every second
+                            if objective.timer % 30 == 0:
                                 notifications.append(f"Defending {objective.location}... {objective.timer // 30}s remaining.")
                         else:
                             objective.completed = True
                             notifications.append(f"Successfully defended {objective.location}!")
                     else:
                         notifications.append(f"Return to {objective.location} to defend it!")
-        
-        if not game_state.current_quest.ready_to_turn_in:
-            game_state.current_quest.update(game_state)
 
-        if game_state.current_quest.completed and not game_state.current_quest.ready_to_turn_in:
-            if game_state.current_quest.requires_turn_in:
-                game_state.current_quest.ready_to_turn_in = True
-                notifications.append(f"Objective complete! Return to city.")
-                audio_manager.stop_music()
-                audio_manager.play_music("car/sounds/world.mid")
-                trigger_quest_prefetching(app) # Trigger pre-fetching
+            # --- Handle Survival Objective ---
+            elif isinstance(objective, SurvivalObjective):
+                if at_waypoint and wx is not None:
+                    if not objective.active:
+                        objective.active = True
+                        notifications.append(f"Survival zone reached! Hold out for {int(objective.timer)}s!")
+                        # Spawn initial wave of enemies
+                        _spawn_quest_enemies(game_state, wx, wy, 3)
+
+                    # Decrement timer (called every frame at 30fps)
+                    objective.timer -= 1.0 / 30.0
+
+                    # Spawn reinforcements periodically
+                    spawn_key = "survival_spawn_timer"
+                    if spawn_key not in quest.__dict__:
+                        quest.__dict__[spawn_key] = QUEST_ENEMY_SPAWN_INTERVAL
+                    quest.__dict__[spawn_key] -= 1.0 / 30.0
+                    if quest.__dict__[spawn_key] <= 0:
+                        _spawn_quest_enemies(game_state, wx, wy, random.randint(1, 3))
+                        quest.__dict__[spawn_key] = QUEST_ENEMY_SPAWN_INTERVAL
+
+                    remaining = max(0, int(objective.timer))
+                    if remaining > 0 and remaining % 10 == 0 and abs(objective.timer - remaining) < 0.05:
+                        notifications.append(f"Survive: {remaining}s remaining!")
+
+                    if objective.timer <= 0:
+                        objective.completed = True
+                        notifications.append("You survived!")
+                elif objective.active:
+                    notifications.append("Return to the survival zone!")
+
+            # --- Handle Wave Spawn Objective ---
+            elif isinstance(objective, WaveSpawnObjective):
+                if at_waypoint and wx is not None:
+                    if not objective.wave_active:
+                        objective.wave_active = True
+                        # Start the first wave
+                        objective.current_wave = 1
+                        objective.wave_enemies_remaining = objective.enemies_per_wave
+                        _spawn_quest_enemies(game_state, wx, wy, objective.enemies_per_wave)
+                        notifications.append(f"Wave {objective.current_wave}/{objective.total_waves} incoming!")
+
+                    elif objective.wave_enemies_remaining <= 0:
+                        # Current wave cleared
+                        if objective.current_wave < objective.total_waves:
+                            objective.current_wave += 1
+                            objective.wave_enemies_remaining = objective.enemies_per_wave
+                            _spawn_quest_enemies(game_state, wx, wy, objective.enemies_per_wave)
+                            notifications.append(f"Wave {objective.current_wave}/{objective.total_waves} incoming!")
+                        else:
+                            objective.completed = True
+                            notifications.append("All waves cleared!")
+                elif objective.wave_active:
+                    notifications.append("Return to the combat zone!")
+
+        if not quest.ready_to_turn_in:
+            quest.update(game_state)
+
+        if quest.completed and not quest.ready_to_turn_in:
+            if quest.requires_turn_in:
+                quest.ready_to_turn_in = True
+                notifications.append(f"Objective complete! Return to city to turn in '{quest.name}'.")
+                trigger_quest_prefetching(app)
             else:
-                # For quests that complete immediately without turn-in
-                app.push_screen(QuestCompleteScreen(game_state.current_quest))
-                complete_quest(game_state, app)
-                audio_manager.stop_music()
-                audio_manager.play_music("car/sounds/world.mid")
+                app.push_screen(QuestCompleteScreen(quest))
+                complete_quest(game_state, app, quest)
 
-        elif game_state.current_quest.failed:
-            giver_faction_id = game_state.current_quest.quest_giver_faction
+        elif quest.failed:
+            giver_faction_id = quest.quest_giver_faction
             if giver_faction_id:
                 if giver_faction_id not in game_state.faction_reputation:
                     game_state.faction_reputation[giver_faction_id] = 0
                 game_state.faction_reputation[giver_faction_id] -= 5
-                faction_logic.decrease_control(game_state, giver_faction_id, 2) # Control penalty for failure
+                faction_logic.decrease_control(game_state, giver_faction_id, 2)
                 notifications.append(f"Reputation with {game_state.factions[giver_faction_id]['name']} decreased.")
-            
-            notifications.append(f"Quest Failed: {game_state.current_quest.name}")
+
+            notifications.append(f"Quest Failed: {quest.name}")
             game_state.story_events.append({
-                "text": f"Failed '{game_state.current_quest.name}'. Reputation suffered.",
+                "text": f"Failed '{quest.name}'. Reputation suffered.",
                 "event_type": "quest_failed",
             })
-            game_state.current_quest = None
-            audio_manager.stop_music()
-            audio_manager.play_music("car/sounds/world.mid")
+            quests_to_remove.append(quest)
+
+    for quest in quests_to_remove:
+        if quest in game_state.active_quests:
+            game_state.active_quests.remove(quest)
+    _clamp_selected_quest(game_state)
+
     return notifications
+
+
+def _clamp_selected_quest(game_state):
+    """Ensure selected_quest_index stays in bounds."""
+    if not game_state.active_quests:
+        game_state.selected_quest_index = 0
+    elif game_state.selected_quest_index >= len(game_state.active_quests):
+        game_state.selected_quest_index = len(game_state.active_quests) - 1
 
 def check_for_faction_takeover(game_state):
     """
@@ -309,15 +453,16 @@ def generate_quest(game_state, quest_id):
 import json
 import os
 
-def complete_quest(game_state, app):
+def complete_quest(game_state, app, quest=None):
     """
     Handles the logic for completing a quest.
-    If the quest is part of a chain, it sets up the next quest.
-    Otherwise, it clears the current quest.
+    If the quest is part of a chain, it adds the next quest.
+    Removes the completed quest from active_quests.
     """
-    quest = game_state.current_quest
-    if not quest:
-        return
+    if quest is None:
+        if not game_state.active_quests:
+            return
+        quest = game_state.active_quests[0]
 
     # --- Log the completed quest for the narrative engine ---
     quest_log_path = "temp/quest_log.json"
@@ -348,7 +493,7 @@ def complete_quest(game_state, app):
         "text": f"Completed '{quest.name}' for the {giver_name}. Earned {rewards.get('xp', 0)} XP and ${rewards.get('cash', 0)}.",
         "event_type": "quest_complete",
     })
-    
+
     # Update reputation
     giver_faction_id = quest.quest_giver_faction
     if giver_faction_id:
@@ -359,14 +504,25 @@ def complete_quest(game_state, app):
         game_state.faction_reputation[target_faction_id] = game_state.faction_reputation.get(target_faction_id, 0) - 15
         faction_logic.decrease_control(game_state, target_faction_id, 5)
 
+    # Remove completed quest from active list
+    if quest in game_state.active_quests:
+        game_state.active_quests.remove(quest)
+
+    # Remove any QuestItems associated with this quest
+    game_state.player_inventory = [
+        item for item in game_state.player_inventory
+        if not (isinstance(item, QuestItem) and item.quest_name == quest.name)
+    ]
+
     # Check for next quest in the chain
-    if quest.next_quest_id:
-        game_state.current_quest = generate_quest(game_state, quest.next_quest_id)
-    else:
-        game_state.current_quest = None
-    
+    if quest.next_quest_id and len(game_state.active_quests) < 3:
+        next_quest = generate_quest(game_state, quest.next_quest_id)
+        if next_quest:
+            game_state.active_quests.append(next_quest)
+
+    _clamp_selected_quest(game_state)
     check_for_faction_takeover(game_state)
-    
+
     # Trigger pre-fetching for the next set of quests
     trigger_quest_prefetching(app)
 

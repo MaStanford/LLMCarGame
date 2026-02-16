@@ -1,6 +1,6 @@
 import random
 from ..vehicle import Vehicle
-from ...logic.ai_behaviors import _execute_chase_behavior, _execute_ram_behavior, _execute_evade_behavior
+from ...logic.ai_behaviors import execute_behavior
 
 from ...data.game_constants import GLOBAL_SPEED_MULTIPLIER
 
@@ -24,10 +24,13 @@ class ArmoredTruck(Vehicle):
         self.cash_value = 100
         self.drop_item = "repair_kit"
         self.drop_rate = 0.5
-        
+        self.collision_damage = 12
+        self.shoot_damage = 4
+
         # More aggressive AI phases
         self.phases = [
-            {"name": "Chase", "duration": (4, 6), "behavior": "CHASE", "next_phases": {"PrepareRam": 1.0}},
+            {"name": "Chase", "duration": (4, 6), "behavior": "CHASE", "next_phases": {"Shoot": 0.6, "PrepareRam": 0.4}},
+            {"name": "Shoot", "duration": (3, 5), "behavior": "SHOOT", "next_phases": {"PrepareRam": 1.0}},
             {"name": "PrepareRam", "duration": (1, 2), "behavior": "EVADE", "next_phases": {"Ram": 1.0}},
             {"name": "Ram", "duration": (3, 4), "behavior": "RAM", "next_phases": {"Chase": 1.0}},
         ]
@@ -40,6 +43,8 @@ class ArmoredTruck(Vehicle):
 
     def update(self, game_state, world, dt):
         """Updates the vehicle's state and AI logic each frame."""
+        self.ai_state["elapsed"] = self.ai_state.get("elapsed", 0) + dt
+
         # Countdown the phase timer
         self.phase_timer -= dt
 
@@ -52,14 +57,8 @@ class ArmoredTruck(Vehicle):
             self.phase_timer = random.uniform(self.current_phase["duration"][0], self.current_phase["duration"][1])
 
         # Execute the current AI behavior
-        behavior = self.current_phase["behavior"]
-        if behavior == "CHASE":
-            _execute_chase_behavior(self, game_state, self)
-        elif behavior == "RAM":
-            _execute_ram_behavior(self, game_state, self)
-        elif behavior == "EVADE":
-            _execute_evade_behavior(self, game_state, self)
-            
+        execute_behavior(self.current_phase["behavior"], self, game_state, self)
+
         # Update position based on velocity
         self.x += self.vx * dt
         self.y += self.vy * dt

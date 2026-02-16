@@ -26,11 +26,11 @@ PICKUP_DATA = {
     PICKUP_CASH:        {"art": ["[$]"], "color_pair_name": "PICKUP_CASH", "value": 10},
 
     # --- Ammo Pickups ---
-    PICKUP_AMMO_BULLET: {"art": ["[∙∙]"], "color_pair_name": "PICKUP_AMMO", "value": 50, "ammo_type": AMMO_BULLET},
-    PICKUP_AMMO_HEAVY_BULLET: {"art": ["[■■]"], "color_pair_name": "PICKUP_AMMO", "value": 25, "ammo_type": AMMO_HEAVY_BULLET},
-    PICKUP_AMMO_SHELL:  {"art": ["[▊▊]"], "color_pair_name": "PICKUP_AMMO", "value": 15, "ammo_type": AMMO_SHOTGUN},
-    PICKUP_AMMO_MINES:  {"art": ["[※]"], "color_pair_name": "PICKUP_AMMO", "value": 5, "ammo_type": AMMO_MINES},
-    PICKUP_AMMO_FUEL:   {"art": ["[☢]"], "color_pair_name": "PICKUP_AMMO", "value": 100, "ammo_type": AMMO_FUEL},
+    PICKUP_AMMO_BULLET: {"art": ["[∙∙]"], "color_pair_name": "PICKUP_AMMO", "value": 100, "ammo_type": AMMO_BULLET},
+    PICKUP_AMMO_HEAVY_BULLET: {"art": ["[■■]"], "color_pair_name": "PICKUP_AMMO", "value": 50, "ammo_type": AMMO_HEAVY_BULLET},
+    PICKUP_AMMO_SHELL:  {"art": ["[▊▊]"], "color_pair_name": "PICKUP_AMMO", "value": 30, "ammo_type": AMMO_SHOTGUN},
+    PICKUP_AMMO_MINES:  {"art": ["[※]"], "color_pair_name": "PICKUP_AMMO", "value": 10, "ammo_type": AMMO_MINES},
+    PICKUP_AMMO_FUEL:   {"art": ["[☢]"], "color_pair_name": "PICKUP_AMMO", "value": 200, "ammo_type": AMMO_FUEL},
 
     # --- Gun Pickups ---
     PICKUP_GUN_LMG:     {"art": ["[︻═-]"], "color_pair_name": "PICKUP_GUN", "gun_key": "lmg"},

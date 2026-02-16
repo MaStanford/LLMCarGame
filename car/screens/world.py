@@ -2,13 +2,13 @@ import math
 import logging
 import time
 
+from rich.style import Style
 from textual.screen import Screen
 from textual.widgets import Static, Footer
 from textual.containers import Horizontal, Vertical, Container
 
-from ..data.game_constants import CITY_SPACING
+from ..data.game_constants import CITY_SPACING, CITY_SIZE
 from ..widgets.entity_modal import EntityModal
-from ..widgets.explosion import Explosion
 from ..widgets.hud_stats import StatsHUD
 from ..widgets.hud_location import HudLocation
 from ..widgets.hud_compass import CompassHUD
@@ -17,7 +17,7 @@ from ..widgets.hud_weapons import WeaponHUD
 from ..widgets.game_view import GameView
 from ..widgets.notifications import Notifications
 from ..widgets.fps_counter import FPSCounter
-from ..world.generation import get_city_name
+from ..world.generation import get_city_name, does_city_exist_at
 from ..logic.spawning import spawn_initial_entities
 from ..logic.debug_commands import execute_command
 from ..widgets.debug_console import DebugConsole
@@ -44,7 +44,7 @@ PEDAL_RAMP_RATE = 4.0       # pedal units per second (0 to 1.0 in ~0.25s)
 ONE_SHOT_ACTIONS = {
     "escape": "toggle_pause",
     "i": "toggle_inventory",
-    "tab": "toggle_inventory",
+    "tab": "cycle_quest",
     "m": "show_map",
     "f": "show_factions",
     "q": "show_quests",
@@ -72,7 +72,7 @@ class WorldScreen(Screen):
         Binding("right", "noop", "Aim Right", show=False),
         Binding("space", "noop", "Fire", show=False),
         Binding("escape", "toggle_pause", "Pause", show=True),
-        Binding("tab", "toggle_inventory", "Inventory", show=False),
+        Binding("tab", "cycle_quest", "Next Quest", show=True),
         Binding("i", "toggle_inventory", "Inventory", show=True),
         Binding("m", "show_map", "Map", show=True),
         Binding("f", "show_factions", "Factions", show=True),
@@ -87,6 +87,7 @@ class WorldScreen(Screen):
         """Called when the screen is mounted."""
         self._pressed_keys = {}  # key_name -> last_event_timestamp (gameplay)
         self._oneshot_active = {}  # key_name -> last_event_timestamp (menu keys, for debounce)
+        self._last_location_name = None  # Track city transitions for entrance banner
         self.focus()
         gs = self.app.game_state
 
@@ -234,6 +235,22 @@ class WorldScreen(Screen):
         """Pushes the quest detail screen."""
         self.app.push_screen(QuestDetailScreen())
 
+    def action_cycle_quest(self) -> None:
+        """Cycle to the next active quest and update compass."""
+        gs = self.app.game_state
+        if not gs.active_quests:
+            return
+        gs.selected_quest_index = (gs.selected_quest_index + 1) % len(gs.active_quests)
+        quest = gs.active_quests[gs.selected_quest_index]
+        from ..logic.quest_logic import get_quest_target_location
+        tx, ty, label = get_quest_target_location(quest, gs)
+        if tx is not None:
+            gs.waypoint = {"x": tx, "y": ty, "name": label or quest.name}
+        notifications = self.query_one("#notifications", Notifications)
+        notifications.add_notification(f"Tracking: {quest.name}")
+        quest_hud = self.query_one("#quest_hud", QuestHUD)
+        quest_hud.selected_index = gs.selected_quest_index
+
     def action_show_story(self) -> None:
         """Pushes the story journal screen."""
         self.app.push_screen(StoryScreen())
@@ -331,14 +348,39 @@ class WorldScreen(Screen):
         weapon_hud.weapons_data = weapons_info
 
         quest_hud = self.query_one("#quest_hud", QuestHUD)
-        quest_hud.quest_name = gs.current_quest.name if gs.current_quest else "None"
+        quest_hud.quest_names = [q.name for q in gs.active_quests]
+        quest_hud.selected_index = gs.selected_quest_index
 
+        # Update Location HUD with proper city detection
         location = self.query_one("#location_hud", HudLocation)
-        location.x = int(gs.car_world_x)
-        location.y = int(gs.car_world_y)
         grid_x = round(gs.car_world_x / CITY_SPACING)
         grid_y = round(gs.car_world_y / CITY_SPACING)
-        location.city_name = get_city_name(grid_x, grid_y, gs.factions, gs.world_details)
+        city_center_x = grid_x * CITY_SPACING
+        city_center_y = grid_y * CITY_SPACING
+        half_city = CITY_SIZE / 2
+
+        # Check if player is actually inside a city
+        in_city = (does_city_exist_at(grid_x, grid_y, self.app.world.seed, gs.factions)
+                   and abs(gs.car_world_x - city_center_x) < half_city
+                   and abs(gs.car_world_y - city_center_y) < half_city)
+
+        if in_city:
+            location_name = get_city_name(grid_x, grid_y, gs.factions, gs.world_details)
+        else:
+            from ..world.generation import get_city_faction
+            faction_id = get_city_faction(gs.car_world_x, gs.car_world_y, gs.factions)
+            location_name = gs.factions.get(faction_id, {}).get("name", "The Wasteland")
+
+        location.update_location(location_name, int(gs.car_world_x), int(gs.car_world_y))
+
+        # City entrance banner
+        if location_name != self._last_location_name:
+            if in_city and self._last_location_name is not None:
+                notifications = self.query_one("#notifications", Notifications)
+                notifications.add_notification(
+                    f"── Entering {location_name} ──", duration=4
+                )
+            self._last_location_name = location_name
 
         compass = self.query_one("#compass_hud", CompassHUD)
         compass.absolute_bearing = gs.compass_info["absolute_bearing"]
@@ -352,19 +394,31 @@ class WorldScreen(Screen):
             entity_modal.hp = closest_entity["hp"]
             entity_modal.max_hp = closest_entity["max_hp"]
             entity_modal.art = closest_entity["art"]
+            # Compute bearing from player to target entity
+            dx = closest_entity["x"] - gs.car_world_x
+            dy = closest_entity["y"] - gs.car_world_y
+            angle = math.atan2(dy, dx)
+            entity_modal.bearing = (math.degrees(angle) + 90) % 360
         else:
             entity_modal.entity_name = "No Target"
             entity_modal.hp = 0
             entity_modal.max_hp = 0
             entity_modal.art = []
+            entity_modal.bearing = -1.0
 
-        # Handle explosions
+        # Handle explosions — add to game_state for canvas-based rendering
         for destroyed in gs.destroyed_this_frame:
             art = destroyed.art.get("N") if isinstance(destroyed.art, dict) else destroyed.art
-            explosion = Explosion(art)
-            self.mount(explosion)
-            explosion.offset = (int(destroyed.x - gs.car_world_x + self.size.width / 2),
-                                int(destroyed.y - gs.car_world_y + self.size.height / 2))
+            gs.active_explosions.append({
+                "x": destroyed.x,
+                "y": destroyed.y,
+                "art": [list(row) for row in art],
+                "original_art": [list(row) for row in art],
+                "styles": [[Style() for _ in row] for row in art],
+                "step": 0,
+                "total_steps": 10,
+                "last_update": time.time(),
+            })
             # Show destruction feedback in entity modal
             if getattr(destroyed, "is_faction_boss", False) and hasattr(destroyed, "name"):
                 entity_modal.destroyed_name = destroyed.name

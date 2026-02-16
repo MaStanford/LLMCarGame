@@ -9,11 +9,11 @@ from ..world.generation import get_city_faction
 
 # Ammo shop listings: (display_name, ammo_type, amount, base_price)
 AMMO_SHOP_ITEMS = [
-    ("Bullets", AMMO_BULLET, 50, 50),
-    ("Heavy Rounds", AMMO_HEAVY_BULLET, 25, 100),
-    ("Shotgun Shells", AMMO_SHOTGUN, 15, 75),
-    ("Mines", AMMO_MINES, 5, 150),
-    ("Flamethrower Fuel", AMMO_FUEL, 100, 80),
+    ("Bullets", AMMO_BULLET, 100, 25),
+    ("Heavy Rounds", AMMO_HEAVY_BULLET, 50, 50),
+    ("Shotgun Shells", AMMO_SHOTGUN, 30, 40),
+    ("Mines", AMMO_MINES, 10, 75),
+    ("Flamethrower Fuel", AMMO_FUEL, 200, 40),
 ]
 
 def purchase_item(game_state, item):
@@ -102,8 +102,9 @@ def get_shop_inventory(shop_type, game_state):
             })
 
     elif shop_type == "mechanic_shop":
-        # Repair option
-        inventory.append({"type": "repair", "name": "Full Repair", "price": int(100 * price_modifier)})
+        # Repair option (only if not already at full durability)
+        if game_state.current_durability < game_state.max_durability:
+            inventory.append({"type": "repair", "name": "Full Repair", "price": int(100 * price_modifier)})
 
         # Sell mechanic-affinity equipment
         for equip_id, equip_data in EQUIPMENT_DATA.items():
@@ -121,7 +122,9 @@ def get_shop_inventory(shop_type, game_state):
                 })
 
     elif shop_type == "gas_station":
-        inventory.append({"type": "gas", "name": "Fill Tank", "price": int(50 * price_modifier)})
+        # Fill Tank option (only if not already at full gas)
+        if game_state.current_gas < game_state.gas_capacity:
+            inventory.append({"type": "gas", "name": "Fill Tank", "price": int(50 * price_modifier)})
 
     return inventory
 

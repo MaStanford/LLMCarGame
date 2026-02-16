@@ -1,11 +1,11 @@
 # --- Weapon Modifier Definitions ---
 
 RARITY_TIERS = {
-    "common": {"color": "white", "weight": 85},
-    "uncommon": {"color": "green", "weight": 10},
-    "rare": {"color": "blue", "weight": 4.85},
-    "epic": {"color": "purple", "weight": 0.10},
-    "legendary": {"color": "orange", "weight": 0.05}
+    "common": {"color": "white", "weight": 75},
+    "uncommon": {"color": "green", "weight": 15},
+    "rare": {"color": "blue", "weight": 6},
+    "epic": {"color": "purple", "weight": 3},
+    "legendary": {"color": "orange", "weight": 1}
 }
 
 MODIFIER_POOLS = {

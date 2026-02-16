@@ -77,9 +77,11 @@ Based on all of the above, generate a new quest.
 - The quest should be relevant to the current political landscape (especially the "vibe" of the factions) and the player's status.
 - The quest's difficulty and rewards should be appropriate for a player who has completed a number of quests (as noted in the "PREVIOUSLY..." section).
 - The quest must have a clear `name`, a `description` for the player, and some `dialog` for the quest giver.
-- The quest must have one of the following objective types: `KillCountObjective`, `KillBossObjective`, `SurvivalObjective`, `DeliverPackageObjective`, or `DefendLocationObjective`.
+- The quest must have one of the following objective types: `KillCountObjective`, `KillBossObjective`, `SurvivalObjective`, `DeliverPackageObjective`, `DefendLocationObjective`, or `WaveSpawnObjective`.
 - For `DeliverPackageObjective`, the destination city MUST be one of the "Nearby Cities" listed in the WORLD MAP section. Do not invent city names.
 - For `DefendLocationObjective`, the location MUST be one of the "Nearby Landmarks" listed in the WORLD MAP section. Do not invent landmark names.
+- For `WaveSpawnObjective`, provide [total_waves, enemies_per_wave]. Typical values: 2-4 waves, 3-6 enemies per wave. Higher difficulty = more waves/enemies.
+- For `SurvivalObjective`, provide [duration_seconds]. The player must survive at the quest location for this many seconds. Typical values: 60-180.
 - The `target_vehicle` for `KillBossObjective` objectives MUST be chosen from the `Enemy Vehicles` list in the **Available Entities** section of the game context.
 - The `enemy_types` for `KillCountObjective` and `SurvivalObjective` objectives MUST be chosen from the `Enemy Vehicles` and `Characters` lists in the **Available Entities** section of the game context.
 - Do NOT invent new entities. Use only the provided lists.
@@ -169,6 +171,23 @@ Based on all of the above, generate a new quest.
     "cash": 1800
   },
   "target_faction": null
+}
+```
+
+# EXAMPLE 6 (Wave Assault)
+```json
+{
+  "name": "Clear the Raider Camp",
+  "description": "An enemy encampment has been located. Fight through waves of defenders to clear it out.",
+  "dialog": "We've got a raider encampment that's been hitting our supply lines. They've dug in deep—you'll face multiple waves of fighters. Get in there and clear them all out.",
+  "objectives": [
+    ["WaveSpawnObjective", [3, 4]]
+  ],
+  "rewards": {
+    "xp": 1500,
+    "cash": 800
+  },
+  "target_faction": "raiders"
 }
 ```
 

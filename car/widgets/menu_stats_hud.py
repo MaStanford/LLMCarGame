@@ -25,7 +25,7 @@ class MenuStatsHUD(Static):
         scrap = getattr(gs, 'player_scrap', 0)
 
         stats_str = f"""
-[b]Quest:[/b] {gs.current_quest.name if gs.current_quest else 'None'}
+[b]Quests:[/b] {len(gs.active_quests)}/3 active
 [b]Level:[/b] {gs.player_level} (XP: {gs.current_xp}/{gs.xp_to_next_level})
 
 [b]Durability:[/b] {gs.current_durability}/{gs.max_durability}

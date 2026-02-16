@@ -62,13 +62,15 @@ class StoryScreen(ModalScreen):
             chronicle_text = "[bold]Chronicle[/bold]\nNo events recorded yet."
         self.query_one("#story_chronicle", Static).update(chronicle_text)
 
-        # --- Current Quest ---
-        if gs.current_quest:
-            quest = gs.current_quest
-            status = "Ready to turn in" if quest.ready_to_turn_in else "In Progress"
-            quest_text = f"[bold]Current Quest[/bold]\n  {quest.name} ({status})\n  {quest.description}"
+        # --- Active Quests ---
+        if gs.active_quests:
+            quest_lines = []
+            for i, quest in enumerate(gs.active_quests):
+                status = "Ready to turn in" if quest.ready_to_turn_in else "In Progress"
+                quest_lines.append(f"  [{i+1}] {quest.name} ({status})")
+            quest_text = "[bold]Active Quests[/bold]\n" + "\n".join(quest_lines)
         else:
-            quest_text = "[bold]Current Quest[/bold]\n  None"
+            quest_text = "[bold]Active Quests[/bold]\n  None"
         self.query_one("#story_current", Static).update(quest_text)
 
         # --- World State ---

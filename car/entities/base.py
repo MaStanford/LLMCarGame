@@ -18,6 +18,7 @@ class Entity(ABC):
         self.patrol_target_x = None
         self.patrol_target_y = None
         self.is_major_enemy = False
+        self.ai_state = {}  # Per-entity AI timers (e.g. last_shot_time)
 
     @staticmethod
     def get_car_dimensions(car_art_list):

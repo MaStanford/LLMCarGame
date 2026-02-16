@@ -147,19 +147,9 @@ class MapView(Widget):
 
         self.world_nodes = nodes
 
-        # Set initial selection: waypoint node if exists, else nearest city
+        # Set initial selection: nearest city to the player (don't move camera)
         self.selected_node_index = -1
-        if gs.waypoint:
-            wp_x, wp_y = gs.waypoint["x"], gs.waypoint["y"]
-            for i, node in enumerate(nodes):
-                if abs(node["x"] - wp_x) < 1 and abs(node["y"] - wp_y) < 1:
-                    self.selected_node_index = i
-                    self.camera_x = node["x"]
-                    self.camera_y = node["y"]
-                    break
-
-        if self.selected_node_index == -1 and nodes:
-            # Select nearest city to player
+        if nodes:
             px, py = gs.car_world_x, gs.car_world_y
             best_i = 0
             best_dist = float('inf')
@@ -583,8 +573,9 @@ class MapView(Widget):
         if 0 <= self.selected_node_index < len(self.world_nodes):
             selected_node = self.world_nodes[self.selected_node_index]
 
-        # Draw Roads
+        # Draw Roads (L-shaped: horizontal then vertical segments)
         if gs.world_details and "roads" in gs.world_details:
+            road_style = Style(color="rgb(80,70,40)", dim=True)
             for road in gs.world_details["roads"]:
                 try:
                     from_x_str, from_y_str = road["from"].split(',')
@@ -602,7 +593,9 @@ class MapView(Widget):
                     sx2 = int((to_wx - map_start_x) / scale)
                     sy2 = int((to_wy - map_start_y) / scale)
 
-                    self._draw_line(canvas, styles, sx1, sy1, sx2, sy2, "·", Style(color="yellow"))
+                    # Draw horizontal segment first, then vertical
+                    self._draw_line(canvas, styles, sx1, sy1, sx2, sy1, "·", road_style)
+                    self._draw_line(canvas, styles, sx2, sy1, sx2, sy2, "·", road_style)
                 except (ValueError, KeyError):
                     continue
 
@@ -634,8 +627,8 @@ class MapView(Widget):
 
         # Draw Cities
         for (gx, gy), (symbol, orig_gx, orig_gy) in self.map_data.items():
-            city_world_x = gx * CITY_SPACING
-            city_world_y = gy * CITY_SPACING
+            city_world_x = orig_gx * CITY_SPACING
+            city_world_y = orig_gy * CITY_SPACING
 
             sx = int((city_world_x - map_start_x) / scale)
             sy = int((city_world_y - map_start_y) / scale)
@@ -673,24 +666,27 @@ class MapView(Widget):
                 wp_name = gs.waypoint.get("name", "Waypoint")
                 self._draw_text(canvas, styles, wp_sx + 2, wp_sy, wp_name, wp_style)
 
-        # Draw Quest Objective Marker (on top of waypoint if overlapping)
-        if gs.current_quest:
+        # Draw Quest Objective Markers
+        if gs.active_quests:
             from ..logic.quest_logic import get_quest_target_location
-            qt_x, qt_y, qt_label = get_quest_target_location(gs.current_quest, gs)
-            if qt_x is not None:
-                qsx = int((qt_x - map_start_x) / scale)
-                qsy = int((qt_y - map_start_y) / scale)
-                if 0 <= qsy < h - 1 and 0 <= qsx < w:
-                    if gs.current_quest.ready_to_turn_in:
-                        marker_char = "?"
-                        marker_style = Style(color="green", bold=True)
-                    else:
-                        marker_char = "!"
-                        marker_style = Style(color="yellow", bold=True)
-                    canvas[qsy][qsx] = marker_char
-                    styles[qsy][qsx] = marker_style
-                    if qt_label:
-                        self._draw_text(canvas, styles, qsx + 2, qsy, qt_label, marker_style)
+            selected_idx = min(gs.selected_quest_index, len(gs.active_quests) - 1)
+            for i, quest in enumerate(gs.active_quests):
+                qt_x, qt_y, qt_label = get_quest_target_location(quest, gs)
+                if qt_x is not None:
+                    qsx = int((qt_x - map_start_x) / scale)
+                    qsy = int((qt_y - map_start_y) / scale)
+                    if 0 <= qsy < h - 1 and 0 <= qsx < w:
+                        is_selected = (i == selected_idx)
+                        if quest.ready_to_turn_in:
+                            marker_char = "?"
+                            marker_style = Style(color="green", bold=is_selected)
+                        else:
+                            marker_char = "!"
+                            marker_style = Style(color="yellow" if is_selected else "rgb(120,120,60)", bold=is_selected)
+                        canvas[qsy][qsx] = marker_char
+                        styles[qsy][qsx] = marker_style
+                        if qt_label and is_selected:
+                            self._draw_text(canvas, styles, qsx + 2, qsy, qt_label, marker_style)
 
         # Draw Player
         player_x = int((self.game_state.car_world_x - map_start_x) / scale)

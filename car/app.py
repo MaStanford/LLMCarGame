@@ -19,7 +19,6 @@ from .logic.trigger_logic import check_triggers
 from .audio.audio import AudioManager
 from .data.game_constants import CUTSCENE_RADIUS, UNTARGET_RADIUS, CITY_SPACING, SHOP_INTERACTION_SPEED_THRESHOLD
 from .widgets.entity_modal import EntityModal
-from .widgets.explosion import Explosion
 from .widgets.notifications import Notifications
 from .widgets.fps_counter import FPSCounter
 from .world.generation import get_buildings_in_city, does_city_exist_at
@@ -79,6 +78,9 @@ class GenesisModuleApp(App):
         # Ensure any old timer is stopped before creating a new one.
         if self.game_loop:
             self.game_loop.stop()
+        # Reset the timestamp so the first tick after resuming doesn't
+        # accumulate all the time spent in menus/map as one giant dt.
+        self.last_update_time = time.time()
         self.game_loop = self.set_interval(1 / 30, self.update_game)
 
     def on_mount(self) -> None:
@@ -124,10 +126,11 @@ class GenesisModuleApp(App):
                 self.screen.query_one("#notifications", Notifications).add_notification(notification)
 
             # Spawning logic
+            spawn_rate = gs.difficulty_mods.get("spawn_rate_mult", 1.0)
             gs.enemy_spawn_timer -= dt
             if gs.enemy_spawn_timer <= 0:
                 spawn_enemy(gs, self.world)
-                gs.enemy_spawn_timer = random.uniform(1.5, 3.5) # Spawn every 1.5-3.5 seconds
+                gs.enemy_spawn_timer = random.uniform(1.5, 3.5) / spawn_rate
 
             gs.fauna_spawn_timer -= dt
             if gs.fauna_spawn_timer <= 0:
@@ -230,7 +233,7 @@ class GenesisModuleApp(App):
                     art = enemy.art.get("N") if isinstance(enemy.art, dict) else enemy.art
                     closest = {
                         "name": enemy.name, "hp": enemy.durability, "max_hp": enemy.max_durability,
-                        "art": art
+                        "art": art, "x": enemy.x, "y": enemy.y
                     }
 
         # If no boss is nearby, find the closest normal enemy
@@ -243,7 +246,7 @@ class GenesisModuleApp(App):
                     closest = {
                         "name": enemy.__class__.__name__.replace("_", " ").title(),
                         "hp": enemy.durability, "max_hp": enemy.max_durability,
-                        "art": art
+                        "art": art, "x": enemy.x, "y": enemy.y
                     }
 
         # Also check obstacles (only if damaged by player)
@@ -258,7 +261,7 @@ class GenesisModuleApp(App):
                     closest = {
                         "name": obstacle.__class__.__name__.replace("_", " ").title(),
                         "hp": obstacle.durability, "max_hp": obstacle.max_durability,
-                        "art": art
+                        "art": art, "x": obstacle.x, "y": obstacle.y
                     }
 
         # Also check fauna (only if damaged by player)
@@ -273,7 +276,7 @@ class GenesisModuleApp(App):
                     closest = {
                         "name": fauna.__class__.__name__.replace("_", " ").title(),
                         "hp": fauna.durability, "max_hp": fauna.max_durability,
-                        "art": art
+                        "art": art, "x": fauna.x, "y": fauna.y
                     }
 
         return closest
@@ -288,8 +291,9 @@ class GenesisModuleApp(App):
             target_x = gs.waypoint["x"]
             target_y = gs.waypoint["y"]
             target_name = gs.waypoint.get("name", "Waypoint")
-        elif gs.current_quest:
-            target_x, target_y, target_name = get_quest_target_location(gs.current_quest, gs)
+        elif gs.active_quests:
+            idx = min(gs.selected_quest_index, len(gs.active_quests) - 1)
+            target_x, target_y, target_name = get_quest_target_location(gs.active_quests[idx], gs)
 
         if target_x is not None:
             # atan2 gives angle in screen coords: 0=east, pi/2=south, -pi/2=north

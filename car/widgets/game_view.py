@@ -1,4 +1,6 @@
 import time
+import math
+import random
 from textual.widget import Widget
 from ..common.utils import angle_to_direction
 from ..data.colors import ATTACHMENT_COLOR_MAP
@@ -6,7 +8,19 @@ from ..data.game_constants import CITY_SPACING
 from ..world.generation import get_buildings_in_city
 from rich.text import Text
 from rich.style import Style
-import math
+
+# Explosion characters for canvas-based rendering (terminal-safe, no emojis)
+_EXPLOSION_FIRE = [
+    ("*", Style(color="red", bold=True)),
+    ("#", Style(color="rgb(255,100,0)", bold=True)),
+    ("~", Style(color="rgb(255,165,0)")),
+    ("+", Style(color="yellow", bold=True)),
+    (".", Style(color="rgb(200,80,0)")),
+]
+_EXPLOSION_SMOKE = [
+    (".", Style(color="rgb(100,100,100)")),
+    (":", Style(color="rgb(80,80,80)")),
+]
 
 class GameView(Widget):
     """A widget to display the game world."""
@@ -93,7 +107,9 @@ class GameView(Widget):
                         styles[sy][draw_x] = Style(color=color, bold=True, bgcolor=existing_style.bgcolor)
 
         # Render particles
-        for p_x, p_y, _, _, _, _, particle_char, _, _ in gs.active_particles:
+        for p_state in gs.active_particles:
+            p_x, p_y = p_state[0], p_state[1]
+            particle_char = p_state[6]
             sx = int(p_x - world_start_x)
             sy = int(p_y - world_start_y)
             if 0 <= sy < h and 0 <= sx < w:
@@ -103,6 +119,49 @@ class GameView(Widget):
                     color="yellow",
                     bgcolor=existing_style.bgcolor
                 )
+
+        # Render explosions directly on canvas (avoids widget bounding-box artifacts)
+        now = time.time()
+        expired_explosions = []
+        for idx, exp in enumerate(gs.active_explosions):
+            # Advance animation frame
+            if now - exp["last_update"] >= 0.05:
+                exp["step"] += 1
+                exp["last_update"] = now
+                if exp["step"] <= exp["total_steps"]:
+                    progress = exp["step"] / exp["total_steps"]
+                    for r, row in enumerate(exp["original_art"]):
+                        for c, char in enumerate(row):
+                            if char != ' ' and random.random() < progress:
+                                if progress < 0.6:
+                                    ch, st = random.choice(_EXPLOSION_FIRE)
+                                elif progress < 0.85:
+                                    ch, st = random.choice(_EXPLOSION_FIRE + _EXPLOSION_SMOKE)
+                                else:
+                                    ch, st = random.choice(_EXPLOSION_SMOKE + [(" ", Style())])
+                                exp["art"][r][c] = ch
+                                exp["styles"][r][c] = st
+
+            if exp["step"] > exp["total_steps"]:
+                expired_explosions.append(idx)
+                continue
+
+            # Draw explosion chars onto canvas
+            art = exp["art"]
+            art_h = len(art)
+            art_w = max(len(row) for row in art) if art else 0
+            ex = int(exp["x"] - world_start_x - art_w / 2)
+            ey = int(exp["y"] - world_start_y - art_h / 2)
+            for r, row in enumerate(art):
+                for c, char in enumerate(row):
+                    if char != ' ':
+                        dy, dx = ey + r, ex + c
+                        if 0 <= dy < h and 0 <= dx < w:
+                            canvas[dy][dx] = char
+                            styles[dy][dx] = exp["styles"][r][c]
+
+        for idx in reversed(expired_explosions):
+            gs.active_explosions.pop(idx)
 
         # Render player direction arrow
         if time.time() % 0.4 < 0.2:

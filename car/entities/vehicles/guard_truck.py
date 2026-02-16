@@ -1,6 +1,6 @@
 import random
 from ..vehicle import Vehicle
-from ...logic.ai_behaviors import _execute_chase_behavior, _execute_stationary_behavior
+from ...logic.ai_behaviors import execute_behavior
 
 from ...data.game_constants import GLOBAL_SPEED_MULTIPLIER
 
@@ -22,8 +22,11 @@ class GuardTruck(Vehicle):
         self.cash_value = 50
         self.drop_item = "ammo_bullet"
         self.drop_rate = 0.2
+        self.collision_damage = 8
+        self.shoot_damage = 3
         self.phases = [
-            {"name": "Guard", "duration": (1, 2), "behavior": "STATIONARY", "next_phases": {"Chase": 1.0}},
+            {"name": "Guard", "duration": (1, 2), "behavior": "STATIONARY", "next_phases": {"Shoot": 1.0}},
+            {"name": "Shoot", "duration": (3, 5), "behavior": "SHOOT", "next_phases": {"Chase": 0.6, "Guard": 0.4}},
             {"name": "Chase", "duration": (10, 15), "behavior": "CHASE", "next_phases": {"Guard": 1.0}}
         ]
         self._initialize_ai()
@@ -35,30 +38,34 @@ class GuardTruck(Vehicle):
         self.phase_timer = random.uniform(*self.current_phase["duration"])
 
     def update(self, game_state, world, dt):
+        self.ai_state["elapsed"] = self.ai_state.get("elapsed", 0) + dt
+
         self.phase_timer -= dt
 
         dist_to_player = ((self.x - game_state.car_world_x)**2 + (self.y - game_state.car_world_y)**2)**0.5
-        
+
         # If player is far away, always stay in Guard mode
-        if dist_to_player > self.aggro_radius and self.current_phase["name"] == "Chase":
-            self.current_phase = self.phases[0] # Switch to Guard
+        if dist_to_player > self.aggro_radius and self.current_phase["name"] != "Guard":
+            self.current_phase = self.phases[0]  # Switch to Guard
             self.phase_timer = random.uniform(*self.current_phase["duration"])
 
         if self.phase_timer <= 0:
             if self.current_phase["name"] == "Guard" and dist_to_player <= self.aggro_radius:
-                # If guarding and player is close, switch to chase
-                self.current_phase = self.phases[1]
+                # If guarding and player is close, switch to Shoot
+                self.current_phase = next((p for p in self.phases if p["name"] == "Shoot"), self.phases[1])
+            elif self.current_phase["name"] != "Guard":
+                # Use weighted phase transitions
+                next_phase_options = list(self.current_phase["next_phases"].keys())
+                next_phase_weights = list(self.current_phase["next_phases"].values())
+                new_phase_name = random.choices(next_phase_options, weights=next_phase_weights, k=1)[0]
+                self.current_phase = next((p for p in self.phases if p["name"] == new_phase_name), self.phases[0])
             else:
-                 # Otherwise, just switch back to guard
+                # Guarding and player is far, just reset guard timer
                 self.current_phase = self.phases[0]
 
             self.phase_timer = random.uniform(*self.current_phase["duration"])
 
-        behavior = self.current_phase["behavior"]
-        if behavior == "CHASE":
-            _execute_chase_behavior(self, game_state, self)
-        elif behavior == "STATIONARY":
-            _execute_stationary_behavior(self, game_state, self)
+        execute_behavior(self.current_phase["behavior"], self, game_state, self)
 
         self.x += self.vx * dt
         self.y += self.vy * dt

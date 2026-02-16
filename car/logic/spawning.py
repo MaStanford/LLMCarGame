@@ -113,6 +113,32 @@ def spawn_enemy(game_state, world):
         new_enemy.patrol_target_y = sy + random.uniform(-100, 100)
         game_state.active_enemies.append(new_enemy)
 
+        # Group spawning: chance to spawn additional enemies of the same type
+        max_enemies = game_state.difficulty_mods.get("max_enemies", 12)
+        roll = random.random()
+        extra_count = 0
+        if roll < 0.05:
+            extra_count = 2  # 5% chance for a trio
+        elif roll < 0.20:
+            extra_count = 1  # 15% chance for a pair
+
+        for _ in range(extra_count):
+            if len(game_state.active_enemies) >= max_enemies:
+                break
+            offset_x = sx + random.uniform(-15, 15)
+            offset_y = sy + random.uniform(-15, 15)
+            if world.get_terrain_at(offset_x, offset_y).get("passable", True):
+                extra = enemy_class(offset_x, offset_y)
+                extra.durability = int(extra.durability * hp_mult)
+                extra.max_durability = extra.durability
+                if hasattr(extra, 'collision_damage'):
+                    extra.collision_damage = int(extra.collision_damage * dmg_mult)
+                else:
+                    extra.collision_damage = int(5 * dmg_mult)
+                extra.patrol_target_x = offset_x + random.uniform(-100, 100)
+                extra.patrol_target_y = offset_y + random.uniform(-100, 100)
+                game_state.active_enemies.append(extra)
+
 def spawn_fauna(game_state, world, is_initial_spawn=False):
     """Spawns a new fauna."""
     if not is_initial_spawn and len(game_state.active_fauna) >= MAX_FAUNA:

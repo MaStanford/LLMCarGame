@@ -43,7 +43,7 @@ class CompassHUD(Static):
         """Render the compass display."""
         if not self.target_name:
             content = Text("No objective", justify="center", style="dim")
-            return Panel(content, title="Compass", border_style="dim white")
+            return Panel(content, title="Compass", border_style="dim white", expand=True)
 
         arrow, cardinal = _bearing_to_arrow(self.absolute_bearing)
 
@@ -51,4 +51,4 @@ class CompassHUD(Static):
             f"[bold]{arrow}[/bold] {cardinal}  {self.target_name}",
             justify="center",
         )
-        return Panel(content, title="Compass", border_style="white")
+        return Panel(content, title="Compass", border_style="white", expand=True)

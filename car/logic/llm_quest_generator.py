@@ -4,7 +4,8 @@ import random
 from .prompt_builder import build_quest_prompt
 from ..data.quests import (
     Quest, KillBossObjective, KillCountObjective,
-    SurvivalObjective, DeliverPackageObjective, DefendLocationObjective
+    SurvivalObjective, DeliverPackageObjective, DefendLocationObjective,
+    WaveSpawnObjective
 )
 from .llm_inference import generate_json
 from .llm_schemas import QUEST_SCHEMA
@@ -16,6 +17,7 @@ OBJECTIVE_CLASS_MAP = {
     "SurvivalObjective": SurvivalObjective,
     "DeliverPackageObjective": DeliverPackageObjective,
     "DefendLocationObjective": DefendLocationObjective,
+    "WaveSpawnObjective": WaveSpawnObjective,
 }
 
 # Max grid distance for delivery/defend objectives

@@ -80,7 +80,18 @@ def spawn_faction_boss(game_state, faction_id):
         requires_turn_in=False # Completes on boss defeat
     )
     new_quest.boss_name = boss_entity.name # Link boss to quest
-    game_state.current_quest = new_quest
+    if len(game_state.active_quests) < 3:
+        game_state.active_quests.append(new_quest)
+    else:
+        # Boss challenge takes priority — replace oldest non-boss quest
+        replaced = False
+        for i, q in enumerate(game_state.active_quests):
+            if not getattr(q, 'boss', None):
+                game_state.active_quests[i] = new_quest
+                replaced = True
+                break
+        if not replaced:
+            game_state.active_quests[-1] = new_quest
 
 def handle_faction_boss_defeat(game_state, boss_entity):
     """Handles the consequences of defeating a faction boss."""

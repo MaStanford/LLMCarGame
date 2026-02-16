@@ -1,6 +1,6 @@
 import random
 from ..vehicle import Vehicle
-from ...logic.ai_behaviors import _execute_chase_behavior, _execute_strafe_behavior, _execute_evade_behavior
+from ...logic.ai_behaviors import execute_behavior
 
 from ...data.game_constants import GLOBAL_SPEED_MULTIPLIER
 
@@ -19,9 +19,11 @@ class RustySedan(Vehicle):
         self.cash_value = 10
         self.drop_item = "ammo_bullet"
         self.drop_rate = 0.05
+        self.collision_damage = 3
+        self.shoot_damage = 2
         self.phases = [
             {"name": "Pursuit", "duration": (4, 6), "behavior": "CHASE", "next_phases": {"DriveBy": 1.0}},
-            {"name": "DriveBy", "duration": (3, 5), "behavior": "STRAFE", "next_phases": {"Pursuit": 0.7, "Reposition": 0.3}},
+            {"name": "DriveBy", "duration": (3, 5), "behavior": "SHOOT", "next_phases": {"Pursuit": 0.5, "Reposition": 0.5}},
             {"name": "Reposition", "duration": (2, 3), "behavior": "EVADE", "next_phases": {"Pursuit": 1.0}}
         ]
         self._initialize_ai()
@@ -31,6 +33,8 @@ class RustySedan(Vehicle):
         self.phase_timer = random.uniform(self.current_phase["duration"][0], self.current_phase["duration"][1])
 
     def update(self, game_state, world, dt):
+        self.ai_state["elapsed"] = self.ai_state.get("elapsed", 0) + dt
+
         self.phase_timer -= dt
 
         if self.phase_timer <= 0:
@@ -40,14 +44,8 @@ class RustySedan(Vehicle):
             self.current_phase = next((p for p in self.phases if p["name"] == new_phase_name), self.phases[0])
             self.phase_timer = random.uniform(self.current_phase["duration"][0], self.current_phase["duration"][1])
 
-        behavior = self.current_phase["behavior"]
-        if behavior == "CHASE":
-            _execute_chase_behavior(self, game_state, self)
-        elif behavior == "STRAFE":
-            _execute_strafe_behavior(self, game_state, self)
-        elif behavior == "EVADE":
-            _execute_evade_behavior(self, game_state, self)
-            
+        execute_behavior(self.current_phase["behavior"], self, game_state, self)
+
         # Update position
         self.x += self.vx * dt
         self.y += self.vy * dt
