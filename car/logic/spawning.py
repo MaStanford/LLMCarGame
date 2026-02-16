@@ -4,6 +4,7 @@ from .entity_loader import ENEMY_VEHICLES, ENEMY_CHARACTERS, FAUNA, OBSTACLES
 from ..data.game_constants import CITY_SPACING, CITY_SIZE, SAFE_ZONE_RADIUS, DESPAWN_RADIUS, MAX_FAUNA, MAX_OBSTACLES
 from ..logic.data_loader import FACTION_DATA
 from ..world.generation import get_city_faction
+from .scaling import get_enemy_scaling
 
 def _apply_faction_name(entity, unit_id, faction_id, game_state):
     """Apply LLM-generated faction name and description to a spawned entity."""
@@ -111,12 +112,20 @@ def spawn_enemy(game_state, world):
         new_enemy = enemy_class(sx, sy)
         hp_mult = game_state.difficulty_mods.get("enemy_hp_mult", 1.0)
         dmg_mult = game_state.difficulty_mods.get("enemy_dmg_mult", 1.0)
+        # Apply progression scaling on top of difficulty
+        prog_hp, prog_dmg, prog_reward = get_enemy_scaling(game_state)
+        hp_mult *= prog_hp
+        dmg_mult *= prog_dmg
         new_enemy.durability = int(new_enemy.durability * hp_mult)
         new_enemy.max_durability = new_enemy.durability
         if hasattr(new_enemy, 'collision_damage'):
             new_enemy.collision_damage = int(new_enemy.collision_damage * dmg_mult)
         else:
             new_enemy.collision_damage = int(5 * dmg_mult)
+        if hasattr(new_enemy, 'shoot_damage'):
+            new_enemy.shoot_damage = int(new_enemy.shoot_damage * dmg_mult)
+        new_enemy.xp_value = int(new_enemy.xp_value * prog_reward)
+        new_enemy.cash_value = int(new_enemy.cash_value * prog_reward)
         # Apply faction-specific vehicle names
         _apply_faction_name(new_enemy, enemy_name, current_faction_id, game_state)
         new_enemy.patrol_target_x = sx + random.uniform(-100, 100)
@@ -145,6 +154,10 @@ def spawn_enemy(game_state, world):
                     extra.collision_damage = int(extra.collision_damage * dmg_mult)
                 else:
                     extra.collision_damage = int(5 * dmg_mult)
+                if hasattr(extra, 'shoot_damage'):
+                    extra.shoot_damage = int(extra.shoot_damage * dmg_mult)
+                extra.xp_value = int(extra.xp_value * prog_reward)
+                extra.cash_value = int(extra.cash_value * prog_reward)
                 _apply_faction_name(extra, enemy_name, current_faction_id, game_state)
                 extra.patrol_target_x = offset_x + random.uniform(-100, 100)
                 extra.patrol_target_y = offset_y + random.uniform(-100, 100)

@@ -33,6 +33,8 @@ def generate_weapon_modifiers(player_level, luck_factor=1.0):
         num_modifiers = random.randint(3, 4)
     elif chosen_rarity == "legendary":
         num_modifiers = random.randint(4, 5)
+    elif chosen_rarity == "godly":
+        num_modifiers = random.randint(5, 6)
 
     for _ in range(num_modifiers):
         modifier_type = random.choice(list(modifier_pool.keys()))
@@ -71,6 +73,8 @@ def generate_equipment_modifiers(player_level, luck_factor=1.0):
         num_modifiers = random.randint(3, 4)
     elif chosen_rarity == "legendary":
         num_modifiers = random.randint(4, 5)
+    elif chosen_rarity == "godly":
+        num_modifiers = random.randint(5, 6)
 
     for _ in range(num_modifiers):
         modifier_type = random.choice(list(modifier_pool.keys()))

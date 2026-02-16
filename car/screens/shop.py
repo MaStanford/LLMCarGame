@@ -153,7 +153,7 @@ class ShopScreen(Screen):
             selected_item = player_widget.selected_item
             if self.sell_confirmation_item == selected_item and selected_item is not None:
                 price = calculate_sell_price(selected_item, self.app.game_state)
-                button.label = f"Confirm Sell (${price})?"
+                button.label = f"Confirm Sell (${price:,})?"
             else:
                 button.label = "Sell"
             button.disabled = not player_widget.items
@@ -253,7 +253,7 @@ class ShopScreen(Screen):
             price = calculate_sell_price(selected_item, gs)
             gs.player_cash += price
             gs.player_inventory.remove(selected_item)
-            self._notify(f"Sold {selected_item.name} for ${price}!")
+            self._notify(f"Sold {selected_item.name} for ${price:,}!")
             self.sell_confirmation_item = None
             self.update_displays()
         else:

@@ -6,6 +6,7 @@ from ..data.game_constants import CITY_SPACING
 from ..world.generation import get_buildings_in_city, get_city_faction
 from ..logic.data_loader import FACTION_DATA
 from . import faction_logic
+from .scaling import get_enemy_scaling
 
 # Radius within which quest location objectives are active
 QUEST_LOCATION_RADIUS = 80
@@ -221,12 +222,20 @@ def _spawn_quest_enemies(game_state, wx, wy, count):
         new_enemy = enemy_class(sx, sy)
         hp_mult = game_state.difficulty_mods.get("enemy_hp_mult", 1.0)
         dmg_mult = game_state.difficulty_mods.get("enemy_dmg_mult", 1.0)
+        # Apply progression scaling on top of difficulty
+        prog_hp, prog_dmg, prog_reward = get_enemy_scaling(game_state)
+        hp_mult *= prog_hp
+        dmg_mult *= prog_dmg
         new_enemy.durability = int(new_enemy.durability * hp_mult)
         new_enemy.max_durability = new_enemy.durability
         if hasattr(new_enemy, 'collision_damage'):
             new_enemy.collision_damage = int(new_enemy.collision_damage * dmg_mult)
         else:
             new_enemy.collision_damage = int(5 * dmg_mult)
+        if hasattr(new_enemy, 'shoot_damage'):
+            new_enemy.shoot_damage = int(new_enemy.shoot_damage * dmg_mult)
+        new_enemy.xp_value = int(new_enemy.xp_value * prog_reward)
+        new_enemy.cash_value = int(new_enemy.cash_value * prog_reward)
         new_enemy.patrol_target_x = wx + random.uniform(-50, 50)
         new_enemy.patrol_target_y = wy + random.uniform(-50, 50)
         game_state.active_enemies.append(new_enemy)
@@ -504,6 +513,7 @@ def complete_quest(game_state, app, quest=None):
     rewards = quest.rewards
     game_state.gain_xp(rewards.get("xp", 0))
     game_state.player_cash += rewards.get("cash", 0)
+    game_state.quests_completed += 1
 
     # Log to story journal
     giver_name = game_state.factions.get(quest.quest_giver_faction, {}).get("name", "Unknown") if quest.quest_giver_faction else "an unknown patron"

@@ -55,7 +55,7 @@ class ItemListWidget(Static):
                 name = item_data.get("name", "Unknown")
                 price = item_data.get("price")
                 if price is not None:
-                    price_str = f"${price}"
+                    price_str = f"${price:,}"
                 item_type = item_data.get("type", "")
                 rarity = item_data.get("rarity", "common")
                 if item_type == "equipment":
@@ -67,7 +67,7 @@ class ItemListWidget(Static):
             elif hasattr(item_data, "name"):
                 name = item_data.name
                 if hasattr(item_data, "price"):
-                     price_str = f"${item_data.price}"
+                     price_str = f"${item_data.price:,}"
                 rarity = getattr(item_data, "rarity", "common")
                 item_type = getattr(item_data, "type", "")
                 if item_type == "equipment":

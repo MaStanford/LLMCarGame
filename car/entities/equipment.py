@@ -44,7 +44,7 @@ class Equipment:
     @property
     def scrap_value(self):
         base_scrap = self.base_stats.get("scrap_value", 5)
-        rarity_multipliers = {"common": 1, "uncommon": 2, "rare": 4, "epic": 8, "legendary": 16}
+        rarity_multipliers = {"common": 1, "uncommon": 2, "rare": 4, "epic": 8, "legendary": 16, "godly": 32}
         return base_scrap * rarity_multipliers.get(self.rarity, 1)
 
     def __eq__(self, other):

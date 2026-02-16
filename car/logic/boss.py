@@ -9,6 +9,7 @@ from ..entities.vehicles.armored_truck import ArmoredTruck
 from ..entities.vehicles.miner import Miner
 from ..entities.vehicles.hotrod import Hotrod
 from ..entities.vehicles.truck import Truck
+from .scaling import get_enemy_scaling
 
 def check_challenge_conditions(game_state, faction_id, factions_data):
     """
@@ -59,6 +60,11 @@ def spawn_faction_boss(game_state, faction_id):
         boss_entity.durability *= 1.5
         boss_entity.max_durability = boss_entity.durability
         boss_entity.name = f"Enraged {boss_entity.name}"
+
+    # Apply progression scaling
+    prog_hp, prog_dmg, _ = get_enemy_scaling(game_state)
+    boss_entity.durability = int(boss_entity.durability * prog_hp)
+    boss_entity.max_durability = boss_entity.durability
 
     game_state.active_enemies.append(boss_entity)
 

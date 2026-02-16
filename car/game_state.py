@@ -146,6 +146,7 @@ class GameState:
         self.active_bosses = []
         self.combat_enemy = None
         self.quest_cache = {}
+        self.quests_completed = 0
 
         # --- Story / Journal ---
         self.story_events = []  # List of {"text": str, "event_type": str}
@@ -322,6 +323,7 @@ class GameState:
             "activated_triggers": list(self.activated_triggers),
             "active_quests": [q.to_dict() for q in self.active_quests],
             "selected_quest_index": self.selected_quest_index,
+            "quests_completed": self.quests_completed,
             "karma": self.karma,
             "story_events": self.story_events,
             "visited_cities": [list(c) for c in self.visited_cities],
@@ -403,6 +405,7 @@ class GameState:
         gs.defeated_bosses = set(data["defeated_bosses"]) # Convert list back to set
         gs.activated_triggers = set(data.get("activated_triggers", []))
         gs.karma = data.get("karma", 0)
+        gs.quests_completed = data.get("quests_completed", 0)
         gs.story_events = data.get("story_events", [])
         gs.visited_cities = {tuple(c) for c in data.get("visited_cities", [(0, 0)])}
 
