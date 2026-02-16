@@ -811,3 +811,29 @@ StoryScreen {
 #story_world_state {
     margin-bottom: 1;
 }
+
+/* --- Boss Key Screen --- */
+BossKeyScreen {
+    width: 100%;
+    height: 100%;
+    background: black;
+    layout: vertical;
+}
+
+#boss-key-display {
+    width: 100%;
+    height: 1fr;
+    background: black;
+    color: #00ff00;
+    overflow-y: auto;
+    padding: 0 1;
+}
+
+#boss-key-statusbar {
+    width: 100%;
+    height: 1;
+    background: #005f00;
+    color: #00ff00;
+    dock: bottom;
+    padding: 0 1;
+}

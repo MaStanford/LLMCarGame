@@ -83,6 +83,18 @@ class GenesisModuleApp(App):
         self.last_update_time = time.time()
         self.game_loop = self.set_interval(1 / 30, self.update_game)
 
+    def on_key(self, event: Key) -> None:
+        """Global key handler — intercepts F12 for boss key from any screen."""
+        from .screens.boss_key import BossKeyScreen
+        if event.key == "f12":
+            event.prevent_default()
+            event.stop()
+            if isinstance(self.screen, BossKeyScreen):
+                self.pop_screen()
+            else:
+                self.stop_game_loop()
+                self.push_screen(BossKeyScreen())
+
     def on_mount(self) -> None:
         """Called when the app is first mounted."""
         self.push_screen(MainMenuScreen())
