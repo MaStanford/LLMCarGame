@@ -52,6 +52,7 @@ def spawn_faction_boss(game_state, faction_id):
     boss_entity.durability *= boss_data["hp_multiplier"]
     boss_entity.max_durability = boss_entity.durability
     boss_entity.is_faction_boss = True
+    boss_entity.is_major_enemy = True
 
     # Apply "Enraged" stat boost if challenged early
     if game_state.faction_reputation.get(faction_id, 0) > -100:

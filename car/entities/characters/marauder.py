@@ -42,8 +42,7 @@ class Marauder(Character):
 
         execute_behavior(self.current_phase["behavior"], self, game_state, self)
 
-        self.x += self.vx * dt
-        self.y += self.vy * dt
+        self._move_with_terrain_check(world, dt)
 
     def draw(self, stdscr, game_state, world_start_x, world_start_y, color_map):
         from ...rendering.draw_utils import draw_sprite
