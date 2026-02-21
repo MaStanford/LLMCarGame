@@ -1,3 +1,9 @@
 {
-    "generation_mode": "local"
+  "generation_mode": "gemini_cli",
+  "model_size": "small",
+  "cli_preset": "claude",
+  "custom_cli_command": "",
+  "custom_cli_args": "",
+  "dev_mode": true,
+  "dev_quick_start": false
 }

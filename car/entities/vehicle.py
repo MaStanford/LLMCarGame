@@ -10,11 +10,12 @@ UNIVERSAL_FILLER_PHASES = [
 ]
 
 class Vehicle(Entity):
-    def __init__(self, x, y, art, durability, speed, acceleration, handling):
+    def __init__(self, x, y, art, durability, speed, acceleration, handling, weight=1000):
         super().__init__(x, y, art, durability)
         self.speed = speed
         self.acceleration = acceleration
         self.handling = handling
+        self.weight = weight
         self.fuel = 100
         self.max_fuel = 100
         self.attachment_points = {}
@@ -74,6 +75,26 @@ class Vehicle(Entity):
             self.current_phase = chosen
             self.phase_timer = random.uniform(*chosen["duration"])
 
+            # Clear ram sub-state when leaving a RAM phase
+            if chosen["behavior"] != "RAM" and "ram_substate" in self.ai_state:
+                del self.ai_state["ram_substate"]
+                del self.ai_state["ram_timer"]
+
+    def _check_bbox_passable(self, world, cx, cy):
+        """Check if the vehicle's bounding box centered at (cx, cy) is in passable terrain."""
+        half_w = self.width / 2
+        half_h = self.height / 2
+        corners = [
+            (cx - half_w, cy - half_h),
+            (cx + half_w, cy - half_h),
+            (cx - half_w, cy + half_h),
+            (cx + half_w, cy + half_h),
+        ]
+        for x, y in corners:
+            if not world.get_terrain_at(x, y).get("passable", True):
+                return False
+        return True
+
     def _move_with_terrain_check(self, world, dt):
         """Move the vehicle, respecting impassable terrain (buildings, rocks, trees)."""
         next_x = self.x + self.vx * dt
@@ -84,28 +105,20 @@ class Vehicle(Entity):
             self.y = next_y
             return
 
-        # Check proposed position center
-        center_x = next_x + self.width / 2
-        center_y = next_y + self.height / 2
-        terrain = world.get_terrain_at(center_x, center_y)
-
-        if terrain.get("passable", True):
+        # Check proposed position using bounding box corners
+        if self._check_bbox_passable(world, next_x, next_y):
             self.x = next_x
             self.y = next_y
             return
 
         # Wall-slide: try X-only
-        x_center = (self.x + self.vx * dt) + self.width / 2
-        y_center = self.y + self.height / 2
-        if world.get_terrain_at(x_center, y_center).get("passable", True):
+        if self._check_bbox_passable(world, self.x + self.vx * dt, self.y):
             self.x += self.vx * dt
             self.vy *= 0.3
             return
 
         # Wall-slide: try Y-only
-        x_center = self.x + self.width / 2
-        y_center = (self.y + self.vy * dt) + self.height / 2
-        if world.get_terrain_at(x_center, y_center).get("passable", True):
+        if self._check_bbox_passable(world, self.x, self.y + self.vy * dt):
             self.y += self.vy * dt
             self.vx *= 0.3
             return

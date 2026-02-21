@@ -73,6 +73,7 @@ class PanelWagon(PlayerCar):
             handling=1.4,
             braking_power=3.5,
             weapon_aim_speed=0.9,
+            weight=1500,
             # Attachment points for weapons
             attachment_points={
                 "roof_rack": {"name": "Roof Rack", "level": "medium", "offset_x": 0, "offset_y": -1},

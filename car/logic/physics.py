@@ -61,12 +61,16 @@ def update_physics_and_collisions(game_state, world, audio_manager, dt, app):
 
     for fauna in game_state.active_fauna:
         fauna.update(game_state, world, dt)
+
+    for turret in game_state.active_turrets:
+        turret.update(game_state, world, dt)
         
     # 6. Despawn entities that are too far away
     despawn_radius_sq = game_state.despawn_radius**2
     game_state.active_enemies = [e for e in game_state.active_enemies if (e.x - game_state.car_world_x)**2 + (e.y - game_state.car_world_y)**2 < despawn_radius_sq]
     game_state.active_fauna = [f for f in game_state.active_fauna if (f.x - game_state.car_world_x)**2 + (f.y - game_state.car_world_y)**2 < despawn_radius_sq]
     game_state.active_obstacles = [o for o in game_state.active_obstacles if (o.x - game_state.car_world_x)**2 + (o.y - game_state.car_world_y)**2 < despawn_radius_sq]
+    game_state.active_turrets = [t for t in game_state.active_turrets if (t.x - game_state.car_world_x)**2 + (t.y - game_state.car_world_y)**2 < despawn_radius_sq]
     
     # 7. Check for game over condition
     if game_state.current_durability <= 0:

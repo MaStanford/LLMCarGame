@@ -73,7 +73,7 @@ class MuscleCar(Vehicle):
                 "▀▓▓░▀▀   "
             ]
         }
-        super().__init__(x, y, art, durability=85, speed=10.1 * GLOBAL_SPEED_MULTIPLIER, acceleration=0.9, handling=0.18)
+        super().__init__(x, y, art, durability=85, speed=10.1 * GLOBAL_SPEED_MULTIPLIER, acceleration=0.9, handling=0.18, weight=1500)
         self.name = "Muscle Car"
         self.xp_value = 40
         self.cash_value = 75

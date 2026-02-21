@@ -75,6 +75,7 @@ class Hatchback(PlayerCar):
             handling=2.0,
             braking_power=5.5,
             weapon_aim_speed=1.1,
+            weight=1000,
             attachment_points={
                 "hood_gun": {"name": "Hood Gun", "level": "light", "offset_x": 0, "offset_y": -2},
                 "roof_rack": {"name": "Roof Rack", "level": "light", "offset_x": 0, "offset_y": -1},

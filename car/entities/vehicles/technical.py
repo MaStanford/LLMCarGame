@@ -74,7 +74,7 @@ class Technical(Vehicle):
                 "▀▓▀╩  "
             ]
         }
-        super().__init__(x, y, art, durability=70, speed=8.25 * GLOBAL_SPEED_MULTIPLIER, acceleration=0.5, handling=0.6)
+        super().__init__(x, y, art, durability=70, speed=8.25 * GLOBAL_SPEED_MULTIPLIER, acceleration=0.5, handling=0.6, weight=1200)
         self.name = "Technical"
         self.xp_value = 25
         self.cash_value = 40

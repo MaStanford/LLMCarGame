@@ -19,6 +19,56 @@ BEHAVIOR_COSTS = {
 }
 
 
+def _are_factions_hostile(faction_a, faction_b, game_state):
+    """Check if two factions are hostile to each other."""
+    if not faction_a or not faction_b or faction_a == faction_b:
+        return False
+    relationships = game_state.factions.get(faction_a, {}).get("relationships", {})
+    return relationships.get(faction_b, "Neutral") == "Hostile"
+
+
+def _get_target_position(enemy, game_state):
+    """Determine the best target for this enemy.
+    Scans for nearby hostile-faction enemies and targets the closest one.
+    Falls back to the player position."""
+    enemy_faction = getattr(enemy, 'faction_id', None)
+    best_target = None
+    best_dist_sq = 80 * 80  # 80 unit detection range
+
+    if enemy_faction:
+        for other in game_state.active_enemies:
+            if other is enemy:
+                continue
+            other_faction = getattr(other, 'faction_id', None)
+            if not _are_factions_hostile(enemy_faction, other_faction, game_state):
+                continue
+            dx = other.x - enemy.x
+            dy = other.y - enemy.y
+            dist_sq = dx * dx + dy * dy
+            if dist_sq < best_dist_sq:
+                best_dist_sq = dist_sq
+                best_target = other
+
+        # Also check turrets from rival factions
+        for turret in game_state.active_turrets:
+            turret_faction = getattr(turret, 'faction_id', None)
+            if not _are_factions_hostile(enemy_faction, turret_faction, game_state):
+                continue
+            dx = turret.x - enemy.x
+            dy = turret.y - enemy.y
+            dist_sq = dx * dx + dy * dy
+            if dist_sq < best_dist_sq:
+                best_dist_sq = dist_sq
+                best_target = turret
+
+    if best_target:
+        enemy.ai_state["target_entity"] = best_target
+        return best_target.x, best_target.y
+
+    enemy.ai_state["target_entity"] = None
+    return game_state.car_world_x, game_state.car_world_y
+
+
 def _get_aim_spread(game_state):
     """Returns the difficulty-scaled aim spread multiplier."""
     return game_state.difficulty_mods.get("enemy_aim_spread", 1.0)
@@ -30,9 +80,10 @@ def _get_movement_jitter(game_state):
 
 
 def _fire_enemy_projectile(enemy, game_state, damage, accuracy=0.15):
-    """Create an enemy projectile aimed at the player with difficulty-scaled spread."""
-    dx = game_state.car_world_x - enemy.x
-    dy = game_state.car_world_y - enemy.y
+    """Create an enemy projectile aimed at the enemy's current target."""
+    tx, ty = _get_target_position(enemy, game_state)
+    dx = tx - enemy.x
+    dy = ty - enemy.y
     angle = math.atan2(dy, dx)
     # Scale accuracy spread by difficulty
     scaled_accuracy = accuracy * _get_aim_spread(game_state)
@@ -52,7 +103,7 @@ def _fire_enemy_projectile(enemy, game_state, damage, accuracy=0.15):
         ENEMY_PROJECTILE_CHAR,
         enemy.x,
         enemy.y,
-        "enemy"
+        ("enemy", getattr(enemy, 'faction_id', None))
     ])
 
 
@@ -68,9 +119,10 @@ def _try_shoot(enemy, game_state, cooldown, damage, accuracy=0.15):
 
 
 def _execute_chase_behavior(enemy, game_state, edata):
-    """Moves the enemy towards the player with difficulty-scaled steering jitter."""
-    dx = game_state.car_world_x - enemy.x
-    dy = game_state.car_world_y - enemy.y
+    """Moves the enemy towards its target with difficulty-scaled steering jitter."""
+    tx, ty = _get_target_position(enemy, game_state)
+    dx = tx - enemy.x
+    dy = ty - enemy.y
     dist = math.sqrt(dx*dx + dy*dy)
     if dist > 0:
         jitter = _get_movement_jitter(game_state)
@@ -78,9 +130,10 @@ def _execute_chase_behavior(enemy, game_state, edata):
         enemy.vy = (dy / dist + random.uniform(-jitter, jitter)) * edata.speed
 
 def _execute_strafe_behavior(enemy, game_state, edata):
-    """Circles the player at a distance."""
-    dx = game_state.car_world_x - enemy.x
-    dy = game_state.car_world_y - enemy.y
+    """Circles the target at a distance."""
+    tx, ty = _get_target_position(enemy, game_state)
+    dx = tx - enemy.x
+    dy = ty - enemy.y
     dist = math.sqrt(dx*dx + dy*dy)
     if dist > 0:
         # Move perpendicular to the player
@@ -88,19 +141,58 @@ def _execute_strafe_behavior(enemy, game_state, edata):
         enemy.vy = dx / dist * edata.speed
 
 def _execute_ram_behavior(enemy, game_state, edata):
-    """Moves aggressively towards the player with a speed boost and difficulty-scaled jitter."""
-    dx = game_state.car_world_x - enemy.x
-    dy = game_state.car_world_y - enemy.y
-    dist = math.sqrt(dx*dx + dy*dy)
-    if dist > 0:
-        jitter = _get_movement_jitter(game_state)
-        enemy.vx = (dx / dist + random.uniform(-jitter, jitter)) * edata.speed * 1.5
-        enemy.vy = (dy / dist + random.uniform(-jitter, jitter)) * edata.speed * 1.5
+    """Ram with charge/backup/wait cycling.
+    Sub-states tracked in enemy.ai_state:
+      ram_substate: 'charging' | 'backing_up' | 'waiting'
+      ram_timer: countdown for current sub-state
+    """
+    tx, ty = _get_target_position(enemy, game_state)
+    dx = tx - enemy.x
+    dy = ty - enemy.y
+    dist = math.sqrt(dx * dx + dy * dy)
+
+    # Initialize sub-state if not set
+    if "ram_substate" not in enemy.ai_state:
+        enemy.ai_state["ram_substate"] = "charging"
+        enemy.ai_state["ram_timer"] = 0
+
+    substate = enemy.ai_state["ram_substate"]
+
+    if substate == "charging":
+        # Rush toward the player at 1.5x speed
+        if dist > 0:
+            jitter = _get_movement_jitter(game_state)
+            enemy.vx = (dx / dist + random.uniform(-jitter, jitter)) * edata.speed * 1.5
+            enemy.vy = (dy / dist + random.uniform(-jitter, jitter)) * edata.speed * 1.5
+
+        # Transition to backing up when close to the player
+        if dist < 8:
+            enemy.ai_state["ram_substate"] = "backing_up"
+            enemy.ai_state["ram_timer"] = random.uniform(0.8, 1.2)
+
+    elif substate == "backing_up":
+        # Reverse away from the player
+        if dist > 0:
+            enemy.vx = -(dx / dist) * edata.speed * 0.8
+            enemy.vy = -(dy / dist) * edata.speed * 0.8
+        enemy.ai_state["ram_timer"] -= 1.0 / 30.0  # Approximate frame time
+        if enemy.ai_state["ram_timer"] <= 0:
+            enemy.ai_state["ram_substate"] = "waiting"
+            enemy.ai_state["ram_timer"] = random.uniform(0.4, 0.8)
+
+    elif substate == "waiting":
+        # Hold position briefly before charging again
+        enemy.vx *= 0.85
+        enemy.vy *= 0.85
+        enemy.ai_state["ram_timer"] -= 1.0 / 30.0
+        if enemy.ai_state["ram_timer"] <= 0:
+            enemy.ai_state["ram_substate"] = "charging"
 
 def _execute_evade_behavior(enemy, game_state, edata):
-    """Moves away from the player with difficulty-scaled steering jitter."""
-    dx = game_state.car_world_x - enemy.x
-    dy = game_state.car_world_y - enemy.y
+    """Moves away from the target with difficulty-scaled steering jitter."""
+    tx, ty = _get_target_position(enemy, game_state)
+    dx = tx - enemy.x
+    dy = ty - enemy.y
     dist = math.sqrt(dx*dx + dy*dy)
     if dist > 0:
         jitter = _get_movement_jitter(game_state)
@@ -135,7 +227,7 @@ def _execute_patrol_behavior(enemy, game_state, edata):
 
 
 def _execute_deploy_mine_behavior(enemy, game_state, edata):
-    """Flees from the player and deploys a mine."""
+    """Flees from the target and deploys a mine."""
     if "mine_cooldown" not in enemy.ai_state:
         enemy.ai_state["mine_cooldown"] = 0
 
@@ -144,16 +236,17 @@ def _execute_deploy_mine_behavior(enemy, game_state, edata):
         _execute_chase_behavior(enemy, game_state, edata)
         return
 
-    # Flee from the player
-    dx = enemy.x - game_state.car_world_x
-    dy = enemy.y - game_state.car_world_y
+    # Flee from the target
+    tx, ty = _get_target_position(enemy, game_state)
+    dx = enemy.x - tx
+    dy = enemy.y - ty
     dist = math.sqrt(dx*dx + dy*dy)
     if dist > 0:
         enemy.vx = (dx / dist) * edata.speed
         enemy.vy = (dy / dist) * edata.speed
 
-    # Deploy a mine if far enough away
-    dist_sq = (enemy.x - game_state.car_world_x)**2 + (enemy.y - game_state.car_world_y)**2
+    # Deploy a mine if far enough away from target
+    dist_sq = (enemy.x - tx)**2 + (enemy.y - ty)**2
     if dist_sq > 100:
         new_mine = Mine(enemy.x, enemy.y)
         game_state.active_obstacles.append(new_mine)
@@ -163,9 +256,10 @@ def _execute_deploy_mine_behavior(enemy, game_state, edata):
 # --- New shooting behaviors ---
 
 def _execute_shoot_behavior(enemy, game_state, edata):
-    """Face player, maintain medium distance (80-120), fire periodically."""
-    dx = game_state.car_world_x - enemy.x
-    dy = game_state.car_world_y - enemy.y
+    """Face target, maintain medium distance (80-120), fire periodically."""
+    tx, ty = _get_target_position(enemy, game_state)
+    dx = tx - enemy.x
+    dy = ty - enemy.y
     dist = math.sqrt(dx*dx + dy*dy)
 
     # Maintain distance: approach if too far, retreat if too close
@@ -190,8 +284,9 @@ def _execute_shoot_behavior(enemy, game_state, edata):
 
 def _execute_snipe_behavior(enemy, game_state, edata):
     """Hold position at long range, fire accurate shots."""
-    dx = game_state.car_world_x - enemy.x
-    dy = game_state.car_world_y - enemy.y
+    tx, ty = _get_target_position(enemy, game_state)
+    dx = tx - enemy.x
+    dy = ty - enemy.y
     dist = math.sqrt(dx*dx + dy*dy)
 
     preferred_dist = 160
@@ -212,9 +307,10 @@ def _execute_snipe_behavior(enemy, game_state, edata):
 
 
 def _execute_flank_behavior(enemy, game_state, edata):
-    """Circle to player's side/rear, then shoot, with difficulty-scaled jitter."""
-    dx = game_state.car_world_x - enemy.x
-    dy = game_state.car_world_y - enemy.y
+    """Circle to target's side/rear, then shoot, with difficulty-scaled jitter."""
+    tx, ty = _get_target_position(enemy, game_state)
+    dx = tx - enemy.x
+    dy = ty - enemy.y
     dist = math.sqrt(dx*dx + dy*dy)
 
     if dist > 0:

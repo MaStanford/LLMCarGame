@@ -65,7 +65,7 @@ class Miner(Vehicle):
                 "▀█░▀  "
             ]
         }
-        super().__init__(x, y, art, durability=150, speed=2.85 * GLOBAL_SPEED_MULTIPLIER, acceleration=0.3, handling=0.05)
+        super().__init__(x, y, art, durability=150, speed=2.85 * GLOBAL_SPEED_MULTIPLIER, acceleration=0.3, handling=0.05, weight=2500)
         self.name = "Miner"
         self.collision_damage = 10
         self.shoot_damage = 0

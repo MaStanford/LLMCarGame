@@ -88,7 +88,7 @@ class WarRig(Vehicle):
                 "▀▓░░▀▀    "
             ]
         }
-        super().__init__(x, y, art, durability=300, speed=3.0 * GLOBAL_SPEED_MULTIPLIER, acceleration=0.2, handling=0.03)
+        super().__init__(x, y, art, durability=300, speed=3.0 * GLOBAL_SPEED_MULTIPLIER, acceleration=0.2, handling=0.03, weight=5000)
         self.name = "War Rig"
         self.xp_value = 200
         self.cash_value = 300

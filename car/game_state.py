@@ -134,6 +134,8 @@ class GameState:
         self.fauna_spawn_timer = 0
         self.active_enemies = []
         self.enemy_spawn_timer = 0
+        self.active_turrets = []
+        self.turret_spawn_timer = 0
         
         # --- Quest State ---
         self.active_quests = []         # List of Quest objects, max 3
@@ -191,10 +193,11 @@ class GameState:
     @property
     def all_entities(self):
         """Returns a combined list of all active entities."""
-        return ([self.player_car] + 
-                self.active_obstacles + 
-                self.active_fauna + 
-                self.active_enemies)
+        return ([self.player_car] +
+                self.active_obstacles +
+                self.active_fauna +
+                self.active_enemies +
+                self.active_turrets)
 
     def gain_xp(self, xp):
         self.current_xp += xp

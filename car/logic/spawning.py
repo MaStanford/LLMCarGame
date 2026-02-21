@@ -110,6 +110,7 @@ def spawn_enemy(game_state, world):
 
     if world.get_terrain_at(sx, sy).get("passable", True):
         new_enemy = enemy_class(sx, sy)
+        new_enemy.faction_id = current_faction_id
         hp_mult = game_state.difficulty_mods.get("enemy_hp_mult", 1.0)
         dmg_mult = game_state.difficulty_mods.get("enemy_dmg_mult", 1.0)
         # Apply progression scaling on top of difficulty
@@ -148,6 +149,7 @@ def spawn_enemy(game_state, world):
             offset_y = sy + random.uniform(-15, 15)
             if world.get_terrain_at(offset_x, offset_y).get("passable", True):
                 extra = enemy_class(offset_x, offset_y)
+                extra.faction_id = current_faction_id
                 extra.durability = int(extra.durability * hp_mult)
                 extra.max_durability = extra.durability
                 if hasattr(extra, 'collision_damage'):
@@ -186,3 +188,47 @@ def spawn_obstacle(game_state, world, is_initial_spawn=False):
     if world.get_terrain_at(sx, sy).get("passable", True):
         new_obstacle = obstacle_class(sx, sy)
         game_state.active_obstacles.append(new_obstacle)
+
+
+MAX_TURRETS_PER_CITY = 6
+
+def spawn_turrets(game_state, world):
+    """Spawn defense turrets in hostile cities when the player is nearby."""
+    from ..entities.turret import Turret
+
+    dist_to_city = _get_distance_to_nearest_city_center(game_state.car_world_x, game_state.car_world_y)
+    if dist_to_city > CITY_SIZE:
+        return  # Not inside a city
+
+    faction_id = get_city_faction(game_state.car_world_x, game_state.car_world_y, game_state.factions)
+    if not faction_id:
+        return
+
+    player_rep = game_state.faction_reputation.get(faction_id, 0)
+    if player_rep > -50:
+        return  # Only spawn in hostile cities
+
+    # Check how many turrets from this faction already exist nearby
+    existing = sum(
+        1 for t in game_state.active_turrets
+        if getattr(t, 'faction_id', None) == faction_id
+    )
+    if existing >= MAX_TURRETS_PER_CITY:
+        return
+
+    # Spawn turrets around the city perimeter
+    grid_x = round(game_state.car_world_x / CITY_SPACING)
+    grid_y = round(game_state.car_world_y / CITY_SPACING)
+    center_x = grid_x * CITY_SPACING
+    center_y = grid_y * CITY_SPACING
+
+    count = random.randint(4, MAX_TURRETS_PER_CITY) - existing
+    for i in range(count):
+        angle = (2 * math.pi * i) / count + random.uniform(-0.3, 0.3)
+        dist = CITY_SIZE * 0.7 + random.uniform(-5, 5)
+        tx = center_x + dist * math.cos(angle)
+        ty = center_y + dist * math.sin(angle)
+        if world.get_terrain_at(tx, ty).get("passable", True):
+            turret = Turret(tx, ty)
+            turret.faction_id = faction_id
+            game_state.active_turrets.append(turret)

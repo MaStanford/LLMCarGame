@@ -2,8 +2,8 @@ from ..vehicle import Vehicle
 from ..base import Entity
 
 class PlayerCar(Vehicle):
-    def __init__(self, x, y, art, durability, speed, acceleration, handling, braking_power, attachment_points, default_weapons={}, weapon_aim_speed=1.0):
-        super().__init__(x, y, art, durability, speed, acceleration, handling)
+    def __init__(self, x, y, art, durability, speed, acceleration, handling, braking_power, attachment_points, default_weapons={}, weapon_aim_speed=1.0, weight=1000):
+        super().__init__(x, y, art, durability, speed, acceleration, handling, weight=weight)
         self.braking_power = braking_power
         self.weapon_aim_speed = weapon_aim_speed
         self.attachment_points = attachment_points

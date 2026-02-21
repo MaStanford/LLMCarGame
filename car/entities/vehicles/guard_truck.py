@@ -72,7 +72,7 @@ class GuardTruck(Vehicle):
                 "▀██░█▀  "
             ]
         }
-        super().__init__(x, y, art, durability=150, speed=3.75 * GLOBAL_SPEED_MULTIPLIER, acceleration=0.2, handling=0.2)
+        super().__init__(x, y, art, durability=150, speed=3.75 * GLOBAL_SPEED_MULTIPLIER, acceleration=0.2, handling=0.2, weight=2000)
         self.name = "Guard Truck"
         self.xp_value = 30
         self.cash_value = 50

@@ -9,6 +9,25 @@ def _is_terrain_enterable(terrain):
     building = terrain.get("building", {})
     return building.get("enterable", False)
 
+def _check_bbox_terrain(world, cx, cy, w, h):
+    """Check terrain at the vehicle's bounding box corners.
+    cx, cy is the CENTER of the vehicle (matches rendering).
+    Returns the first impassable terrain found, or the center terrain if all clear.
+    This prevents vehicles from visually clipping into buildings."""
+    half_w = w / 2
+    half_h = h / 2
+    corners = [
+        (cx - half_w, cy - half_h),  # top-left
+        (cx + half_w, cy - half_h),  # top-right
+        (cx - half_w, cy + half_h),  # bottom-left
+        (cx + half_w, cy + half_h),  # bottom-right
+    ]
+    for x, y in corners:
+        terrain = world.get_terrain_at(x, y)
+        if not _is_terrain_enterable(terrain):
+            return terrain
+    return world.get_terrain_at(cx, cy)
+
 def _is_enterable_building(terrain):
     """Check if terrain is specifically an enterable building (not just passable ground)."""
     return not terrain.get("passable", True) and terrain.get("building", {}).get("enterable", False)
@@ -113,9 +132,8 @@ def update_vehicle_movement(game_state, world, audio_manager, dt):
             game_state.deflection_vx = 0.0
             game_state.deflection_vy = 0.0
     
-    next_center_x = next_world_x + game_state.player_car.width / 2
-    next_center_y = next_world_y + game_state.player_car.height / 2
-    next_terrain = world.get_terrain_at(next_center_x, next_center_y)
+    next_terrain = _check_bbox_terrain(world, next_world_x, next_world_y,
+                                        game_state.player_car.width, game_state.player_car.height)
 
     if _is_terrain_enterable(next_terrain):
         game_state.car_world_x = next_world_x
@@ -132,9 +150,8 @@ def update_vehicle_movement(game_state, world, audio_manager, dt):
 
         # Try moving in X only
         test_x = game_state.car_world_x + dx
-        test_cx = test_x + game_state.player_car.width / 2
-        test_cy = game_state.car_world_y + game_state.player_car.height / 2
-        terrain_x = world.get_terrain_at(test_cx, test_cy)
+        terrain_x = _check_bbox_terrain(world, test_x, game_state.car_world_y,
+                                        game_state.player_car.width, game_state.player_car.height)
         if _is_terrain_enterable(terrain_x):
             game_state.car_world_x = test_x
             moved = True
@@ -143,9 +160,8 @@ def update_vehicle_movement(game_state, world, audio_manager, dt):
 
         # Try moving in Y only
         test_y = game_state.car_world_y + dy
-        test_cx = game_state.car_world_x + game_state.player_car.width / 2
-        test_cy = test_y + game_state.player_car.height / 2
-        terrain_y = world.get_terrain_at(test_cx, test_cy)
+        terrain_y = _check_bbox_terrain(world, game_state.car_world_x, test_y,
+                                        game_state.player_car.width, game_state.player_car.height)
         if _is_terrain_enterable(terrain_y):
             game_state.car_world_y = test_y
             moved = True
@@ -166,7 +182,11 @@ def update_vehicle_movement(game_state, world, audio_manager, dt):
                 # Apply ram damage to buildings
                 if "building" in next_terrain:
                     ram_damage = max(1, abs(prev_speed) * BUILDING_RAM_DAMAGE)
-                    city_key, b_idx, b_data = find_building_at(next_center_x, next_center_y)
+                    # Use building's own center to locate it (a corner may have triggered this)
+                    bld = next_terrain["building"]
+                    bld_cx = bld['x'] + bld['w'] / 2
+                    bld_cy = bld['y'] + bld['h'] / 2
+                    city_key, b_idx, b_data = find_building_at(bld_cx, bld_cy)
                     if city_key is not None:
                         bld_notes = damage_building(game_state, city_key, b_idx, b_data, ram_damage)
                         notifications.extend(bld_notes)

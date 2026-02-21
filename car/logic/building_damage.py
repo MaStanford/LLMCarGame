@@ -147,6 +147,7 @@ def _spawn_retaliation_wave(game_state, faction_id):
         ey = game_state.car_world_y + dist * math.sin(angle)
         enemy_class = random.choice(possible_vehicles)
         new_enemy = enemy_class(ex, ey)
+        new_enemy.faction_id = faction_id
         new_enemy.patrol_target_x = ex + random.uniform(-50, 50)
         new_enemy.patrol_target_y = ey + random.uniform(-50, 50)
         game_state.active_enemies.append(new_enemy)

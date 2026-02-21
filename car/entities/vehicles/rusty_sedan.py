@@ -62,7 +62,7 @@ class RustySedan(Vehicle):
                 "▀▒░▒▀  "
             ]
         }
-        super().__init__(x, y, art, durability=20, speed=6.75 * GLOBAL_SPEED_MULTIPLIER, acceleration=0.5, handling=0.5)
+        super().__init__(x, y, art, durability=20, speed=6.75 * GLOBAL_SPEED_MULTIPLIER, acceleration=0.5, handling=0.5, weight=1000)
         self.name = "Rusty Sedan"
         self.xp_value = 5
         self.cash_value = 10

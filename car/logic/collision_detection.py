@@ -5,6 +5,7 @@ from .building_damage import find_building_at, damage_building
 from ..world.generation import get_buildings_in_city
 from ..data.game_constants import CITY_SPACING
 from ..data.quests import KillCountObjective, WaveSpawnObjective
+from .ai_behaviors import _are_factions_hostile
 
 # Collision physics constants
 STOP_THRESHOLD = 2.0  # Speed below which collisions stop the car completely
@@ -12,7 +13,8 @@ DEFLECTION_FRAMES = 15  # Number of frames to apply deflection (~0.5s at 30fps)
 DEFLECTION_STRENGTH = 3.0  # Base deflection velocity
 COLLISION_IFRAMES = 15  # Invulnerability frames after a collision
 SPEED_REDUCTION_FACTOR = 0.5  # How much speed is reduced on collision
-PUSH_OUT_DISTANCE = 2.0  # Distance to push player away from collision
+PUSH_OUT_DISTANCE = 3.0  # Distance to push vehicles apart on collision
+BOUNCE_STRENGTH = 4.0  # Base bounce strength for momentum-based collisions
 
 
 def find_safe_exit_spot(world, building):
@@ -54,18 +56,19 @@ def check_collision(rect1, rect2):
             y1 + h1 > y2)
 
 
-def _apply_deflection(game_state, other_x, other_y, other_w, other_h, damage):
+def _apply_deflection(game_state, other_entity, damage):
     """
-    Applies deflection physics when the player collides with an entity.
-    Calculates ricochet direction and sets deflection state.
+    Applies momentum-based deflection physics when the player collides with an entity.
+    Both entities bounce based on relative weight and speed.
+    Works with any entity type (vehicles, obstacles, fauna).
     """
     player = game_state.player_car
 
     # Calculate collision normal (direction from other entity to player)
     player_cx = player.x + player.width / 2
     player_cy = player.y + player.height / 2
-    other_cx = other_x + other_w / 2
-    other_cy = other_y + other_h / 2
+    other_cx = other_entity.x + other_entity.width / 2
+    other_cy = other_entity.y + other_entity.height / 2
 
     nx = player_cx - other_cx
     ny = player_cy - other_cy
@@ -79,34 +82,106 @@ def _apply_deflection(game_state, other_x, other_y, other_w, other_h, damage):
         nx = -math.cos(adjusted_angle)
         ny = -math.sin(adjusted_angle)
 
+    # --- Weight-based bounce calculations ---
+    player_weight = getattr(player, 'weight', 1000)
+    other_weight = getattr(other_entity, 'weight', 1000)
+    total_weight = player_weight + other_weight
+
+    # Bounce ratios: lighter entity bounces more
+    player_bounce_ratio = other_weight / total_weight
+    other_bounce_ratio = player_weight / total_weight
+
+    # Combined speed for bounce intensity
+    player_speed = abs(game_state.car_speed)
+    other_speed = math.sqrt(other_entity.vx * other_entity.vx + other_entity.vy * other_entity.vy)
+    combined_speed = max(player_speed, 1) + max(other_speed, 1)
+
     # Apply speed-scaled damage
-    speed_factor = max(0.3, game_state.car_speed / (game_state.max_speed if game_state.max_speed > 0 else 1))
+    speed_factor = max(0.3, player_speed / (game_state.max_speed if game_state.max_speed > 0 else 1))
     actual_damage = max(1, int(damage * speed_factor))
     if not game_state.god_mode:
         game_state.current_durability -= actual_damage
 
-    if game_state.car_speed < STOP_THRESHOLD:
-        # At low speeds, just stop
+    # --- Player bounce ---
+    if player_speed < STOP_THRESHOLD:
         game_state.car_speed = 0
         game_state.car_velocity_x = 0
         game_state.car_velocity_y = 0
     else:
-        # Reduce speed and apply deflection
         game_state.car_speed *= SPEED_REDUCTION_FACTOR
 
-        # Ricochet: reflect velocity across collision normal
-        game_state.deflection_vx = nx * DEFLECTION_STRENGTH * speed_factor
-        game_state.deflection_vy = ny * DEFLECTION_STRENGTH * speed_factor
-        game_state.deflection_frames = DEFLECTION_FRAMES
+    # Ricochet: player bounced along +normal, scaled by weight ratio
+    player_bounce = BOUNCE_STRENGTH * player_bounce_ratio * (combined_speed / 10.0)
+    game_state.deflection_vx = nx * player_bounce
+    game_state.deflection_vy = ny * player_bounce
+    game_state.deflection_frames = DEFLECTION_FRAMES
 
     # Push player out of overlap
-    game_state.car_world_x += nx * PUSH_OUT_DISTANCE
-    game_state.car_world_y += ny * PUSH_OUT_DISTANCE
+    game_state.car_world_x += nx * PUSH_OUT_DISTANCE * player_bounce_ratio
+    game_state.car_world_y += ny * PUSH_OUT_DISTANCE * player_bounce_ratio
     game_state.player_car.x = game_state.car_world_x
     game_state.player_car.y = game_state.car_world_y
 
+    # --- Other entity bounce (pushed in opposite direction) ---
+    other_bounce = BOUNCE_STRENGTH * other_bounce_ratio * (combined_speed / 10.0)
+    other_entity.vx = -nx * other_bounce
+    other_entity.vy = -ny * other_bounce
+    other_entity.x -= nx * PUSH_OUT_DISTANCE * other_bounce_ratio
+    other_entity.y -= ny * PUSH_OUT_DISTANCE * other_bounce_ratio
+
+    # If the other entity was ramming, reset its ram sub-state to backing up
+    if hasattr(other_entity, 'ai_state') and "ram_substate" in other_entity.ai_state:
+        other_entity.ai_state["ram_substate"] = "backing_up"
+        other_entity.ai_state["ram_timer"] = 1.0
+
     # Set invulnerability frames
     game_state.collision_iframes = COLLISION_IFRAMES
+
+
+def _parse_projectile_owner(p_state):
+    """Parse projectile owner into (owner_type, faction_id).
+    Handles both old 'enemy'/'player' strings and new ('enemy', faction_id) tuples.
+    """
+    raw = p_state[9] if len(p_state) > 9 else "player"
+    if isinstance(raw, tuple):
+        return raw[0], raw[1]
+    return raw, None
+
+
+def _apply_entity_bounce(entity_a, entity_b):
+    """Apply weight-based bounce between two non-player entities.
+    Both entities are pushed apart based on weight ratios.
+    """
+    a_cx = entity_a.x + entity_a.width / 2
+    a_cy = entity_a.y + entity_a.height / 2
+    b_cx = entity_b.x + entity_b.width / 2
+    b_cy = entity_b.y + entity_b.height / 2
+
+    nx = a_cx - b_cx
+    ny = a_cy - b_cy
+    dist = math.sqrt(nx * nx + ny * ny)
+    if dist > 0:
+        nx /= dist
+        ny /= dist
+    else:
+        nx, ny = 1.0, 0.0
+
+    weight_a = getattr(entity_a, 'weight', 1000)
+    weight_b = getattr(entity_b, 'weight', 1000)
+    total_weight = weight_a + weight_b
+
+    bounce_a = BOUNCE_STRENGTH * (weight_b / total_weight)
+    bounce_b = BOUNCE_STRENGTH * (weight_a / total_weight)
+
+    entity_a.vx = nx * bounce_a
+    entity_a.vy = ny * bounce_a
+    entity_a.x += nx * PUSH_OUT_DISTANCE * (weight_b / total_weight)
+    entity_a.y += ny * PUSH_OUT_DISTANCE * (weight_b / total_weight)
+
+    entity_b.vx = -nx * bounce_b
+    entity_b.vy = -ny * bounce_b
+    entity_b.x -= nx * PUSH_OUT_DISTANCE * (weight_a / total_weight)
+    entity_b.y -= ny * PUSH_OUT_DISTANCE * (weight_a / total_weight)
 
 
 def _drop_meat(game_state, x, y):
@@ -158,7 +233,7 @@ def handle_collisions(game_state, world, audio_manager, app):
             continue
         p_x, p_y = p_state[0], p_state[1]
         p_power = p_state[4]
-        p_owner = p_state[9] if len(p_state) > 9 else "player"
+        p_owner_type, p_owner_faction = _parse_projectile_owner(p_state)
 
         # Check for collisions with terrain
         p_terrain = world.get_terrain_at(p_x, p_y)
@@ -173,7 +248,7 @@ def handle_collisions(game_state, world, audio_manager, app):
             continue
 
         # Enemy projectiles hit the player
-        if p_owner == "enemy":
+        if p_owner_type == "enemy":
             player = game_state.player_car
             if (player.x <= p_x < player.x + player.width and
                 player.y <= p_y < player.y + player.height):
@@ -185,8 +260,51 @@ def handle_collisions(game_state, world, audio_manager, app):
                 projectiles_to_remove.add(i)
                 continue
 
+            # Enemy projectiles hit rival-faction enemies
+            if p_owner_faction:
+                hit_rival = False
+                for enemy in game_state.active_enemies:
+                    enemy_faction = getattr(enemy, 'faction_id', None)
+                    if enemy_faction == p_owner_faction:
+                        continue  # Don't hit friendlies
+                    if not enemy_faction:
+                        continue  # Skip factionless enemies
+                    if (enemy.x <= p_x < enemy.x + enemy.width and
+                            enemy.y <= p_y < enemy.y + enemy.height):
+                        enemy.durability -= p_power
+                        projectiles_to_remove.add(i)
+                        if enemy.durability <= 0:
+                            game_state.destroyed_this_frame.append(enemy)
+                            handle_enemy_loot_drop(game_state, enemy, app)
+                            xp = getattr(enemy, 'xp_value', 5)
+                            game_state.gain_xp(xp)
+                            _update_kill_objectives(game_state, enemy)
+                            game_state.active_enemies.remove(enemy)
+                        hit_rival = True
+                        break
+                if hit_rival:
+                    continue
+
+                # Enemy projectiles hit rival-faction turrets
+                for turret in getattr(game_state, 'active_turrets', []):
+                    turret_faction = getattr(turret, 'faction_id', None)
+                    if turret_faction == p_owner_faction:
+                        continue
+                    if not turret_faction:
+                        continue
+                    if (turret.x <= p_x < turret.x + turret.width and
+                            turret.y <= p_y < turret.y + turret.height):
+                        turret.durability -= p_power
+                        projectiles_to_remove.add(i)
+                        if turret.durability <= 0:
+                            game_state.destroyed_this_frame.append(turret)
+                            xp = getattr(turret, 'xp_value', 10)
+                            game_state.gain_xp(xp)
+                            game_state.active_turrets.remove(turret)
+                        break
+
         # Player projectiles hit enemies
-        if p_owner == "player":
+        if p_owner_type == "player":
             hit = False
             for enemy in game_state.active_enemies:
                 if (enemy.x <= p_x < enemy.x + enemy.width and
@@ -202,6 +320,24 @@ def handle_collisions(game_state, world, audio_manager, app):
                         _update_kill_objectives(game_state, enemy)
                         notifications.append(f"Destroyed {enemy.__class__.__name__}! (+{xp} XP)")
                         game_state.active_enemies.remove(enemy)
+                    hit = True
+                    break
+            if hit:
+                continue
+
+            # Player projectiles hit turrets
+            for turret in getattr(game_state, 'active_turrets', []):
+                if (turret.x <= p_x < turret.x + turret.width and
+                        turret.y <= p_y < turret.y + turret.height):
+                    turret.durability -= p_power
+                    audio_manager.play_sfx("enemy_hit")
+                    projectiles_to_remove.add(i)
+                    if turret.durability <= 0:
+                        game_state.destroyed_this_frame.append(turret)
+                        xp = getattr(turret, 'xp_value', 10)
+                        game_state.gain_xp(xp)
+                        notifications.append(f"Destroyed turret! (+{xp} XP)")
+                        game_state.active_turrets.remove(turret)
                     hit = True
                     break
             if hit:
@@ -286,7 +422,7 @@ def handle_collisions(game_state, world, audio_manager, app):
                 audio_manager.play_sfx("crash")
 
                 collision_damage = getattr(enemy, "collision_damage", 5)
-                _apply_deflection(game_state, enemy.x, enemy.y, enemy.width, enemy.height, collision_damage)
+                _apply_deflection(game_state, enemy, collision_damage)
 
                 # Damage the enemy too
                 enemy.durability -= getattr(player, "collision_damage", 5)
@@ -301,6 +437,42 @@ def handle_collisions(game_state, world, audio_manager, app):
                     game_state.active_enemies.remove(enemy)
                 break  # Only handle one collision per frame
 
+    # --- Inter-Faction Enemy-vs-Enemy Collision ---
+    enemies = game_state.active_enemies
+    enemies_to_remove = []
+    for i_e in range(len(enemies)):
+        for j_e in range(i_e + 1, len(enemies)):
+            a = enemies[i_e]
+            b = enemies[j_e]
+            fa = getattr(a, 'faction_id', None)
+            fb = getattr(b, 'faction_id', None)
+            if not fa or not fb or fa == fb:
+                continue
+            if not _are_factions_hostile(fa, fb, game_state):
+                continue
+            if check_collision(
+                (a.x, a.y, a.width, a.height),
+                (b.x, b.y, b.width, b.height)
+            ):
+                _apply_entity_bounce(a, b)
+                dmg_a = getattr(a, 'collision_damage', 5)
+                dmg_b = getattr(b, 'collision_damage', 5)
+                b.durability -= dmg_a
+                a.durability -= dmg_b
+                if a.durability <= 0 and a not in enemies_to_remove:
+                    enemies_to_remove.append(a)
+                if b.durability <= 0 and b not in enemies_to_remove:
+                    enemies_to_remove.append(b)
+
+    for dead in enemies_to_remove:
+        if dead in game_state.active_enemies:
+            game_state.destroyed_this_frame.append(dead)
+            handle_enemy_loot_drop(game_state, dead, app)
+            xp = getattr(dead, 'xp_value', 5)
+            game_state.gain_xp(xp)
+            _update_kill_objectives(game_state, dead)
+            game_state.active_enemies.remove(dead)
+
     # --- Obstacle Collisions (with deflection) ---
     if game_state.collision_iframes <= 0:
         player_rect = (game_state.player_car.x, game_state.player_car.y,
@@ -310,7 +482,7 @@ def handle_collisions(game_state, world, audio_manager, app):
             if check_collision(player_rect, obstacle_rect):
                 audio_manager.play_sfx("crash")
 
-                _apply_deflection(game_state, obstacle.x, obstacle.y, obstacle.width, obstacle.height, obstacle.damage)
+                _apply_deflection(game_state, obstacle, obstacle.damage)
 
                 obstacle.durability -= 10
                 if obstacle.durability <= 0:
@@ -332,7 +504,7 @@ def handle_collisions(game_state, world, audio_manager, app):
                 audio_manager.play_sfx("crash")
 
                 fauna_damage = getattr(fauna, 'collision_damage', 1)
-                _apply_deflection(game_state, fauna.x, fauna.y, fauna.width, fauna.height, fauna_damage)
+                _apply_deflection(game_state, fauna, fauna_damage)
 
                 fauna.durability -= getattr(player, "collision_damage", 5)
                 if fauna.durability <= 0:
@@ -342,6 +514,25 @@ def handle_collisions(game_state, world, audio_manager, app):
                     game_state.karma -= 1
                     _drop_meat(game_state, fauna.x, fauna.y)
                     notifications.append(f"Ran over {fauna.__class__.__name__}! (-1 Karma)")
+                break
+
+    # --- Player-Turret Collisions (with deflection) ---
+    if game_state.collision_iframes <= 0:
+        player_rect = (game_state.player_car.x, game_state.player_car.y,
+                       game_state.player_car.width, game_state.player_car.height)
+        for turret in getattr(game_state, 'active_turrets', [])[:]:
+            turret_rect = (turret.x, turret.y, turret.width, turret.height)
+            if check_collision(player_rect, turret_rect):
+                audio_manager.play_sfx("crash")
+                turret_damage = getattr(turret, 'collision_damage', 3)
+                _apply_deflection(game_state, turret, turret_damage)
+                turret.durability -= getattr(player, "collision_damage", 5)
+                if turret.durability <= 0:
+                    game_state.destroyed_this_frame.append(turret)
+                    xp = getattr(turret, 'xp_value', 10)
+                    game_state.gain_xp(xp)
+                    notifications.append(f"Destroyed turret! (+{xp} XP)")
+                    game_state.active_turrets.remove(turret)
                 break
 
     # --- Pickup Collisions ---

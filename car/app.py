@@ -12,7 +12,7 @@ from .screens.game_over import GameOverScreen
 from .screens.map import MapScreen
 from .game_state import GameState
 from .world import World
-from .logic.spawning import spawn_enemy, spawn_fauna, spawn_obstacle
+from .logic.spawning import spawn_enemy, spawn_fauna, spawn_obstacle, spawn_turrets
 from .logic.physics import update_physics_and_collisions
 from .logic.quest_logic import update_quests
 from .logic.trigger_logic import check_triggers
@@ -157,6 +157,11 @@ class GenesisModuleApp(App):
             if gs.obstacle_spawn_timer <= 0:
                 spawn_obstacle(gs, self.world)
                 gs.obstacle_spawn_timer = random.uniform(1.0, 2.5)
+
+            gs.turret_spawn_timer -= dt
+            if gs.turret_spawn_timer <= 0:
+                spawn_turrets(gs, self.world)
+                gs.turret_spawn_timer = 5.0
             
             quest_notifications = update_quests(gs, self.audio_manager, self)
             for notification in quest_notifications:
@@ -297,6 +302,19 @@ class GenesisModuleApp(App):
                         "hp": fauna.durability, "max_hp": fauna.max_durability,
                         "art": art, "x": fauna.x, "y": fauna.y,
                         "description": getattr(fauna, "description", ""),
+                    }
+
+        # Check turrets
+        if not closest:
+            for turret in gs.active_turrets:
+                dist_sq = (turret.x - gs.car_world_x)**2 + (turret.y - gs.car_world_y)**2
+                if dist_sq < min_dist_sq:
+                    min_dist_sq = dist_sq
+                    art = turret.get_static_art()
+                    closest = {
+                        "name": turret.name, "hp": turret.durability, "max_hp": turret.max_durability,
+                        "art": art, "x": turret.x, "y": turret.y,
+                        "description": getattr(turret, "description", "Defense turret"),
                     }
 
         return closest

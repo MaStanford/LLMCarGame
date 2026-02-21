@@ -76,7 +76,7 @@ class ArmoredTruck(Vehicle):
             ]
         }
         # Upgraded stats to match its appearance
-        super().__init__(x, y, art, durability=250, speed=2.7 * GLOBAL_SPEED_MULTIPLIER, acceleration=0.2, handling=0.05)
+        super().__init__(x, y, art, durability=250, speed=2.7 * GLOBAL_SPEED_MULTIPLIER, acceleration=0.2, handling=0.05, weight=3500)
         self.name = "Armored Truck"
         self.xp_value = 50
         self.cash_value = 100

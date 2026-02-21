@@ -63,7 +63,7 @@ class RaiderBuggy(Vehicle):
                 "▼░▀  "
             ]
         }
-        super().__init__(x, y, art, durability=40, speed=9.0 * GLOBAL_SPEED_MULTIPLIER, acceleration=0.7, handling=0.8)
+        super().__init__(x, y, art, durability=40, speed=9.0 * GLOBAL_SPEED_MULTIPLIER, acceleration=0.7, handling=0.8, weight=600)
         self.name = "Raider Buggy"
         self.xp_value = 15
         self.cash_value = 20

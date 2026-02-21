@@ -65,6 +65,7 @@ class Motorcycle(PlayerCar):
             handling=3.0,
             braking_power=8.0,
             weapon_aim_speed=1.5,
+            weight=300,
             # Attachment points for weapons
             attachment_points={
                 "front_gun": {"name": "Front Gun", "level": "light", "offset_x": 0, "offset_y": -1},

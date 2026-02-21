@@ -16,6 +16,8 @@ class Entity(ABC):
         self.height = 0
         self.durability = durability
         self.max_durability = durability
+        self.weight = 1000  # Default weight for momentum-based collisions
+        self.faction_id = None  # Faction this entity belongs to
         self.patrol_target_x = None
         self.patrol_target_y = None
         self.is_major_enemy = False
